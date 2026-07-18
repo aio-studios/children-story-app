@@ -22,8 +22,11 @@ For each changed file:
 
 ## 3. Update Relevant Documentation
 
-- **CHANGELOG.md**: Add entry under "Unreleased" section (create the file using Keep a Changelog format if it doesn't exist yet).
-  - Use categories: Added, Changed, Fixed, Security, Removed.
+- **CHANGELOG.md**: Grouped by day, each entry timestamped.
+  - Get the real current date/time via `date "+%Y-%m-%d %H:%M"` — never guess or reuse an old date.
+  - If today's date section (`## YYYY-MM-DD`) doesn't exist yet, create it at the top of the file (most recent day first).
+  - Under the day, use categories: Added, Changed, Fixed, Security, Removed.
+  - Each bullet is prefixed with the time: `- HH:MM - <description>`.
   - Be concise, user-facing language.
 
 ## 4. Documentation Style Rules
