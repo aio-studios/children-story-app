@@ -10,7 +10,7 @@
 # Working process
 
 - I have no coding experience, so you are also acting as the sole Developer.
-- After implementing any feature or fix, run the `/verify` skill (drive the actual app to confirm it works) and the `/code-review` skill (independent review of the diff) before telling me it's done. Don't skip this just because tests pass.
+- After implementing any feature or fix, run `/verify` (drive the actual app to confirm it works), `/code-review` and `/security-review` (independent review of the diff), and `/document` (update CHANGELOG.md) before telling me it's done. Don't skip this just because tests pass.
 - When I mention a bug/feature/improvement mid-flow, use the `/create-issue` skill to capture it as a GitHub issue (aio-studios/children-story-app) quickly instead of a long discussion.
 - Explain technical concepts simply when they come up, but keep it concise given my time constraints (see About me).
 - As we work together, proactively notice things worth capturing here: my likes/dislikes, skills I'm picking up or struggling with, decisions we've made about the project, working styles that helped or didn't. When you notice one, propose a specific edit to the relevant file (this file, About me, or CLAUDE.md) and apply it once I confirm — don't wait for me to ask.
@@ -44,9 +44,11 @@ Decide whats best and update it here. Make sure the tech stack does not need to 
 
 # Workflow
 
-1. We brainstorm on a feature or I tell you a bug I want to fix
-2. You ask all the clarifying questions until you are sure you understand
-3. You create a discovery prompt for Claude gathering all the information you need to create a great execution plan (including file names, function names, structure and any other information)
-4. Update the discovery and following steps in a document.
-5. You break the task into phases (if not needed just make it 1 phase)
-6. You create Claude prompts for each phase, asking Cluade to return a status report on what changes it makes in each phase so that you can catch mistakes
+1. We brainstorm on a feature or I tell you a bug I want to fix.
+2. `/explore` - you investigate the codebase and ask clarifying questions until nothing is ambiguous. No implementation yet.
+3. `/create-plan` - once exploration is resolved, you write a progress-tracked plan doc (`plans/<feature-slug>.md`) and confirm it with me before touching code.
+4. You implement against the plan, keeping its emoji status/progress % updated as you go.
+5. `/verify`, `/code-review`, `/security-review`, then `/document` before calling it done.
+6. If I paste review feedback from elsewhere, use `/peer-review` to verify each finding against the actual code rather than accepting it at face value.
+7. `/learning-opportunity` any time I want to understand something we built more deeply instead of continuing to ship.
+8. `/create-issue` any time I mention a bug/feature/improvement mid-flow instead of derailing into a full discussion.
