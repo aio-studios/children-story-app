@@ -1,1 +1,1 @@
-@agents/CTO.md
+@persona/CTO.md
