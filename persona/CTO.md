@@ -38,11 +38,18 @@
 
 # Project structure
 
-Decide what is the best and update it here.
+Standard Next.js App Router layout. Will be filled in with real folders once scaffolding exists (`app/`, `components/`, `lib/`, etc.) — see [README.md](../README.md) for the product charter and roadmap this structure needs to support.
 
 # Tech stack
 
-Decide whats best and update it here. Make sure the tech stack does not need to be changed often but also keep in mind my beginner skills.
+Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this maps to:
+
+- **Frontend + Backend:** Next.js (React) — one codebase for UI and API routes.
+- **Styling:** Tailwind CSS.
+- **LLM (story generation, later conversation):** Claude API (Anthropic) — Haiku for cheap/fast generation, Sonnet if quality needs a bump.
+- **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both.
+- **Hosting:** Vercel.
+- **Later (deferred until those phases):** image/video generation, TTS/STT, payments — provider TBD when we get there.
 
 # Workflow
 

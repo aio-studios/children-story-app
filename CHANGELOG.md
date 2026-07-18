@@ -6,3 +6,4 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Added
 - 17:02 - Project scaffolding: CLAUDE.md/CTO.md/about_me.md context chain, GitHub org (aio-studios) and repo, issue tracking (Epic/Feature/User Story/Bug/Task types, priority/effort labels), and Claude Code skills for the dev workflow (explore, create-plan, code review, peer-review, document, learning-opportunity, create-issue).
+- 17:25 - Project Charter (README.md): vision, Day 1/Day 2/Later roadmap, and locked-in tech stack (Next.js, Tailwind, Claude API, Supabase, Vercel).
