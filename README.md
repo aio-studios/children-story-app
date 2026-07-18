@@ -16,8 +16,11 @@ Character-driven AI chat apps already exist and are popular, but nearly all of t
 ### Day 1 (MVP)
 - Select a genre.
 - Select a character, or create your own (e.g. based on your kid).
-- Get a one-shot AI-generated story built around the genre + character.
+- Select story length, reading level, tone/mood, and a lesson/value the story should carry.
+- Get a one-shot AI-generated story built around all of the above.
 - Stateless — no accounts, nothing saved yet. Optimized to be the fastest path to a working, demoable product.
+
+See [docs/PRD.md](docs/PRD.md) for the full feature list, including a "Future Ideas" backlog (choose-your-own-adventure branching, character memory, voice/illustration style choice, printable keepsakes, and more) captured but not yet scoped.
 
 ### Day 2 (must-have next)
 - Ongoing back-and-forth conversation with the character (Character.AI-style), not just a single generated story.
