@@ -8,7 +8,8 @@ Step-by-step checklist for any piece of work on this project, from a loose idea 
 - **Purpose:** figure out what to build and why, before it's a concrete task.
 - Just talk it through — no skill required for the discussion itself.
 - If researching best practices, competitors, or an unfamiliar tool would help, use the built-in `/deep-research` skill.
-- **Output:** an idea clear enough to become an issue (`/create-issue`), or well-defined enough to skip straight to exploration.
+- For foundational/whole-product ideation (not a single feature), go deeper: list features, then functional and non-functional requirements, technical considerations, and architecture — captured in [`docs/PRD.md`](../docs/PRD.md) and [`docs/architecture.md`](../docs/architecture.md). Revisit these when scope changes significantly, not on every small feature.
+- **Output:** an idea clear enough to become an issue (`/create-issue`), or well-defined enough to skip straight to exploration. For anything non-trivial, `/explore` and `/create-plan` should stay consistent with `docs/PRD.md`/`docs/architecture.md` rather than contradict them.
 
 ## 2. Issue Creation
 - **Purpose:** capture the idea/bug/improvement as a tracked GitHub issue so it isn't lost.

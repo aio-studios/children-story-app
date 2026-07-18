@@ -32,6 +32,11 @@ Character-driven AI chat apps already exist and are popular, but nearly all of t
 
 See [persona/CTO.md](persona/CTO.md#tech-stack) for the decision and rationale. Summary: Next.js + Tailwind, Claude API for generation, Supabase for auth/DB once Day 2 needs persistence, hosted on Vercel.
 
+## Documentation
+
+- [docs/PRD.md](docs/PRD.md) - full feature list, functional and non-functional requirements
+- [docs/architecture.md](docs/architecture.md) - technical considerations and system architecture
+
 ## Working With This Repo
 
 This project is built collaboratively with Claude Code acting as CTO/developer — see [persona/CTO.md](persona/CTO.md) for how that's set up, and [persona/workflow.md](persona/workflow.md) for the step-by-step process (ideation → issue → explore → plan → build → test → review → document → UAT) used for every feature.
