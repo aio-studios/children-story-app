@@ -1,8 +1,18 @@
 # Product Requirements Document
 
-**Last updated:** 2026-07-18 18:03
+**Last updated:** 2026-07-18 18:18
 
 Detailed breakdown of [README.md](../README.md)'s roadmap into concrete features and requirements. This is the reference for what we're building; [architecture.md](architecture.md) covers how.
+
+## Target Users & UX Ownership
+
+Target age range: roughly 0-10, with a split in who operates the app:
+
+- **Setup/selection (genre, character, length, reading level, tone, lesson)** is always parent-operated — normal, adult-usable form UI. This doesn't change in Day 2.
+- **Under age ~3**: fully parent-driven end to end — parent also reads the story to the child. No child-facing UI needed.
+- **Age ~3+**: parent still does setup, but the child is the intended reader/participant from there on. This means:
+  - The Day 1 reading view (F8) should already use kid-friendly typography (larger text, simple layout) even though a parent chose the settings — a 3-year-old may be the one reading it.
+  - The Day 2 conversation feature (F15) must be usable by a child directly — icon-forward, large touch targets, minimal reading required to operate the chat itself (separate from the story content, which does involve reading). Child-solo navigation of setup/selection is explicitly out of scope until later, not Day 2.
 
 ## Features
 
@@ -16,7 +26,7 @@ Detailed breakdown of [README.md](../README.md)'s roadmap into concrete features
 | F5 | Select tone/mood (funny, calming/bedtime, exciting, heartwarming) |
 | F6 | Select a lesson/value the story should carry (kindness, courage, sharing, etc.) |
 | F7 | Generate a one-shot story incorporating all selections above |
-| F8 | Read the generated story in a simple, mobile-friendly reading view |
+| F8 | Read the generated story in a simple, mobile-friendly reading view, using kid-friendly typography since a young child (3+) may be the one reading it even though a parent set it up |
 | F9 | Regenerate ("try again") if the result isn't liked |
 | F10 | Age-appropriate content filtering on generated stories |
 | F11 | Basic filtering on custom character input to block inappropriate names/descriptions before they reach the model |
@@ -27,7 +37,7 @@ Detailed breakdown of [README.md](../README.md)'s roadmap into concrete features
 | F12 | Parent-owned account (sign up/login) |
 | F13 | Save custom characters, reusable across sessions |
 | F14 | Save/revisit past stories (a simple library view) |
-| F15 | Ongoing back-and-forth conversation with the character (not just one story) |
+| F15 | Ongoing back-and-forth conversation with the character (not just one story), UI designed for a child to operate directly - icon-forward, large touch targets, minimal reading required to use the chat itself |
 | F16 | Conversation history persisted per character |
 
 ### Later
@@ -76,7 +86,7 @@ From an ideation pass on 2026-07-18. Not scoped into Day 2/Later yet, just captu
 - **Performance**: story generation should complete in well under ~10s so a young reader doesn't lose interest; Day 2 chat responses should stream (first token fast) rather than wait for the full response.
 - **Content safety**: this is a kids' product - generated content and any user-entered text (custom character fields) must both be filtered. Treat this as a hard requirement, not a nice-to-have.
 - **Privacy/legal (flagging - not yet resolved)**: if any user under 13 could be using the account directly (vs. a parent using it on the child's behalf), COPPA (US) and equivalent regulations elsewhere restrict data collection and *behavioral/targeted advertising* to children. This directly conflicts with F21 (ads) if not designed carefully. Recommendation once we reach that phase: keep accounts parent-owned, collect minimal data from the child (e.g. a nickname, not a real name), and use contextual (not behavioral/targeted) ads only, or skip ads in favor of a paid-plan-only model. Needs a real decision before F21 is built, not before Day 1/2.
-- **Accessibility**: mobile-first, legible type sizes suitable for a parent reading aloud or a child reading independently, sufficient color contrast.
+- **Accessibility**: mobile-first, legible type sizes suitable for a parent reading aloud or a child (3+) reading independently, sufficient color contrast. Setup/selection UI can assume an adult operator; the reading view (Day 1) and chat UI (Day 2) must not.
 - **Cost control**: default to the cheaper model tier (Claude Haiku) for generation; add basic rate limiting per user/IP before this is publicly shared, so a spike in usage can't produce a surprise bill (fits the "keep infra costs low" goal).
 - **Reliability**: if the LLM API fails or times out, show a kid-friendly retry state, never a raw error/stack trace.
 - **Security**: never expose the Claude/Supabase API keys to the client; all generation calls happen server-side (Next.js API routes).
