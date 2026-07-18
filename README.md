@@ -1,6 +1,6 @@
-# Children Story Creation App
+# Storykins *(working title — not final)*
 
-**Last updated:** 2026-07-18 17:25
+**Last updated:** 2026-07-18 18:24
 **Status:** Pre-development — foundation complete, first build phase not started.
 
 ## Vision
