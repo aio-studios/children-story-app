@@ -1,6 +1,6 @@
 # Product Requirements Document
 
-**Last updated:** 2026-07-18 18:18
+**Last updated:** 2026-07-18 18:30
 
 Detailed breakdown of [README.md](../README.md)'s roadmap into concrete features and requirements. This is the reference for what we're building; [architecture.md](architecture.md) covers how.
 
@@ -49,6 +49,7 @@ Target age range: roughly 0-10, with a split in who operates the app:
 | F20 | Speech-to-text input (so a kid can talk instead of type) |
 | F21 | Monetization: ads and/or paid plans to offset AI compute cost |
 | F22 | Usage caps/tiers tied to monetization (e.g. free-tier story limit per day) |
+| F23 | Native iOS/Android apps (via Expo/React Native), reusing the same backend/Supabase project - web ships first, native comes after |
 
 ## Future Ideas / Backlog (not yet committed - reassess when we get there)
 

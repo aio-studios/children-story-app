@@ -1,6 +1,6 @@
 # Storykins *(working title — not final)*
 
-**Last updated:** 2026-07-18 18:24
+**Last updated:** 2026-07-18 18:30
 **Status:** Pre-development — foundation complete, first build phase not started.
 
 ## Vision
@@ -30,6 +30,7 @@ See [docs/PRD.md](docs/PRD.md) for the full feature list, including a "Future Id
 - Image/video generation alongside the story.
 - Text-to-speech and speech-to-text, with different tones/sounds, so the character feels animated rather than just text on a screen.
 - Ads and/or paid plans to offset AI compute cost.
+- Native iOS/Android apps, once the web app is solid — reusing the same backend, no rewrite needed there (see [docs/architecture.md](docs/architecture.md)).
 
 ## Tech Stack
 

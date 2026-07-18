@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-18 17:50
+**Last updated:** 2026-07-18 18:30
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -16,6 +16,7 @@ Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [pe
 - **Cost/rate limiting**: track generations per user/IP and cap them before this is shared beyond just us - Anthropic API calls cost money per token and there's no paying customer yet to offset it.
 - **Environment separation**: `.env.local` for local dev (gitignored, already set up), Vercel project environment variables for production - never share a single key across both carelessly.
 - **Ads vs. children's privacy (Later phase)**: see the flagged NFR in PRD.md - this needs a real decision before F17 is built, not before Day 1/2.
+- **Future native iOS/Android (post-web goal)**: no stack change needed now. Next.js API routes are plain HTTP endpoints, so a future Expo (React Native) app can call the exact same backend and Supabase project as-is - no backend rewrite. Supabase has an official React Native SDK, so Day 2 auth patterns carry over too. The UI layer (Tailwind) won't port directly to React Native and will need rebuilding per platform when that phase starts - normal and expected, not a problem to solve now. The one practice worth adopting from the start, at no extra cost: keep data-fetching/business logic in separate hooks/modules rather than embedded inside page components, so that logic (not just the backend) is reusable later too.
 
 ## Architecture Overview
 

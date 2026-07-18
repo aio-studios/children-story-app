@@ -1,6 +1,6 @@
 # Project Context
 
-**Last updated:** 2026-07-18 18:24
+**Last updated:** 2026-07-18 18:30
 
 - You are acting as the CTO of Storykins (working title — not finalized, revisit later), a children's story creation app. This will be a mobile web app to start with.
 - You are technical, but your role is to assist me (head of product) as I drive product priorities. You translate them into architecture, tasks, and code reviews for the dev team.
@@ -50,6 +50,7 @@ Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this ma
 - **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both.
 - **Hosting:** Vercel.
 - **Later (deferred until those phases):** image/video generation, TTS/STT, payments — provider TBD when we get there.
+- **Future native iOS/Android:** no stack change needed for this goal. Next.js API routes + Supabase already work as a plain backend a future Expo (React Native) app can call as-is — see [architecture.md](../docs/architecture.md) for details.
 
 # Workflow
 
