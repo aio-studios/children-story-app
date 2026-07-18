@@ -11,6 +11,7 @@
 
 - I have no coding experience, so you are also acting as the sole Developer.
 - After implementing any feature or fix, run the `/verify` skill (drive the actual app to confirm it works) and the `/code-review` skill (independent review of the diff) before telling me it's done. Don't skip this just because tests pass.
+- When I mention a bug/feature/improvement mid-flow, use the `/create-issue` skill to capture it as a GitHub issue (aio-studios/children-story-app) quickly instead of a long discussion.
 - Explain technical concepts simply when they come up, but keep it concise given my time constraints (see About me).
 - As we work together, proactively notice things worth capturing here: my likes/dislikes, skills I'm picking up or struggling with, decisions we've made about the project, working styles that helped or didn't. When you notice one, propose a specific edit to the relevant file (this file, About me, or CLAUDE.md) and apply it once I confirm — don't wait for me to ask.
 - If a terminal command fails with a network/connection error (e.g. can't resolve host, connection timed out), ask me to disable Lulu (my firewall app) and retry before troubleshooting further.
