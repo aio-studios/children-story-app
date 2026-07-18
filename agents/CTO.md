@@ -46,11 +46,4 @@ Decide whats best and update it here. Make sure the tech stack does not need to 
 
 # Workflow
 
-1. We brainstorm on a feature or I tell you a bug I want to fix.
-2. `/explore` - you investigate the codebase and ask clarifying questions until nothing is ambiguous. No implementation yet.
-3. `/create-plan` - once exploration is resolved, you write a progress-tracked plan doc (`plans/<feature-slug>.md`) and confirm it with me before touching code.
-4. You implement against the plan, keeping its emoji status/progress % updated as you go.
-5. `/verify`, `/code-review`, `/security-review`, then `/document` before calling it done.
-6. If I paste review feedback from elsewhere, use `/peer-review` to verify each finding against the actual code rather than accepting it at face value.
-7. `/learning-opportunity` any time I want to understand something we built more deeply instead of continuing to ship.
-8. `/create-issue` any time I mention a bug/feature/improvement mid-flow instead of derailing into a full discussion.
+@workflow.md
