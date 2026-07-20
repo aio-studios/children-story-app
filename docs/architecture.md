@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-18 18:30
+**Last updated:** 2026-07-19 21:51
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -30,6 +30,85 @@ Client (Next.js, mobile-first)
   <- story text returned, rendered client-side
 ```
 No database, no auth. Everything lives in the request/response cycle.
+
+#### Code map: Genre & Character Selection screen (#4)
+
+Component tree — who renders whom. Amber = holds its own state (`useState`); blue = stateless/display-only.
+
+```mermaid
+graph TD
+  Page["Home · app/page.tsx<br/>state: genreSelection<br/>state: customGenreDraft<br/>state: characterSelection"]
+  GS["GenreSelector"]
+  CS["CharacterSelector"]
+  GC["GenreCard × 5<br/>state: isActive"]
+  CGC["CustomGenreCard"]
+  CC["CharacterCard × 3<br/>(current genre's presets)"]
+  CCF["CustomCharacterForm<br/>(only when type = custom)"]
+
+  Page -->|selection, callbacks| GS
+  Page -->|selection, callbacks| CS
+  GS --> GC
+  GS --> CGC
+  CS --> CC
+  CS --> CCF
+
+  classDef stateful fill:#FBEBD6,stroke:#B5670E;
+  classDef plain fill:#EAF1FB,stroke:#4A72A8;
+  class Page,GC stateful;
+  class GS,CS,CGC,CC,CCF plain;
+```
+
+Data model (`lib/types.ts`) — TypeScript `type`s, not classes, but this is the closest thing to a class diagram this codebase has:
+
+```mermaid
+classDiagram
+  class Genre {
+    id: string
+    label: string
+    icon: string
+    blurb: string
+    characters: PresetCharacter[3]
+  }
+  class PresetCharacter {
+    id: string
+    name: string
+    description: string
+  }
+  class GenreSelection {
+    <<union>>
+  }
+  class Preset_Genre {
+    type: "preset"
+    genreId: string
+  }
+  class Custom_Genre {
+    type: "custom"
+    text: string
+  }
+  class SelectedCharacter {
+    <<union>>
+  }
+  class Preset_Character_Ref {
+    type: "preset"
+    characterId: string
+  }
+  class CustomCharacter {
+    type: "custom"
+    name: string
+    traits: string
+    description: string
+  }
+
+  Genre "1" *-- "3" PresetCharacter : characters
+  GenreSelection <|-- Preset_Genre
+  GenreSelection <|-- Custom_Genre
+  SelectedCharacter <|-- Preset_Character_Ref
+  SelectedCharacter <|-- CustomCharacter
+```
+
+`GENRES` in `lib/genres.ts` is the actual instance data: 5 hardcoded `Genre` objects, each with 3 `PresetCharacter`s (15 total).
+
+This is a snapshot of the code as of issue #4 — it'll go stale as new screens are added; re-diagram if it's no longer trustworthy rather than trusting it blindly.
 
 ### Day 2 additions
 ```

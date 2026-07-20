@@ -1,8 +1,12 @@
 # Product Requirements Document
 
-**Last updated:** 2026-07-18 18:30
+**Last updated:** 2026-07-18 20:52
 
 Detailed breakdown of [README.md](../README.md)'s roadmap into concrete features and requirements. This is the reference for what we're building; [architecture.md](architecture.md) covers how.
+
+## Design Principles
+
+- **Smart defaults everywhere**: every selection step should have a sensible default pre-selected (e.g. first genre, a matching preset character) so a tired parent can move through setup with zero required decisions — they change only what they want, rather than being forced to actively choose at each step.
 
 ## Target Users & UX Ownership
 
@@ -13,6 +17,25 @@ Target age range: roughly 0-10, with a split in who operates the app:
 - **Age ~3+**: parent still does setup, but the child is the intended reader/participant from there on. This means:
   - The Day 1 reading view (F8) should already use kid-friendly typography (larger text, simple layout) even though a parent chose the settings — a 3-year-old may be the one reading it.
   - The Day 2 conversation feature (F15) must be usable by a child directly — icon-forward, large touch targets, minimal reading required to operate the chat itself (separate from the story content, which does involve reading). Child-solo navigation of setup/selection is explicitly out of scope until later, not Day 2.
+
+## User Personas
+
+*(Drafted 2026-07-18 for Day 2 ideation. Not an exhaustive list — add more personas here as they come up, e.g. during future feature ideation.)*
+
+**The Tired Parent**
+- End of a long day, low energy, just wants their kid settled with a good story fast.
+- Behavior: takes the first reasonable default at every step rather than customizing; unlikely to write a custom character description from scratch.
+- Pain point: any screen that *requires* a decision before continuing is friction. Directly motivates the **Smart defaults everywhere** principle above, and Day 2's "Daily picks" home-screen section (#29) as a zero-effort starting point.
+
+**The Inquisitive Parent**
+- Has more time/energy, enjoys shaping the story — picks specific tone/lesson, writes a detailed custom character based on their actual kid.
+- Behavior: explores all the selectors (genre, length, reading level, tone, lesson), may regenerate (F9/#22) a few times to get it right, likely to create and reuse custom characters (F13, Day 2).
+- Pain point: wants customization to feel meaningful, not just cosmetic — the story should visibly reflect their choices.
+
+**The Curious Child (age ~3+)**
+- The actual reader once setup is done, per the age-split above — didn't do the setup, but interacts with the output.
+- Behavior: reads the story independently or narrates it; in Day 2, initiates follow-up chat with the character (F15) using icon-forward, low-reading-required UI.
+- Pain point: dense text or complex navigation blocks them — motivates kid-legible typography (F8/#21) and the icon-forward chat requirement (F15).
 
 ## Features
 
@@ -39,6 +62,8 @@ Target age range: roughly 0-10, with a split in who operates the app:
 | F14 | Save/revisit past stories (a simple library view) |
 | F15 | Ongoing back-and-forth conversation with the character (not just one story), UI designed for a child to operate directly - icon-forward, large touch targets, minimal reading required to use the chat itself |
 | F16 | Conversation history persisted per character |
+
+**Note (added 2026-07-18, from #4 exploration):** Day 1's post-genre "stage-setting" blurb and preset characters (F2) are static, hand-written content per genre. Making these live AI-generated (fresh flavor text/character suggestions per visit) is flagged as a Day 2 candidate — not yet scoped into a numbered feature.
 
 ### Later
 | ID | Feature |

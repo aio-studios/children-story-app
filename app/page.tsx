@@ -1,0 +1,91 @@
+"use client";
+
+import { useState } from "react";
+import { GENRES } from "@/lib/genres";
+import { GenreSelection, SelectedCharacter } from "@/lib/types";
+import { GenreSelector } from "@/components/GenreSelector";
+import { CharacterSelector } from "@/components/CharacterSelector";
+
+function isCharacterReady(character: SelectedCharacter): boolean {
+  if (character.type === "preset") return true;
+  return character.name.trim() !== "" && character.traits.trim() !== "" && character.description.trim() !== "";
+}
+
+function isGenreReady(genre: GenreSelection): boolean {
+  if (genre.type === "preset") return true;
+  return genre.text.trim() !== "";
+}
+
+function defaultCharacterFor(genreId: string): SelectedCharacter {
+  const genre = GENRES.find((g) => g.id === genreId);
+  return genre
+    ? { type: "preset", characterId: genre.characters[0].id }
+    : { type: "custom", name: "", traits: "", description: "" };
+}
+
+const EMPTY_CUSTOM_CHARACTER: SelectedCharacter = { type: "custom", name: "", traits: "", description: "" };
+
+export default function Home() {
+  const [genreSelection, setGenreSelection] = useState<GenreSelection>({
+    type: "preset",
+    genreId: GENRES[0].id,
+  });
+  // Kept separate from genreSelection so a typed-in custom genre survives switching to a preset and back.
+  const [customGenreDraft, setCustomGenreDraft] = useState("");
+  const [characterSelection, setCharacterSelection] = useState<SelectedCharacter>({
+    type: "preset",
+    characterId: GENRES[0].characters[0].id,
+  });
+
+  function selectPresetGenre(genreId: string) {
+    if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
+    setGenreSelection({ type: "preset", genreId });
+    setCharacterSelection(defaultCharacterFor(genreId));
+  }
+
+  function selectCustomGenre() {
+    if (genreSelection.type === "custom") return;
+    setGenreSelection({ type: "custom", text: customGenreDraft });
+    setCharacterSelection(EMPTY_CUSTOM_CHARACTER);
+  }
+
+  function updateCustomGenreText(text: string) {
+    setCustomGenreDraft(text);
+    setGenreSelection({ type: "custom", text });
+  }
+
+  const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection);
+
+  return (
+    <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
+      <section className="flex flex-col gap-4">
+        <h1 className="text-xl font-semibold">Pick a genre</h1>
+        <GenreSelector
+          selection={genreSelection}
+          onSelectPreset={selectPresetGenre}
+          onSelectCustom={selectCustomGenre}
+          onCustomTextChange={updateCustomGenreText}
+        />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">Pick a character</h2>
+        <CharacterSelector
+          genreSelection={genreSelection}
+          characterSelection={characterSelection}
+          onChange={setCharacterSelection}
+        />
+      </section>
+
+      <button
+        type="button"
+        disabled
+        className={`rounded-lg px-4 py-3 text-center font-medium ${
+          isReady ? "bg-blue-300 text-white" : "bg-gray-200 text-gray-400"
+        }`}
+      >
+        Continue (more steps coming soon)
+      </button>
+    </main>
+  );
+}
