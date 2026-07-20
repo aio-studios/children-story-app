@@ -1,6 +1,6 @@
 # Development Workflow
 
-**Last updated:** 2026-07-18 17:12
+**Last updated:** 2026-07-19 21:59
 
 Step-by-step checklist for any piece of work on this project, from a loose idea to a shipped, documented feature. Both I (Sarthak) and the CTO agent follow this — if a step gets skipped, call it out rather than quietly moving on.
 
@@ -44,12 +44,14 @@ Step-by-step checklist for any piece of work on this project, from a loose idea 
 ## 8. Documentation
 - **Purpose:** keep a truthful, current record of what changed.
 - **Skill:** `/document` (custom) — updates `CHANGELOG.md` from the actual diff/code, grouped by day, each entry timestamped.
-- **Output:** updated `CHANGELOG.md`.
+- Also update [`docs/architecture.md`](../docs/architecture.md) whenever a change alters structure worth diagramming — component tree, data model, or system flow (new/removed/rewired components, changed types, new API routes). Don't wait to be asked; check this every time, skip it only when nothing diagram-worthy changed.
+- **Output:** updated `CHANGELOG.md` (and `docs/architecture.md` when structure changed).
 
 ## 9. UAT (User Acceptance Testing)
 - **Purpose:** I personally try the feature as an end user before it's "done" — the one step no skill replaces.
 - CTO should walk me through exactly what to click/try, including whatever edge cases it already checked in Testing, so I'm not guessing what to test.
 - **Output:** my explicit sign-off, or a new issue via `/create-issue` if something's off.
+- Once signed off: move the issue's card to "Done" on the [Storykins Roadmap board](https://github.com/orgs/aio-studios/projects/1) and close the issue(s) in GitHub — completed work doesn't sit in Todo. Do this without being asked.
 
 ## Ad hoc (used whenever relevant, not a fixed stage)
 - **`/peer-review`** (custom) — if I paste review feedback from another tool/model, verify each finding against the real code before acting on it.
