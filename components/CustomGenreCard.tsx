@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { MAX_CUSTOM_TEXT_LENGTH } from "@/lib/storyOptions";
 
 type CustomGenreCardProps = {
   selected: boolean;
@@ -28,6 +29,7 @@ export function CustomGenreCard({ selected, text, onSelect, onTextChange }: Cust
         type="text"
         value={text}
         placeholder="Type your own..."
+        maxLength={MAX_CUSTOM_TEXT_LENGTH}
         onFocus={onSelect}
         onChange={(e) => onTextChange(e.target.value)}
         className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"

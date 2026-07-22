@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-21 20:49
+**Last updated:** 2026-07-21 21:38
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -13,7 +13,7 @@ Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [pe
   - `stories` - id, user_id, character_id, genre, content, created_at
   - `conversations` - id, character_id, messages (jsonb), created_at
   - Auth/users handled by Supabase's built-in `auth.users` - don't build a custom users table unless a real need shows up.
-- **Cost/rate limiting**: track generations per user/IP and cap them before this is shared beyond just us - Anthropic API calls cost money per token and there's no paying customer yet to offset it.
+- **Cost/rate limiting**: a basic in-memory per-IP limiter (5 requests/min) ships with #13 as a stopgap against naive scripts - it's not real abuse defense (the `x-forwarded-for` key it reads is client-spoofable, and it doesn't share state across serverless instances). Real rate-limiting infra is still needed before this is shared beyond just us.
 - **Environment separation**: `.env.local` for local dev (gitignored, already set up), Vercel project environment variables for production - never share a single key across both carelessly.
 - **Ads vs. children's privacy (Later phase)**: see the flagged NFR in PRD.md - this needs a real decision before F17 is built, not before Day 1/2.
 - **Future native iOS/Android (post-web goal)**: no stack change needed now. Next.js API routes are plain HTTP endpoints, so a future Expo (React Native) app can call the exact same backend and Supabase project as-is - no backend rewrite. Supabase has an official React Native SDK, so Day 2 auth patterns carry over too. The UI layer (Tailwind) won't port directly to React Native and will need rebuilding per platform when that phase starts - normal and expected, not a problem to solve now. The one practice worth adopting from the start, at no extra cost: keep data-fetching/business logic in separate hooks/modules rather than embedded inside page components, so that logic (not just the backend) is reusable later too.
@@ -23,13 +23,42 @@ Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [pe
 ### Day 1 (stateless)
 ```
 Client (Next.js, mobile-first)
-  -> selects genre + character
-  -> POST /api/generate-story
-       -> server-side call to Claude API (Haiku)
-       -> content-safety check on output
-  <- story text returned, rendered client-side
+  -> selects genre, character, length, reading level, tone, lesson
+  -> POST /api/generate-story                        [built - #13]
+       -> server-side call to Claude API (Haiku)      [built - #13]
+       -> content-safety check on output              [not yet built - #16]
+  <- {title, story} returned, rendered client-side (bare/placeholder - #20 owns the real reading UI)
 ```
 No database, no auth. Everything lives in the request/response cycle.
+
+#### Code map: story generation (#13)
+
+```mermaid
+graph TD
+  Page["Home · app/page.tsx<br/>state: generationState, generatedStory, generationError"]
+  Route["POST /api/generate-story<br/>app/api/generate-story/route.ts"]
+  Validate["validateSelections()<br/>whitelists preset IDs against GENRES/LESSONS,<br/>caps custom text at MAX_CUSTOM_TEXT_LENGTH"]
+  RateLimit["isRateLimited()<br/>in-memory per-IP counter"]
+  Prompt["buildStoryPrompt()<br/>lib/storyPrompt.ts"]
+  Claude["Claude API<br/>claude-haiku-4-5, structured JSON output"]
+
+  Page -->|fetch POST, 6 selections| Route
+  Route --> RateLimit
+  Route --> Validate
+  Validate --> Prompt
+  Prompt -->|system + user prompt| Claude
+  Claude -->|"{title, story}"| Route
+  Route -->|"{title, story} or generic error"| Page
+
+  classDef stateful fill:#FBEBD6,stroke:#B5670E;
+  classDef plain fill:#EAF1FB,stroke:#4A72A8;
+  class Page stateful;
+  class Route,Validate,RateLimit,Prompt,Claude plain;
+```
+
+`lib/storyOptions.ts`'s `MAX_CUSTOM_TEXT_LENGTH` (300 chars) is shared between the route's server-side validation and `maxLength` on the custom genre/character/lesson inputs, so client and server never drift on this limit.
+
+This is a snapshot of the code as of issue #13 — re-diagram when #16 (content-safety layer) or #20 (real reading UI) change this flow.
 
 #### Code map: setup screen — Genre & Character Selection (#4) + Story Customization Selectors (#8, #31)
 

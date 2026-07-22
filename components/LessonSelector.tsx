@@ -1,4 +1,4 @@
-import { LESSONS } from "@/lib/storyOptions";
+import { LESSONS, MAX_CUSTOM_TEXT_LENGTH } from "@/lib/storyOptions";
 import { Lesson, LessonSelection } from "@/lib/types";
 import { PillSelector } from "./PillSelector";
 
@@ -36,6 +36,7 @@ export function LessonSelector({ selection, onSelectPreset, onSelectCustom, onCu
           value={customText}
           onChange={(e) => onCustomTextChange(e.target.value)}
           placeholder="e.g. patience, teamwork..."
+          maxLength={MAX_CUSTOM_TEXT_LENGTH}
           className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
         />
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { GENRES } from "@/lib/genres";
 import {
   DEFAULT_LESSON,
@@ -41,6 +41,18 @@ function defaultCharacterFor(genreId: string): SelectedCharacter {
 
 const EMPTY_CUSTOM_CHARACTER: SelectedCharacter = { type: "custom", name: "", traits: "", description: "" };
 
+function BackToSetupButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg border-2 border-blue-600 px-4 py-3 text-center font-medium text-blue-600"
+    >
+      ← Back to setup
+    </button>
+  );
+}
+
 export default function Home() {
   const [genreSelection, setGenreSelection] = useState<GenreSelection>({
     type: "preset",
@@ -61,6 +73,11 @@ export default function Home() {
   });
   // Kept separate from lessonSelection so a typed-in custom lesson survives switching to a preset and back.
   const [customLessonDraft, setCustomLessonDraft] = useState("");
+  const [generationState, setGenerationState] = useState<"idle" | "loading" | "error" | "success">("idle");
+  const [generatedStory, setGeneratedStory] = useState<{ title: string; story: string } | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  // Synchronous guard against a fast double-click firing two requests before the disabled button re-renders.
+  const isGeneratingRef = useRef(false);
 
   function selectPresetGenre(genreId: string) {
     if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
@@ -97,6 +114,90 @@ export default function Home() {
   // storyLength/readingLevel/tone always hold a valid selection (fixed defaults, no "unset" state);
   // lesson can be an incomplete custom entry, same as genre/character.
   const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection) && isLessonReady(lessonSelection);
+
+  async function generateStory() {
+    if (isGeneratingRef.current) return;
+    isGeneratingRef.current = true;
+    setGenerationState("loading");
+    setGenerationError(null);
+    try {
+      const response = await fetch("/api/generate-story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          genre: genreSelection,
+          character: characterSelection,
+          length: storyLength,
+          readingLevel,
+          tone,
+          lesson: lessonSelection,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setGenerationError(data.error ?? "Something went wrong. Please try again.");
+        setGenerationState("error");
+        return;
+      }
+      setGeneratedStory({ title: data.title, story: data.story });
+      setGenerationState("success");
+    } catch {
+      setGenerationError("Something went wrong. Please try again.");
+      setGenerationState("error");
+    } finally {
+      isGeneratingRef.current = false;
+    }
+  }
+
+  function backToSetup() {
+    setGenerationState("idle");
+    setGeneratedStory(null);
+    setGenerationError(null);
+  }
+
+  if (generationState === "loading") {
+    return (
+      <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-6">
+        <span className="animate-pencil-write text-5xl">✏️</span>
+        <p className="flex items-center gap-1 text-base">
+          Writing your story
+          <span className="inline-flex gap-0.5">
+            <span className="animate-dot-bounce">.</span>
+            <span className="animate-dot-bounce animate-dot-bounce-delay-1">.</span>
+            <span className="animate-dot-bounce animate-dot-bounce-delay-2">.</span>
+          </span>
+        </p>
+      </main>
+    );
+  }
+
+  if (generationState === "success" && generatedStory) {
+    return (
+      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+        <h1 className="text-2xl font-semibold">{generatedStory.title}</h1>
+        <p className="whitespace-pre-wrap text-base leading-relaxed">{generatedStory.story}</p>
+        <BackToSetupButton onClick={backToSetup} />
+      </main>
+    );
+  }
+
+  if (generationState === "error") {
+    return (
+      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+        <p className="text-base">{generationError}</p>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={generateStory}
+            className="rounded-lg bg-blue-500 px-4 py-3 font-medium text-white"
+          >
+            Try again
+          </button>
+          <BackToSetupButton onClick={backToSetup} />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
@@ -139,12 +240,13 @@ export default function Home() {
 
       <button
         type="button"
-        disabled
+        disabled={!isReady}
+        onClick={generateStory}
         className={`rounded-lg px-4 py-3 text-center font-medium ${
-          isReady ? "bg-blue-300 text-white" : "bg-gray-200 text-gray-400"
+          isReady ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-400"
         }`}
       >
-        Continue (more steps coming soon)
+        Continue
       </button>
     </main>
   );

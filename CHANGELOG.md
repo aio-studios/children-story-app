@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-07-22
+
+### Fixed
+
+- 15:25 - Loading pencil (#13 polish) flipped horizontally - tip now points down-right instead of down-left, reading more naturally as "actively writing" left-to-right. UAT feedback.
+
 ## 2026-07-21
 
 ### Added
@@ -11,16 +17,25 @@ All notable changes to this project are documented here, grouped by day, each en
 - 20:07 - docs/PRD.md: 4 descoped ideas logged to the Future Ideas/Backlog section from #8's exploration (genre-aware smart defaults, custom lesson/value text entry, finer story-length scale, richer illustrated-card style for these selectors).
 - 20:49 - Custom "type your own" lesson/value option (issue #31, sub-issue of #8): a 6th "Type your own" pill next to the 5 lesson presets reveals a text input, mirroring the existing custom-genre pattern. Reverses a deliberate #8 descope - brought forward into MVP1 since it's a 4th instance of an already-accepted free-text risk (custom genre/character text), not a new one. New `components/LessonSelector.tsx` and `LessonSelection` type (`lib/types.ts`). Continue button's readiness now also gates on this field (empty custom text blocks it, same as custom genre).
 - 20:49 - plans/custom-lesson-value.md: implementation plan for issue #31.
+- 21:38 - AI Story Generation Engine (issue #13): Continue button now actually generates a story. New `POST /api/generate-story` route (Next.js Route Handler) builds a prompt from the 6 setup selections and calls Claude (`claude-haiku-4-5`, non-streaming, structured JSON output for `{title, story}`). New `lib/storyPrompt.ts` (word-count/vocabulary/tone/lesson guidance per selection) and `app/api/generate-story/route.ts` (server-side validation - never trusts client-sent preset labels, only IDs, resolved against `lib/genres.ts`/`lib/storyOptions.ts`). Client (`app/page.tsx`) gets a `generationState` (idle/loading/error/success) - the setup form swaps for a loading message, then a bare title+story dump (intentionally unstyled - #20 owns the real reading UI) with a "back to setup" link, or a friendly retry-able error (never a raw error/stack trace, per PRD NFR). Basic in-memory per-IP rate limiter added (stopgap ahead of real infra, not a substitute for it - see Security note). First feature with a real server-side secret (`ANTHROPIC_API_KEY`) and network egress. New dependency: `@anthropic-ai/sdk`.
+- 21:38 - plans/ai-story-generation-engine.md: implementation plan for issue #13.
+- 21:51 - Loading/back-to-setup polish on #13, from UAT feedback: the loading screen now shows a bouncing pencil emoji (CSS keyframe wiggle, same technique as the genre card animations) plus a classic 3-dot bounce, replacing static "Writing your story..." text. New shared `BackToSetupButton` component - an outlined secondary button matching "Try again"'s visual weight, replacing a bare underlined text link on both the success and error screens.
 
 ### Changed
 
 - 20:49 - `components/PillSelector.tsx` generalized to support an optional trailing custom pill (via a `children` slot) and an unselected/undefined state - caught during #31's code review as a real, present duplication (not a hypothetical one) once `LessonSelector` needed the same pill styling as an escape-hatch option. `LessonSelector` now composes `PillSelector` instead of duplicating its markup.
 - 20:49 - docs/PRD.md: removed the now-stale "Custom 'type your own' lesson/value" backlog bullet added during #8, since #31 implements it.
+- 21:38 - `lib/storyOptions.ts`: added shared `MAX_CUSTOM_TEXT_LENGTH` constant (300 chars) - used by both the new API route's server-side validation and `maxLength` on the custom genre/character/lesson text inputs (`CustomGenreCard.tsx`, `CustomCharacterForm.tsx`, `LessonSelector.tsx`), so a user can no longer type past a limit the server was already silently enforcing.
+
+### Fixed
+
+- 21:38 - Code review on #13 (high effort, first feature with a real secret + network call) caught and fixed: no rate limiting existed on a route that costs real money per call; a fast double-click/tap could fire two generation requests before React committed the disabled button state; custom character fields (unlike genre/lesson) weren't trimmed before use; `STORY_LENGTHS_VALUES` was hardcoded instead of derived from source data; retrying from the error screen visually flashed back to the full setup form instead of a loading state; a stale error message could persist in state after a successful retry.
 
 ### Security
 
 - 20:07 - Security review: no vulnerabilities found (client-side-only, no new attack surface, no free-text/user input introduced by this change).
 - 20:49 - Security review (#31): no vulnerabilities found (client-side-only, 4th unguarded free-text field of a kind already accepted ahead of #16, no new attack surface).
+- 21:38 - Security review (#13): no vulnerabilities found. Confirmed the API key never reaches the client or logs, no SSRF surface (only outbound call is to Anthropic's fixed endpoint), prompt injection has no escalation path (model has no tools), input validation matches client/server, no XSS (plain JSX text rendering, no `dangerouslySetInnerHTML`). Noted but out of scope: the new rate limiter's `x-forwarded-for` key is spoofable - a stopgap against naive scripts, not real abuse defense; real rate-limiting infra still needed before public launch.
 
 ## 2026-07-18
 

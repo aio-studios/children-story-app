@@ -33,3 +33,7 @@ export const LESSONS: PillOption<Lesson>[] = [
 ];
 
 export const DEFAULT_LESSON: Lesson = "kindness";
+
+// Shared between custom-text inputs (client-side maxLength) and the generate-story API route
+// (server-side validation), so the two never drift.
+export const MAX_CUSTOM_TEXT_LENGTH = 300;

@@ -1,3 +1,4 @@
+import { MAX_CUSTOM_TEXT_LENGTH } from "@/lib/storyOptions";
 import { CustomCharacter } from "@/lib/types";
 
 type CustomCharacterFormProps = {
@@ -13,6 +14,7 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
         <input
           type="text"
           value={character.name}
+          maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, name: e.target.value })}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
         />
@@ -23,6 +25,7 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
           type="text"
           value={character.traits}
           placeholder="e.g. brave, loves dinosaurs"
+          maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, traits: e.target.value })}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
         />
@@ -31,6 +34,7 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
         Appearance / personality description
         <textarea
           value={character.description}
+          maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, description: e.target.value })}
           className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
           rows={2}

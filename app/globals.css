@@ -57,3 +57,52 @@ body {
 .animate-active-loop {
   animation: active-loop 0.8s ease-in-out infinite;
 }
+
+/* Story-generation loading state: a pencil that wiggles like it's actively writing,
+   plus a classic three-dot "typing" bounce. */
+@keyframes pencil-write {
+  0%,
+  100% {
+    transform: scaleX(-1) rotate(-8deg) translateX(0);
+  }
+  25% {
+    transform: scaleX(-1) rotate(4deg) translateX(2px);
+  }
+  50% {
+    transform: scaleX(-1) rotate(-4deg) translateX(-2px);
+  }
+  75% {
+    transform: scaleX(-1) rotate(6deg) translateX(2px);
+  }
+}
+
+.animate-pencil-write {
+  display: inline-block;
+  animation: pencil-write 0.6s ease-in-out infinite;
+}
+
+@keyframes dot-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.animate-dot-bounce {
+  display: inline-block;
+  animation: dot-bounce 1.2s ease-in-out infinite;
+}
+
+.animate-dot-bounce-delay-1 {
+  animation-delay: 150ms;
+}
+
+.animate-dot-bounce-delay-2 {
+  animation-delay: 300ms;
+}
