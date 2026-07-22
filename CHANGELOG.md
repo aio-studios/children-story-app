@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-07-21
+
+### Added
+
+- 20:07 - Story Customization Selectors (issue #8, F3-F6): 4 new pill/chip selectors added below Character selection on the single setup page - story length (Quick/Longer), reading level (Toddler/Early reader/Independent reader), tone (Funny/Calming-bedtime/Exciting/Heartwarming), and lesson/value (Kindness/Courage/Sharing/Honesty/Perseverance). Fixed smart defaults (Quick/Early reader/Heartwarming/Kindness), no genre-dependent logic. New reusable `PillSelector` component (`components/PillSelector.tsx`) and option data module (`lib/storyOptions.ts`). Continue button's enabled-look styling now reflects readiness across all 6 selections (genre, character, and the 4 new ones); still non-clickable since story generation (#13) isn't built yet.
+- 20:07 - plans/story-customization-selectors.md: implementation plan for issue #8.
+- 20:07 - docs/PRD.md: 4 descoped ideas logged to the Future Ideas/Backlog section from #8's exploration (genre-aware smart defaults, custom lesson/value text entry, finer story-length scale, richer illustrated-card style for these selectors).
+
+### Fixed
+
+- 20:07 - Dark-mode contrast bug caught during `/verify`: the new selectors' category labels ("Length", "Reading level", etc.) were using a hardcoded dark text color that was nearly invisible against the dark-mode page background - now inherits the theme-aware foreground color instead.
+
+### Security
+
+- 20:07 - Security review: no vulnerabilities found (client-side-only, no new attack surface, no free-text/user input introduced by this change).
+
 ## 2026-07-18
 
 ### Added

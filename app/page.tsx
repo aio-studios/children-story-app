@@ -2,9 +2,20 @@
 
 import { useState } from "react";
 import { GENRES } from "@/lib/genres";
-import { GenreSelection, SelectedCharacter } from "@/lib/types";
+import {
+  DEFAULT_LESSON,
+  DEFAULT_READING_LEVEL,
+  DEFAULT_STORY_LENGTH,
+  DEFAULT_TONE,
+  LESSONS,
+  READING_LEVELS,
+  STORY_LENGTHS,
+  TONES,
+} from "@/lib/storyOptions";
+import { GenreSelection, Lesson, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
+import { PillSelector } from "@/components/PillSelector";
 
 function isCharacterReady(character: SelectedCharacter): boolean {
   if (character.type === "preset") return true;
@@ -36,6 +47,10 @@ export default function Home() {
     type: "preset",
     characterId: GENRES[0].characters[0].id,
   });
+  const [storyLength, setStoryLength] = useState<StoryLength>(DEFAULT_STORY_LENGTH);
+  const [readingLevel, setReadingLevel] = useState<ReadingLevel>(DEFAULT_READING_LEVEL);
+  const [tone, setTone] = useState<Tone>(DEFAULT_TONE);
+  const [lesson, setLesson] = useState<Lesson>(DEFAULT_LESSON);
 
   function selectPresetGenre(genreId: string) {
     if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
@@ -54,6 +69,8 @@ export default function Home() {
     setGenreSelection({ type: "custom", text });
   }
 
+  // storyLength/readingLevel/tone/lesson always hold a valid selection (fixed defaults, no "unset" state),
+  // so readiness only depends on genre/character, which can be incomplete custom entries.
   const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection);
 
   return (
@@ -75,6 +92,19 @@ export default function Home() {
           characterSelection={characterSelection}
           onChange={setCharacterSelection}
         />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold">Customize your story</h2>
+        <PillSelector label="Length" options={STORY_LENGTHS} selected={storyLength} onSelect={setStoryLength} />
+        <PillSelector
+          label="Reading level"
+          options={READING_LEVELS}
+          selected={readingLevel}
+          onSelect={setReadingLevel}
+        />
+        <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
+        <PillSelector label="Lesson / value" options={LESSONS} selected={lesson} onSelect={setLesson} />
       </section>
 
       <button
