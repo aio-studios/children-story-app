@@ -31,6 +31,8 @@ export type Tone = "funny" | "calming" | "exciting" | "heartwarming";
 
 export type Lesson = "kindness" | "courage" | "sharing" | "honesty" | "perseverance";
 
+export type LessonSelection = { type: "preset"; lessonId: Lesson } | { type: "custom"; text: string };
+
 export type PillOption<T extends string> = {
   id: T;
   label: string;

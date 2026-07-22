@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-21 20:07
+**Last updated:** 2026-07-21 20:49
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -31,33 +31,36 @@ Client (Next.js, mobile-first)
 ```
 No database, no auth. Everything lives in the request/response cycle.
 
-#### Code map: setup screen — Genre & Character Selection (#4) + Story Customization Selectors (#8)
+#### Code map: setup screen — Genre & Character Selection (#4) + Story Customization Selectors (#8, #31)
 
 Component tree — who renders whom. Amber = holds its own state (`useState`); blue = stateless/display-only.
 
 ```mermaid
 graph TD
-  Page["Home · app/page.tsx<br/>state: genreSelection<br/>state: customGenreDraft<br/>state: characterSelection<br/>state: storyLength, readingLevel, tone, lesson"]
+  Page["Home · app/page.tsx<br/>state: genreSelection<br/>state: customGenreDraft<br/>state: characterSelection<br/>state: storyLength, readingLevel, tone<br/>state: lessonSelection, customLessonDraft"]
   GS["GenreSelector"]
   CS["CharacterSelector"]
   GC["GenreCard × 5<br/>state: isActive"]
   CGC["CustomGenreCard"]
   CC["CharacterCard × 3<br/>(current genre's presets)"]
   CCF["CustomCharacterForm<br/>(only when type = custom)"]
-  PS["PillSelector × 4<br/>(length, reading level, tone, lesson)"]
+  PS["PillSelector × 3<br/>(length, reading level, tone)"]
+  LS["LessonSelector<br/>(composes PillSelector + custom trigger/input)"]
 
   Page -->|selection, callbacks| GS
   Page -->|selection, callbacks| CS
   Page -->|options, selected, onSelect| PS
+  Page -->|selection, callbacks| LS
   GS --> GC
   GS --> CGC
   CS --> CC
   CS --> CCF
+  LS --> PS
 
   classDef stateful fill:#FBEBD6,stroke:#B5670E;
   classDef plain fill:#EAF1FB,stroke:#4A72A8;
   class Page,GC stateful;
-  class GS,CS,CGC,CC,CCF,PS plain;
+  class GS,CS,CGC,CC,CCF,PS,LS plain;
 ```
 
 Data model (`lib/types.ts`) — TypeScript `type`s, not classes, but this is the closest thing to a class diagram this codebase has:
@@ -127,11 +130,25 @@ classDiagram
     <<union>>
     "kindness" | "courage" | "sharing" | "honesty" | "perseverance"
   }
+  class LessonSelection {
+    <<union>>
+  }
+  class Preset_Lesson {
+    type: "preset"
+    lessonId: Lesson
+  }
+  class Custom_Lesson {
+    type: "custom"
+    text: string
+  }
+
+  LessonSelection <|-- Preset_Lesson
+  LessonSelection <|-- Custom_Lesson
 ```
 
-`GENRES` in `lib/genres.ts` is the actual instance data: 5 hardcoded `Genre` objects, each with 3 `PresetCharacter`s (15 total). `lib/storyOptions.ts` holds the same role for the #8 selectors: a `PillOption<T>[]` list + a `DEFAULT_*` constant per union type above.
+`GENRES` in `lib/genres.ts` is the actual instance data: 5 hardcoded `Genre` objects, each with 3 `PresetCharacter`s (15 total). `lib/storyOptions.ts` holds the same role for the #8/#31 selectors: a `PillOption<T>[]` list + a `DEFAULT_*` constant per union type above (`LESSONS`/`DEFAULT_LESSON` cover the `Lesson` presets that `LessonSelection`'s preset variant wraps).
 
-This is a snapshot of the code as of issue #4 and #8 — it'll go stale as new screens are added; re-diagram if it's no longer trustworthy rather than trusting it blindly.
+This is a snapshot of the code as of issue #4, #8, and #31 — it'll go stale as new screens are added; re-diagram if it's no longer trustworthy rather than trusting it blindly.
 
 ### Day 2 additions
 ```

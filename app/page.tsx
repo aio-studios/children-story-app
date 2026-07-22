@@ -7,15 +7,15 @@ import {
   DEFAULT_READING_LEVEL,
   DEFAULT_STORY_LENGTH,
   DEFAULT_TONE,
-  LESSONS,
   READING_LEVELS,
   STORY_LENGTHS,
   TONES,
 } from "@/lib/storyOptions";
-import { GenreSelection, Lesson, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
+import { GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
+import { LessonSelector } from "@/components/LessonSelector";
 
 function isCharacterReady(character: SelectedCharacter): boolean {
   if (character.type === "preset") return true;
@@ -25,6 +25,11 @@ function isCharacterReady(character: SelectedCharacter): boolean {
 function isGenreReady(genre: GenreSelection): boolean {
   if (genre.type === "preset") return true;
   return genre.text.trim() !== "";
+}
+
+function isLessonReady(lesson: LessonSelection): boolean {
+  if (lesson.type === "preset") return true;
+  return lesson.text.trim() !== "";
 }
 
 function defaultCharacterFor(genreId: string): SelectedCharacter {
@@ -50,7 +55,12 @@ export default function Home() {
   const [storyLength, setStoryLength] = useState<StoryLength>(DEFAULT_STORY_LENGTH);
   const [readingLevel, setReadingLevel] = useState<ReadingLevel>(DEFAULT_READING_LEVEL);
   const [tone, setTone] = useState<Tone>(DEFAULT_TONE);
-  const [lesson, setLesson] = useState<Lesson>(DEFAULT_LESSON);
+  const [lessonSelection, setLessonSelection] = useState<LessonSelection>({
+    type: "preset",
+    lessonId: DEFAULT_LESSON,
+  });
+  // Kept separate from lessonSelection so a typed-in custom lesson survives switching to a preset and back.
+  const [customLessonDraft, setCustomLessonDraft] = useState("");
 
   function selectPresetGenre(genreId: string) {
     if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
@@ -69,9 +79,24 @@ export default function Home() {
     setGenreSelection({ type: "custom", text });
   }
 
-  // storyLength/readingLevel/tone/lesson always hold a valid selection (fixed defaults, no "unset" state),
-  // so readiness only depends on genre/character, which can be incomplete custom entries.
-  const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection);
+  function selectPresetLesson(lessonId: Lesson) {
+    if (lessonSelection.type === "preset" && lessonSelection.lessonId === lessonId) return;
+    setLessonSelection({ type: "preset", lessonId });
+  }
+
+  function selectCustomLesson() {
+    if (lessonSelection.type === "custom") return;
+    setLessonSelection({ type: "custom", text: customLessonDraft });
+  }
+
+  function updateCustomLessonText(text: string) {
+    setCustomLessonDraft(text);
+    setLessonSelection({ type: "custom", text });
+  }
+
+  // storyLength/readingLevel/tone always hold a valid selection (fixed defaults, no "unset" state);
+  // lesson can be an incomplete custom entry, same as genre/character.
+  const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection) && isLessonReady(lessonSelection);
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
@@ -104,7 +129,12 @@ export default function Home() {
           onSelect={setReadingLevel}
         />
         <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
-        <PillSelector label="Lesson / value" options={LESSONS} selected={lesson} onSelect={setLesson} />
+        <LessonSelector
+          selection={lessonSelection}
+          onSelectPreset={selectPresetLesson}
+          onSelectCustom={selectCustomLesson}
+          onCustomTextChange={updateCustomLessonText}
+        />
       </section>
 
       <button

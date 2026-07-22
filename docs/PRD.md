@@ -93,7 +93,6 @@ From an ideation pass on 2026-07-18. Not scoped into Day 2/Later yet, just captu
 From #8 exploration (Story Customization Selectors) on 2026-07-21 - descoped to keep the first pass simple, captured so they aren't lost:
 
 - **Genre-aware smart defaults for story selectors** - length/tone/lesson defaults shift based on the chosen genre (e.g. Bedtime -> Quick length + Calming tone) instead of one fixed default regardless of genre. Descoped from #8 in favor of fixed defaults, which are simpler and don't surprise the parent when genre changes.
-- **Custom "type your own" lesson/value** - mirror the genre selector's free-text option so a parent can specify a value not in the preset list. Descoped from #8 in favor of a fixed 5-preset list, to avoid adding a fourth free-text field needing content filtering this early.
 - **Finer story length scale** - Short/Medium/Long (or more) instead of a binary Quick/Longer choice. Descoped from #8 since issue #9 only specified two lengths.
 - **Richer illustrated cards for story customization selectors** - same big card style as genre/character selection, instead of compact pill/chip buttons. Descoped from #8 to keep four stacked selectors from taking over the page on a single scrollable Day 1 screen.
 - **Gamification/badges** - flagged: engagement mechanics aimed at maximizing time-in-app are a different, riskier thing when the audience is kids. If pursued, frame around encouraging reading/creativity, not addictive streaks/loops.
