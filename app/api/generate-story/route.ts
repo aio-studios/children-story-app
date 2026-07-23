@@ -1,5 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { anthropicClient, extractJsonBlock, HAIKU_MODEL } from "@/lib/anthropicClient";
+import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
 import { GENRES } from "@/lib/genres";
 import { buildStoryPrompt, StorySelections } from "@/lib/storyPrompt";
 import { LESSONS, MAX_CUSTOM_TEXT_LENGTH, READING_LEVELS, STORY_LENGTHS, TONES } from "@/lib/storyOptions";
@@ -11,11 +12,18 @@ const TONE_VALUES: string[] = TONES.map((t) => t.id);
 
 const GENERIC_ERROR_MESSAGE = "Oops! Our storyteller is having a little trouble right now. Please try again.";
 const RATE_LIMIT_ERROR_MESSAGE = "Whoa, one story at a time! Please wait a moment before trying again.";
+// Separate messages: the input-side blocks (rules filter, input classifier) only ever fire when
+// there's a custom entry to point at; the output-side block can fire on a preset-only request too,
+// where "adjust your custom entry" would be nonsensical.
+const CUSTOM_ENTRY_BLOCK_MESSAGE = "Hmm, let's try a different idea! Please adjust your custom entry and try again.";
+const STORY_BLOCK_MESSAGE = "Hmm, that story didn't turn out right. Please try again or pick different options.";
 
 // Basic per-IP stopgap, not the final rate-limiting infra (that's a separate pass before public launch).
 // In-memory only - resets on redeploy/restart, doesn't share state across serverless instances - but it's
 // enough to stop a naive script from running up the Anthropic bill the moment this route is reachable.
-const RATE_LIMIT_MAX_REQUESTS = 5;
+// Each request can trigger up to 3 Claude calls (input safety check, generation, output safety check),
+// so this is sized lower than a naive "1 request = 1 Claude call" budget would suggest.
+const RATE_LIMIT_MAX_REQUESTS = 3;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const requestTimestamps = new Map<string, number[]>();
 
@@ -98,7 +106,26 @@ function validateSelections(body: unknown): StorySelections | null {
   };
 }
 
-const client = new Anthropic();
+// Any new custom-text field added to StorySelections must be added here too, or its text will
+// silently skip both the rules filter and the safety classifier below.
+function collectCustomText(selections: StorySelections): string | null {
+  const lines: string[] = [];
+
+  if (selections.genre.type === "custom") lines.push(`Genre: ${selections.genre.text}`);
+  if (selections.character.type === "custom") {
+    lines.push(`Character name: ${selections.character.name}`);
+    lines.push(`Character traits: ${selections.character.traits}`);
+    lines.push(`Character description: ${selections.character.description}`);
+  }
+  if (selections.lesson.type === "custom") lines.push(`Lesson: ${selections.lesson.text}`);
+
+  return lines.length > 0 ? lines.join("\n") : null;
+}
+
+function blockUnsafe(reason: string, message: string) {
+  console.warn(`Story generation blocked: ${reason}`);
+  return NextResponse.json({ error: message }, { status: 400 });
+}
 
 export async function POST(request: Request) {
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
@@ -118,11 +145,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  const customText = collectCustomText(selections);
+
+  if (customText && containsBlockedContent(customText)) {
+    return blockUnsafe("rules-based filter", CUSTOM_ENTRY_BLOCK_MESSAGE);
+  }
+
+  if (customText) {
+    try {
+      const inputCheck = await classifySafety(customText);
+      if (!inputCheck.safe) {
+        return blockUnsafe("input classifier", CUSTOM_ENTRY_BLOCK_MESSAGE);
+      }
+    } catch (error) {
+      console.error("Input safety check failed:", error);
+      return NextResponse.json({ error: GENERIC_ERROR_MESSAGE }, { status: 502 });
+    }
+  }
+
   const { system, user } = buildStoryPrompt(selections);
 
+  let parsed: { title: string; story: string };
   try {
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5",
+    const response = await anthropicClient.messages.create({
+      model: HAIKU_MODEL,
       max_tokens: 4096,
       system,
       messages: [{ role: "user", content: user }],
@@ -142,15 +188,21 @@ export async function POST(request: Request) {
       },
     });
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("No text content in Claude response");
-    }
-
-    const parsed = JSON.parse(textBlock.text) as { title: string; story: string };
-    return NextResponse.json({ title: parsed.title, story: parsed.story });
+    parsed = extractJsonBlock<{ title: string; story: string }>(response);
   } catch (error) {
     console.error("Story generation failed:", error);
     return NextResponse.json({ error: GENERIC_ERROR_MESSAGE }, { status: 502 });
   }
+
+  try {
+    const outputCheck = await classifySafety(`${parsed.title}\n${parsed.story}`);
+    if (!outputCheck.safe) {
+      return blockUnsafe("output classifier", STORY_BLOCK_MESSAGE);
+    }
+  } catch (error) {
+    console.error("Output safety check failed:", error);
+    return NextResponse.json({ error: GENERIC_ERROR_MESSAGE }, { status: 502 });
+  }
+
+  return NextResponse.json({ title: parsed.title, story: parsed.story });
 }

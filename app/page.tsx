@@ -183,9 +183,9 @@ export default function Home() {
 
   if (generationState === "error") {
     return (
-      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <p className="text-base">{generationError}</p>
-        <div className="flex items-center gap-4">
+      <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-6 p-6">
+        <p className="text-center text-base">{generationError}</p>
+        <div className="flex items-center justify-center gap-4">
           <button
             type="button"
             onClick={generateStory}
