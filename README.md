@@ -1,7 +1,7 @@
 # Storykins *(working title — not final)*
 
-**Last updated:** 2026-07-18 18:30
-**Status:** Pre-development — foundation complete, first build phase not started.
+**Last updated:** 2026-07-22 23:35
+**Status:** Day 1 (MVP) shipped and live — [try it](https://children-story-app-lac.vercel.app/). Day 2 (accounts, ongoing conversation) not started.
 
 ## Vision
 

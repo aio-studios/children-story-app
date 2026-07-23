@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-22 22:57
+**Last updated:** 2026-07-22 23:35
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -258,6 +258,7 @@ Existing Day 1 generation flow is reused for the initial story; the conversation
 - Payments: Stripe, with webhook handling for subscription state; ties into the usage-cap logic from F18.
 
 ### Hosting
-- Vercel: Next.js app + API routes.
-- Supabase: managed Postgres + Auth (Day 2+).
-- All secrets via environment variables (`.env.local` locally, Vercel project settings in production) - never committed.
+- Vercel: Next.js app + API routes. **Live as of 2026-07-22**: https://children-story-app-lac.vercel.app/ - connected to the `aio-studios/children-story-app` GitHub repo, auto-deploys on every push to `main`.
+- Supabase: managed Postgres + Auth (Day 2+, not yet provisioned).
+- All secrets via environment variables (`.env.local` locally, Vercel project settings in production) - never committed. Confirmed post-deploy: `ANTHROPIC_API_KEY` never reaches the client bundle, generation + full 3-layer safety check verified working against production.
+- Known gap before wider traffic: the per-IP rate limiter (`app/api/generate-story/route.ts`) is in-memory and doesn't share state across Vercel's serverless instances, so it's weaker in production than in a single dev server. Acceptable stopgap for a low-traffic soft launch; revisit (e.g. Upstash Redis-backed limiter) before sharing the link widely.
