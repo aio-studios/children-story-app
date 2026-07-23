@@ -4,11 +4,17 @@ export type PresetCharacter = {
   description: string;
 };
 
+export type GenreAccent = {
+  light: string;
+  dark: string;
+};
+
 export type Genre = {
   id: string;
   label: string;
   icon: string;
   blurb: string;
+  accent: GenreAccent;
   characters: [PresetCharacter, PresetCharacter, PresetCharacter];
 };
 

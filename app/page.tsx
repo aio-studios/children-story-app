@@ -16,6 +16,7 @@ import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
 import { LessonSelector } from "@/components/LessonSelector";
+import { StoryReader } from "@/components/StoryReader";
 
 function isCharacterReady(character: SelectedCharacter): boolean {
   if (character.type === "preset") return true;
@@ -173,11 +174,13 @@ export default function Home() {
 
   if (generationState === "success" && generatedStory) {
     return (
-      <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-        <h1 className="text-2xl font-semibold">{generatedStory.title}</h1>
-        <p className="whitespace-pre-wrap text-base leading-relaxed">{generatedStory.story}</p>
-        <BackToSetupButton onClick={backToSetup} />
-      </main>
+      <StoryReader
+        genreSelection={genreSelection}
+        title={generatedStory.title}
+        story={generatedStory.story}
+        onRegenerate={generateStory}
+        onBackToSetup={backToSetup}
+      />
     );
   }
 

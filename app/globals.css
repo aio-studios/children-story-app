@@ -106,3 +106,181 @@ body {
 .animate-dot-bounce-delay-2 {
   animation-delay: 300ms;
 }
+
+/* Story Reading Experience (#20/#21/#22) - storybook-styled reading view.
+   Design approved in docs/designs/story-reading-experience-preview.html.
+   --accent-light/--accent-dark come from the genre's data (set inline per-instance);
+   --accent resolves to whichever matches the current color scheme. */
+.story-reader-canvas {
+  --sr-canvas: #dcd3c1;
+  --sr-page: #fbf7ee;
+  --sr-ink: #2a2116;
+  --sr-ink-soft: #6e6250;
+  --sr-line: rgba(42, 33, 22, 0.14);
+  --sr-btn-primary-text: #fffdf8;
+
+  min-height: 60vh;
+  display: flex;
+  justify-content: center;
+  background: var(--sr-canvas);
+  padding: 40px 20px 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .story-reader-canvas {
+    --sr-canvas: #14110b;
+    --sr-page: #221c13;
+    --sr-ink: #f2ebdb;
+    --sr-ink-soft: #b5a890;
+    --sr-line: rgba(242, 235, 219, 0.14);
+    --sr-btn-primary-text: #241a10;
+  }
+}
+
+.story-reader-frame {
+  --accent: var(--accent-light);
+  position: relative;
+  width: 100%;
+  max-width: 428px;
+  display: flex;
+  justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .story-reader-frame {
+    --accent: var(--accent-dark);
+  }
+}
+
+.story-reader-glow {
+  position: absolute;
+  inset: -30px -10px auto -10px;
+  height: 220px;
+  background: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 75%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.story-reader-page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: var(--sr-page);
+  color: var(--sr-ink);
+  border-radius: 26px;
+  border: 1px solid var(--sr-line);
+  padding: 30px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.28);
+}
+
+.story-reader-badge {
+  align-self: flex-start;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--sr-page));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--sr-page));
+  color: var(--accent);
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.story-reader-badge-icon {
+  font-size: 15px;
+}
+
+.story-reader-badge-label {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.story-reader-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: clamp(24px, 6.5vw, 30px);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.story-reader-flourish {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-reader-flourish span {
+  height: 1px;
+  flex: 1;
+  background: color-mix(in srgb, var(--accent) 45%, var(--sr-line));
+}
+.story-reader-flourish i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.story-reader-story {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.story-reader-story p {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 17px;
+  line-height: 1.75;
+  max-width: 34em;
+  white-space: pre-wrap;
+}
+
+.story-reader-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.story-reader-btn {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  border-radius: 14px;
+  padding: 12px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+.story-reader-btn-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+.story-reader-btn-primary {
+  background: var(--accent);
+  color: var(--sr-btn-primary-text);
+}
+.story-reader-btn-secondary {
+  background: transparent;
+  border: 2px solid var(--sr-ink);
+  color: var(--sr-ink);
+  padding: 10px 12px;
+}
+.story-reader-btn:focus-visible {
+  outline: 2px solid var(--sr-ink);
+  outline-offset: 2px;
+}

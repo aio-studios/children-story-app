@@ -1,10 +1,11 @@
-import { Genre } from "./types";
+import { Genre, GenreAccent } from "./types";
 
 export const GENRES: Genre[] = [
   {
     id: "adventure",
     label: "Adventure",
     icon: "🗺️",
+    accent: { light: "#B85C27", dark: "#E8A06B" },
     blurb:
       "The map is unrolled and the boots are laced — somewhere past the hill, an adventure is waiting to be found.",
     characters: [
@@ -32,6 +33,7 @@ export const GENRES: Genre[] = [
     id: "fantasy",
     label: "Fantasy",
     icon: "🐉",
+    accent: { light: "#7B4C9E", dark: "#C79EE8" },
     blurb:
       "Beyond the old oak door, where the light bends strangely, a kingdom of magic waits for someone brave enough to knock.",
     characters: [
@@ -59,6 +61,7 @@ export const GENRES: Genre[] = [
     id: "animals",
     label: "Animals",
     icon: "🦊",
+    accent: { light: "#4C7A3F", dark: "#93CC7E" },
     blurb:
       "Deep in the meadow where the tall grass sways, the animals are just waking up for a day full of surprises.",
     characters: [
@@ -83,6 +86,7 @@ export const GENRES: Genre[] = [
     id: "bedtime",
     label: "Bedtime",
     icon: "🌙",
+    accent: { light: "#3E4E86", dark: "#9AAEEF" },
     blurb:
       "The stars are blinking on one by one, and the whole world is getting ready for the softest part of the day.",
     characters: [
@@ -107,6 +111,7 @@ export const GENRES: Genre[] = [
     id: "sci-fi",
     label: "Sci-fi",
     icon: "🚀",
+    accent: { light: "#1D7A8C", dark: "#7BDCEA" },
     blurb:
       "The countdown has started, the stars are close enough to touch, and a brand-new galaxy is just one launch away.",
     characters: [
@@ -128,3 +133,10 @@ export const GENRES: Genre[] = [
     ],
   },
 ];
+
+// Used for the reading view's genre badge when the user typed a custom genre with no GENRES entry to theme from.
+export const CUSTOM_GENRE_ACCENT: GenreAccent = { light: "#8A6D3B", dark: "#D9B876" };
+
+export function getGenreById(genreId: string): Genre | undefined {
+  return GENRES.find((g) => g.id === genreId);
+}
