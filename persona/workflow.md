@@ -1,6 +1,6 @@
 # Development Workflow
 
-**Last updated:** 2026-07-23 22:14
+**Last updated:** 2026-07-23 23:22
 
 Step-by-step checklist for any piece of work on this project, from a loose idea to a shipped, documented feature. Both I (Sarthak) and the CTO agent follow this — if a step gets skipped, call it out rather than quietly moving on.
 
@@ -23,7 +23,8 @@ Step-by-step checklist for any piece of work on this project, from a loose idea 
 
 ## 4. Planning
 - **Purpose:** turn the resolved exploration into a concrete, trackable plan.
-- For anything visually significant (a new screen, a real visual-design pass, not a minor tweak): show a live, working design preview (an Artifact - real content, both light/dark, interactive if it clarifies a system like per-genre theming) and get explicit sign-off *before* `/create-plan` locks in implementation details. Save the approved mockup into `docs/designs/` so it outlives the session. Don't wait to be asked - offer this proactively once the visual direction is discussed, the same way `/code-review` and `/security-review` aren't asked for each time.
+- For a change that spans multiple screens or introduces a new navigation/information structure (not a single-screen restyle): do design research first, before picking one direction to build. Look at how comparable products solve the same structural problem, then sketch 2-3 real wireframe-level iterations of the actual flow/layout - not just one - as a single comparable Artifact (real content, light/dark, interactive enough to click through if the comparison needs it) so there's something concrete to choose between. Keep this proportional to the change; skip it for anything that's really just one screen's visual pass.
+- For anything visually significant (a new screen, a real visual-design pass, not a minor tweak): once a direction is picked (from the research above, or directly if the change was single-screen), show a live, working design preview (an Artifact - real content, both light/dark, interactive if it clarifies a system like per-genre theming) and get explicit sign-off *before* `/create-plan` locks in implementation details. Save the approved mockup into `docs/designs/` so it outlives the session. Don't wait to be asked - offer this proactively once the visual direction is discussed, the same way `/code-review` and `/security-review` aren't asked for each time.
 - **Skill:** `/create-plan` (custom) — produces `plans/<feature-slug>.md` with emoji status (🟩🟨🟥) and an overall progress %. Needs my confirmation before implementation starts.
 - **Output:** a confirmed plan doc (and, for visual features, an approved design preview referenced by it).
 

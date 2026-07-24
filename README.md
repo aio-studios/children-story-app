@@ -49,6 +49,13 @@ See [persona/CTO.md](persona/CTO.md#tech-stack) for the decision and rationale. 
 - [docs/PRD.md](docs/PRD.md) - full feature list, functional and non-functional requirements
 - [docs/architecture.md](docs/architecture.md) - technical considerations and system architecture
 
+## Project Management
+
+Tracked end-to-end on a public GitHub Projects board — Epics/Features/User Stories/Bugs/Tasks, priority and effort labels, and a Status workflow (Backlog → Todo → In Progress → In Review → Done).
+
+- [Kanban board view](https://github.com/orgs/aio-studios/projects/1/views/2) — day-to-day work by status
+- [Backlog view](https://github.com/orgs/aio-studios/projects/1/views/1) — full table of every tracked item
+
 ## Working With This Repo
 
 This project is built collaboratively with Claude Code acting as CTO/developer — see [persona/CTO.md](persona/CTO.md) for how that's set up, and [persona/workflow.md](persona/workflow.md) for the step-by-step process (ideation → issue → explore → plan → build → test → review → document → UAT) used for every feature.
