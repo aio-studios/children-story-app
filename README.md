@@ -48,6 +48,7 @@ See [persona/CTO.md](persona/CTO.md#tech-stack) for the decision and rationale. 
 
 - [docs/PRD.md](docs/PRD.md) - full feature list, functional and non-functional requirements
 - [docs/architecture.md](docs/architecture.md) - technical considerations and system architecture
+- [docs/case-studies/](docs/case-studies/) - PM-perspective retrospective per major version (discovery, design, build, testing, launch), with real screenshots
 
 ## Project Management
 
