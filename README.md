@@ -1,7 +1,15 @@
 # Storykins *(working title — not final)*
 
-**Last updated:** 2026-07-22 23:35
+**Last updated:** 2026-07-23 22:14
 **Status:** Day 1 (MVP) shipped and live — [try it](https://children-story-app-lac.vercel.app/). Day 2 (accounts, ongoing conversation) not started.
+
+## Releases
+
+| Version | Date | Notes |
+|---|---|---|
+| [v1.0.0](https://github.com/aio-studios/children-story-app/releases/tag/v1.0.0) | 2026-07-23 | Day 1 MVP — one-shot AI story generation, content safety, storybook reading view |
+
+Full list: [GitHub Releases](https://github.com/aio-studios/children-story-app/releases) — each entry documents exactly what shipped. Note: the live URL above always reflects the latest `main`, not a specific version; a per-commit snapshot link for old releases is a possible future addition (currently blocked by Vercel's Deployment Protection, which SSO-walls non-production deployment URLs).
 
 ## Vision
 

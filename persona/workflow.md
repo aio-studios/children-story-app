@@ -1,6 +1,6 @@
 # Development Workflow
 
-**Last updated:** 2026-07-22 23:21
+**Last updated:** 2026-07-23 22:14
 
 Step-by-step checklist for any piece of work on this project, from a loose idea to a shipped, documented feature. Both I (Sarthak) and the CTO agent follow this — if a step gets skipped, call it out rather than quietly moving on.
 
@@ -58,6 +58,7 @@ Step-by-step checklist for any piece of work on this project, from a loose idea 
 - **`/peer-review`** (custom) — if I paste review feedback from another tool/model, verify each finding against the real code before acting on it.
 - **`/learning-opportunity`** (custom) — any time I want to understand something more deeply instead of continuing to ship.
 - **`/deep-research`** (built-in) — deeper multi-source research during ideation or when evaluating a new tool/library for the tech stack.
+- **Versioning** — after a significant milestone ships (an Epic closes, a showcase-worthy state is reached — not every small feature), tag the commit (`vX.Y.Z`, semver-ish) and create a [GitHub Release](https://github.com/aio-studios/children-story-app/releases) summarizing what's in it. Add a row to the Releases table in [README.md](../README.md). This preserves a citable "here's what v1 looked like" snapshot for showcasing, separate from the always-latest `main`.
 
 ## Quick Reference
 
