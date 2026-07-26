@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-22 23:35
+**Last updated:** 2026-07-25 21:17
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -241,6 +241,68 @@ graph TD
 `onRegenerate` is the same `generateStory()` already used by the error screen's "Try again" - no new fetch logic, just a second entry point into the existing generation flow. Fonts (Fredoka, Nunito) and all `.story-reader-*` CSS (`app/globals.css`) are scoped to this component only; the rest of the app is untouched. Design was approved via a static mockup (`docs/designs/story-reading-experience-preview.html`) before this was built.
 
 This is a snapshot of the code as of issues #20/#21/#22 — re-diagram if it goes stale.
+
+#### Code map: Home screen + setup stepper (#29, #30)
+
+`app/page.tsx` no longer renders the setup form directly - it's now a `view` state machine (`home | setup | loading | success | error`) wrapped in a shared shell that keeps the nav menu reachable from every screen, including mid-generation:
+
+```mermaid
+graph TD
+  Page["Home · app/page.tsx<br/>state: view, setupStep<br/>+ existing selection state"]
+  Shell["AppShell<br/>components/AppShell.tsx"]
+  Nav["NavMenu<br/>components/NavMenu.tsx<br/>panel portaled to document.body"]
+  HS["HomeScreen<br/>components/HomeScreen.tsx"]
+  Stepper["SetupStepper<br/>components/SetupStepper.tsx<br/>(dot-stepper chrome, no selection logic of its own)"]
+  GS["GenreSelector"]
+  CS["CharacterSelector"]
+  Cust["Customize step<br/>(PillSelector × 3 + LessonSelector)"]
+  SR["StoryReader"]
+
+  Page --> Shell
+  Shell --> Nav
+  Shell -->|view = home| HS
+  Shell -->|view = setup| Stepper
+  Shell -->|view = success| SR
+  Stepper --> GS
+  Stepper --> CS
+  Stepper --> Cust
+  HS -->|onSelectGenre, onContinue| Page
+  Nav -->|onNavigateHome, onNavigateNewStory| Page
+
+  classDef stateful fill:#FBEBD6,stroke:#B5670E;
+  classDef plain fill:#EAF1FB,stroke:#4A72A8;
+  class Page stateful;
+  class Shell,Nav,HS,Stepper,GS,CS,Cust,SR plain;
+```
+
+Tapping a genre chip on Home lands on setup Step 1 (Genre, that genre pre-highlighted) rather than skipping to Step 2 - an early version skipped straight to Character, but UAT found the jump to a differently-themed screen confusing without seeing the pick confirmed first (2026-07-25). A "✨ Your own" tile at the end of the genre strip routes to the same Step 1, custom-genre mode active. `SetupStepper` takes `steps: {label, content, isReady}[]` - `app/page.tsx` still owns all selection state and the per-step readiness checks (`isGenreReady`/`isCharacterReady`/`isLessonReady`), unchanged from before this redesign.
+
+`.sk-topbar` (the shell header) is `position: sticky`, which creates a containing block for `position: fixed` descendants - `NavMenu`'s overlay panel is portaled to `document.body` to escape it, otherwise its `inset: 0` resolves against the header instead of the viewport. Because the portal target is a DOM sibling of `.sk-shell`, not a descendant, any CSS custom property scoped to `.sk-shell` is invisible to the panel - the `--sk-*` color tokens are defined on `:root` for this reason (not `.sk-shell`), and `NavMenu` reapplies the `next/font` `.variable` classes directly on the portal's own root div (a bug caught by literally screenshotting the open panel, not just checking it opens/closes - see CHANGELOG 2026-07-26).
+
+##### Header/nav redesign (2026-07-26)
+
+`AppShell` is an iOS-style 3-zone bar (compact 48px, was ~68px): leading hamburger → `NavMenu`, centered page-aware title, reserved trailing slot (unused, for a future story-page action menu). Two new props drive the center title/behavior, computed in `app/page.tsx` from `view`/`generatedStory`:
+
+- `pageTitle?: string` - omitted on Home (shows brand-colored "Storykins"), `"New Story"` during setup, the actual story title on the reader - both non-brand cases render in ink color.
+- `autoHide?: boolean` - `true` only when `view === "success"` (story reader); the header slides away after ~2.5s idle and reappears on scroll/tap, via a `window` scroll/pointerdown listener and a `setTimeout` idle timer inside `AppShell` itself.
+
+`NavMenu`'s panel slides from the **left** (matches the hamburger's position), locks `document.body` scroll while open, and returns focus to the hamburger button on close.
+
+##### Continue-story persistence (`lib/storyHistory.ts`)
+
+No accounts/Supabase yet - a single "in progress" story slot lives in `localStorage`, read via a `useSyncExternalStore`-backed hook (needed to avoid a hydration mismatch and the `set-state-in-effect` lint rule, not just a plain `useState`):
+
+```mermaid
+graph LR
+  Gen["generateStory() success<br/>app/page.tsx"] -->|saveContinueStory<br/>full selection set, not just genre| LS[("localStorage<br/>storykins:continue-story")]
+  LS -->|useContinueStory&#40;&#41;| HS["HomeScreen<br/>Continue-story hero"]
+  HS -->|onContinue| Resume["handleContinueFromHome&#40;&#41;<br/>restores genre/character/length/<br/>readingLevel/tone/lesson"]
+  SR["StoryReader<br/>Back to setup"] -->|clearContinueStory| LS
+```
+
+Saving the full selection set (not just genre) matters: an earlier version restored only `genreSelection` on resume, which let `characterSelection` stay stale from before the reload - a mismatched genre/character pair the server's `validateCharacter` correctly rejects on Regenerate. Caught by `/verify`, fixed by persisting and restoring everything. Both `saveContinueStory`/`clearContinueStory` (write) and the hook's `getSnapshot` (read) fail soft on a `localStorage` error (Safari private browsing, storage-blocking policies) instead of crashing or discarding an already-successful generation; a shallow shape check on read discards a structurally incompatible stored value rather than trusting `JSON.parse` blindly.
+
+This is a snapshot of the code as of issues #29/#30 — re-diagram if it goes stale. Deferred from this pass (tracked as a follow-up issue): a real "Saved stories" library, Account/Settings/Premium nav items - all blocked on infra (Supabase auth, #27's billing decision) that doesn't exist yet.
 
 ### Day 2 additions
 ```

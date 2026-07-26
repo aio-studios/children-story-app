@@ -11,12 +11,18 @@ import {
   STORY_LENGTHS,
   TONES,
 } from "@/lib/storyOptions";
+import { clearContinueStory, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
 import { GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
 import { LessonSelector } from "@/components/LessonSelector";
 import { StoryReader } from "@/components/StoryReader";
+import { HomeScreen } from "@/components/HomeScreen";
+import { SetupStepper } from "@/components/SetupStepper";
+import { AppShell } from "@/components/AppShell";
+
+type View = "home" | "setup" | "loading" | "success" | "error";
 
 function isCharacterReady(character: SelectedCharacter): boolean {
   if (character.type === "preset") return true;
@@ -42,19 +48,11 @@ function defaultCharacterFor(genreId: string): SelectedCharacter {
 
 const EMPTY_CUSTOM_CHARACTER: SelectedCharacter = { type: "custom", name: "", traits: "", description: "" };
 
-function BackToSetupButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-lg border-2 border-blue-600 px-4 py-3 text-center font-medium text-blue-600"
-    >
-      ← Back to setup
-    </button>
-  );
-}
-
 export default function Home() {
+  const [view, setView] = useState<View>("home");
+  const [setupStep, setSetupStep] = useState(0);
+  const continueStory = useContinueStory();
+
   const [genreSelection, setGenreSelection] = useState<GenreSelection>({
     type: "preset",
     genreId: GENRES[0].id,
@@ -74,11 +72,13 @@ export default function Home() {
   });
   // Kept separate from lessonSelection so a typed-in custom lesson survives switching to a preset and back.
   const [customLessonDraft, setCustomLessonDraft] = useState("");
-  const [generationState, setGenerationState] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [generatedStory, setGeneratedStory] = useState<{ title: string; story: string } | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   // Synchronous guard against a fast double-click firing two requests before the disabled button re-renders.
   const isGeneratingRef = useRef(false);
+  // Bumped whenever the user navigates away mid-generation, so a stale fetch resolving after that
+  // doesn't hijack the screen they've since moved to (nav menu stays reachable during "loading").
+  const activeGenerationRef = useRef(0);
 
   function selectPresetGenre(genreId: string) {
     if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
@@ -112,14 +112,11 @@ export default function Home() {
     setLessonSelection({ type: "custom", text });
   }
 
-  // storyLength/readingLevel/tone always hold a valid selection (fixed defaults, no "unset" state);
-  // lesson can be an incomplete custom entry, same as genre/character.
-  const isReady = isGenreReady(genreSelection) && isCharacterReady(characterSelection) && isLessonReady(lessonSelection);
-
   async function generateStory() {
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
-    setGenerationState("loading");
+    const generationId = ++activeGenerationRef.current;
+    setView("loading");
     setGenerationError(null);
     try {
       const response = await fetch("/api/generate-story", {
@@ -135,122 +132,223 @@ export default function Home() {
         }),
       });
       const data = await response.json();
+      // The user navigated away (Home/New story) while this request was still in flight -
+      // don't yank them back to a screen for a request they've since abandoned.
+      if (activeGenerationRef.current !== generationId) return;
       if (!response.ok) {
         setGenerationError(data.error ?? "Something went wrong. Please try again.");
-        setGenerationState("error");
+        setView("error");
         return;
       }
       setGeneratedStory({ title: data.title, story: data.story });
-      setGenerationState("success");
+      saveContinueStory({
+        title: data.title,
+        story: data.story,
+        genre: genreSelection,
+        character: characterSelection,
+        length: storyLength,
+        readingLevel,
+        tone,
+        lesson: lessonSelection,
+        savedAt: Date.now(),
+      });
+      setView("success");
     } catch {
+      if (activeGenerationRef.current !== generationId) return;
       setGenerationError("Something went wrong. Please try again.");
-      setGenerationState("error");
+      setView("error");
     } finally {
       isGeneratingRef.current = false;
     }
   }
 
-  function backToSetup() {
-    setGenerationState("idle");
-    setGeneratedStory(null);
+  // Leaving the reader via "Back to setup" reads as "done with this one" - clears the continue slot.
+  // Regenerating overwrites it instead (handled inside generateStory), and navigating Home via the
+  // nav menu deliberately does NOT clear it, so Home can still offer to resume this story.
+  function handleBackToSetupFromReader() {
+    clearContinueStory();
     setGenerationError(null);
+    setSetupStep(2);
+    setView("setup");
   }
 
-  if (generationState === "loading") {
-    return (
-      <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-6">
-        <span className="animate-pencil-write text-5xl">✏️</span>
-        <p className="flex items-center gap-1 text-base">
-          Writing your story
-          <span className="inline-flex gap-0.5">
-            <span className="animate-dot-bounce">.</span>
-            <span className="animate-dot-bounce animate-dot-bounce-delay-1">.</span>
-            <span className="animate-dot-bounce animate-dot-bounce-delay-2">.</span>
-          </span>
-        </p>
-      </main>
-    );
+  function handleContinueFromHome() {
+    if (!continueStory) return;
+    setGenreSelection(continueStory.genre);
+    // Keep the drafts in sync too, so toggling preset -> custom -> preset -> custom again in
+    // Setup doesn't overwrite the resumed text with a stale (likely empty) draft.
+    if (continueStory.genre.type === "custom") setCustomGenreDraft(continueStory.genre.text);
+    setCharacterSelection(continueStory.character);
+    setStoryLength(continueStory.length);
+    setReadingLevel(continueStory.readingLevel);
+    setTone(continueStory.tone);
+    setLessonSelection(continueStory.lesson);
+    if (continueStory.lesson.type === "custom") setCustomLessonDraft(continueStory.lesson.text);
+    setGeneratedStory({ title: continueStory.title, story: continueStory.story });
+    setView("success");
   }
 
-  if (generationState === "success" && generatedStory) {
-    return (
-      <StoryReader
-        genreSelection={genreSelection}
-        title={generatedStory.title}
-        story={generatedStory.story}
-        onRegenerate={generateStory}
-        onBackToSetup={backToSetup}
-      />
-    );
+  // Lands on Setup Step 1 (Genre) rather than skipping to Character - the genre still comes in
+  // pre-selected, but the jump to a differently-themed screen was confusing without seeing the
+  // pick confirmed first. Same landing spot for the custom-genre tile below.
+  function handleSelectGenreFromHome(genreId: string) {
+    selectPresetGenre(genreId);
+    setSetupStep(0);
+    setView("setup");
   }
 
-  if (generationState === "error") {
-    return (
-      <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-6 p-6">
-        <p className="text-center text-base">{generationError}</p>
-        <div className="flex items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={generateStory}
-            className="rounded-lg bg-blue-500 px-4 py-3 font-medium text-white"
-          >
-            Try again
-          </button>
-          <BackToSetupButton onClick={backToSetup} />
-        </div>
-      </main>
-    );
+  function handleSelectCustomGenreFromHome() {
+    selectCustomGenre();
+    setSetupStep(0);
+    setView("setup");
   }
 
-  return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
-      <section className="flex flex-col gap-4">
-        <h1 className="text-xl font-semibold">Pick a genre</h1>
+  // Abandon any in-flight generation so its response can't hijack the screen the user is
+  // navigating to, and free the double-click guard immediately instead of waiting for that
+  // stale request to finish.
+  function abandonInFlightGeneration() {
+    activeGenerationRef.current++;
+    isGeneratingRef.current = false;
+  }
+
+  function handleNavigateHome() {
+    abandonInFlightGeneration();
+    setView("home");
+  }
+
+  function handleNavigateNewStory() {
+    abandonInFlightGeneration();
+    setSetupStep(0);
+    setView("setup");
+  }
+
+  const setupSteps = [
+    {
+      label: "Genre",
+      icon: "🧭",
+      isReady: isGenreReady(genreSelection),
+      content: (
         <GenreSelector
           selection={genreSelection}
           onSelectPreset={selectPresetGenre}
           onSelectCustom={selectCustomGenre}
           onCustomTextChange={updateCustomGenreText}
         />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Pick a character</h2>
+      ),
+    },
+    {
+      label: "Character",
+      icon: "🥷",
+      isReady: isCharacterReady(characterSelection),
+      content: (
         <CharacterSelector
           genreSelection={genreSelection}
           characterSelection={characterSelection}
           onChange={setCharacterSelection}
         />
-      </section>
+      ),
+    },
+    {
+      label: "Customize",
+      icon: "🎨",
+      isReady: isLessonReady(lessonSelection),
+      content: (
+        <div className="flex flex-col gap-4">
+          <PillSelector label="Length" options={STORY_LENGTHS} selected={storyLength} onSelect={setStoryLength} />
+          <PillSelector
+            label="Reading level"
+            options={READING_LEVELS}
+            selected={readingLevel}
+            onSelect={setReadingLevel}
+          />
+          <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
+          <LessonSelector
+            selection={lessonSelection}
+            onSelectPreset={selectPresetLesson}
+            onSelectCustom={selectCustomLesson}
+            onCustomTextChange={updateCustomLessonText}
+          />
+        </div>
+      ),
+    },
+  ];
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Customize your story</h2>
-        <PillSelector label="Length" options={STORY_LENGTHS} selected={storyLength} onSelect={setStoryLength} />
-        <PillSelector
-          label="Reading level"
-          options={READING_LEVELS}
-          selected={readingLevel}
-          onSelect={setReadingLevel}
-        />
-        <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
-        <LessonSelector
-          selection={lessonSelection}
-          onSelectPreset={selectPresetLesson}
-          onSelectCustom={selectCustomLesson}
-          onCustomTextChange={updateCustomLessonText}
-        />
-      </section>
+  const pageTitle = view === "setup" ? "New Story" : view === "success" ? generatedStory?.title : undefined;
 
-      <button
-        type="button"
-        disabled={!isReady}
-        onClick={generateStory}
-        className={`rounded-lg px-4 py-3 text-center font-medium ${
-          isReady ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-400"
-        }`}
-      >
-        Continue
-      </button>
-    </main>
+  return (
+    <AppShell
+      onNavigateHome={handleNavigateHome}
+      onNavigateNewStory={handleNavigateNewStory}
+      pageTitle={pageTitle}
+      autoHide={view === "success"}
+    >
+      {view === "home" && (
+        <HomeScreen
+          continueStory={continueStory}
+          onContinue={handleContinueFromHome}
+          onSelectGenre={handleSelectGenreFromHome}
+          onSelectCustomGenre={handleSelectCustomGenreFromHome}
+        />
+      )}
+
+      {view === "setup" && (
+        <SetupStepper
+          steps={setupSteps}
+          currentStep={setupStep}
+          onStepChange={setSetupStep}
+          onBackFromFirstStep={handleNavigateHome}
+          onFinish={generateStory}
+        />
+      )}
+
+      {view === "loading" && (
+        <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-6">
+          <span className="animate-pencil-write text-5xl">✏️</span>
+          <p className="flex items-center gap-1 text-base">
+            Writing your story
+            <span className="inline-flex gap-0.5">
+              <span className="animate-dot-bounce">.</span>
+              <span className="animate-dot-bounce animate-dot-bounce-delay-1">.</span>
+              <span className="animate-dot-bounce animate-dot-bounce-delay-2">.</span>
+            </span>
+          </p>
+        </main>
+      )}
+
+      {view === "success" && generatedStory && (
+        <StoryReader
+          genreSelection={genreSelection}
+          title={generatedStory.title}
+          story={generatedStory.story}
+          onRegenerate={generateStory}
+          onBackToSetup={handleBackToSetupFromReader}
+        />
+      )}
+
+      {view === "error" && (
+        <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-6 p-6">
+          <p className="text-center text-base">{generationError}</p>
+          <div className="flex items-center justify-center gap-4">
+            <button
+              type="button"
+              onClick={generateStory}
+              className="rounded-lg bg-blue-500 px-4 py-3 font-medium text-white"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSetupStep(2);
+                setView("setup");
+              }}
+              className="rounded-lg border-2 border-blue-600 px-4 py-3 text-center font-medium text-blue-600"
+            >
+              ← Back to setup
+            </button>
+          </div>
+        </main>
+      )}
+    </AppShell>
   );
 }

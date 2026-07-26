@@ -1,0 +1,341 @@
+<title>Storykins — header + nav redesign</title>
+<style>
+  :root {
+    --bg: #fbf7ee; --canvas: #dcd3c1; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,.16); --line-soft: rgba(42,33,22,.08);
+    --brand: #8a6d3b; --brand-wash: rgba(138,109,59,.14);
+    --card-bg: #fffdf8; --shadow: 0 10px 30px -12px rgba(42,33,22,.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #221c13; --canvas: #14110b; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,.16); --line-soft: rgba(242,235,219,.07);
+      --brand: #d9b876; --brand-wash: rgba(217,184,118,.16);
+      --card-bg: #241d13; --shadow: 0 10px 30px -10px rgba(0,0,0,.55);
+    }
+  }
+  /* Targets #demo-root, not :root - Artifacts wrap this file in their own <html>/<body>, and
+     :root[data-theme] is reserved for the platform's own viewer-wide toggle. A selector on the
+     actual html element would never match an attribute this page's own JS sets on a child div. */
+  #demo-root[data-theme="dark"] {
+    --bg: #221c13; --canvas: #14110b; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,.16); --line-soft: rgba(242,235,219,.07);
+    --brand: #d9b876; --brand-wash: rgba(217,184,118,.16);
+    --card-bg: #241d13; --shadow: 0 10px 30px -10px rgba(0,0,0,.55);
+  }
+  #demo-root[data-theme="light"] {
+    --bg: #fbf7ee; --canvas: #dcd3c1; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,.16); --line-soft: rgba(42,33,22,.08);
+    --brand: #8a6d3b; --brand-wash: rgba(138,109,59,.14);
+    --card-bg: #fffdf8; --shadow: 0 10px 30px -12px rgba(42,33,22,.28);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* Any element with its own `display` rule (e.g. .nav-panel, .icon-btn both set display:flex)
+     otherwise beats the browser's low-specificity [hidden]{display:none} UA rule, making the
+     `hidden` attribute silently do nothing - this is the actual bug behind "menu won't close". */
+  [hidden] { display: none !important; }
+  body {
+    font-family: -apple-system, "Segoe UI", ui-sans-serif, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Background/color live on #demo-root, not body - #demo-root[data-theme] overrides the palette
+     on itself, and CSS custom properties only cascade to descendants, never back up to ancestors,
+     so a body-level rule could never see this element's own overridden variables. */
+  #demo-root {
+    background: var(--canvas); color: var(--ink);
+    min-height: 100vh;
+  }
+  /* Fredoka stand-in for this preview - Artifact CSP blocks font CDNs and the real weight isn't
+     worth base64-embedding for a throwaway comparison doc; the shipped app already loads real
+     Fredoka via next/font/google. ui-rounded approximates its soft, friendly character. */
+  .display { font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", sans-serif; font-weight: 700; text-wrap: balance; }
+
+  .page-frame { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .intro { max-width: 68ch; margin-bottom: 2rem; }
+  .eyebrow { font-weight: 800; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--brand); margin-bottom: .5rem; }
+  .intro h1 { font-size: 1.5rem; margin: 0 0 .6rem; }
+  .lede { color: var(--ink-soft); line-height: 1.55; font-size: .94rem; }
+  .lede code { background: var(--line-soft); padding: .1rem .35rem; border-radius: 4px; font-size: .85em; font-family: ui-monospace, monospace; }
+
+  .theme-toggle { display: inline-flex; gap: .25rem; border: 1px solid var(--line); border-radius: 999px; padding: .2rem; margin-top: 1rem; margin-right: .5rem; }
+  .theme-toggle button, .mode-toggle button { border: none; background: transparent; color: var(--ink-soft); padding: .35rem .8rem; border-radius: 999px; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .theme-toggle button[aria-pressed="true"], .mode-toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .mode-toggle { display: inline-flex; gap: .25rem; border: 1px solid var(--line); border-radius: 999px; padding: .2rem; margin-top: 1rem; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; }
+
+  .demo-wrap { margin-top: 2.2rem; }
+  .demo-label { font-weight: 800; font-size: .8rem; color: var(--ink-soft); margin-bottom: .7rem; }
+  .hint { font-size: .78rem; color: var(--ink-soft); margin-top: .6rem; max-width: 40ch; }
+
+  .phone { background: var(--bg); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; width: 100%; max-width: 380px; border: 1px solid var(--line); }
+  .phone-body { height: 520px; position: relative; overflow-y: auto; overflow-x: hidden; }
+
+  /* ---- Header: iOS-compact, leading / centered-title / trailing ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .5rem;
+    height: 48px; padding: 0 .6rem;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    transition: transform .32s cubic-bezier(.4,0,.2,1);
+  }
+  .topbar.is-hidden { transform: translateY(-100%); }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    border: none; background: transparent; color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .15s ease; flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--brand-wash); }
+  .icon-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .icon-btn.spacer { visibility: hidden; pointer-events: none; }
+  .brand-title {
+    flex: 1; min-width: 0; text-align: center;
+    font-size: 1rem; color: var(--brand); letter-spacing: .01em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    transition: color .15s ease;
+  }
+  /* On the story page the center slot shows the story's own title, not the app wordmark - that's
+     content, not the brand mark, so it reads in normal ink instead of the brand accent (matches
+     how iOS nav titles work: neutral text, accent reserved for the actual logo screens). */
+  .brand-title.is-story-title { color: var(--ink); font-weight: 600; }
+
+  .body-fill { padding: 1.1rem; color: var(--ink-soft); font-size: .85rem; line-height: 1.6; }
+
+  /* ---- Story page content (for the auto-hide demo) ---- */
+  .story-badge { display: inline-block; font-size: .62rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); background: var(--brand-wash); border: 1px solid var(--brand); border-radius: 999px; padding: .3rem .7rem; margin: 1rem 1.1rem 0; }
+  .story-title { font-size: 1.3rem; margin: .8rem 1.1rem .9rem; text-wrap: balance; }
+  .story-text { padding: 0 1.1rem 2rem; font-size: .92rem; line-height: 1.75; }
+  .story-text p { margin: 0 0 1rem; }
+
+  /* ---- Setup step content (for the "Setup" header-title demo) ---- */
+  .setup-dots { display: flex; align-items: center; padding: 1rem 1.1rem .4rem; }
+  .setup-dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 800; color: var(--ink-soft); flex-shrink: 0; }
+  .setup-dot.is-current { border-color: var(--brand); background: var(--brand); color: var(--card-bg); }
+  .setup-dot-line { flex: 1; height: 2px; background: var(--line); margin: 0 .3rem; }
+  .setup-labels { display: flex; padding: .3rem 1.1rem .6rem; }
+  .setup-labels span { flex: 1; text-align: center; font-size: .62rem; font-weight: 800; color: var(--ink-soft); }
+  .setup-labels span:first-child { text-align: left; }
+  .setup-labels span:last-child { text-align: right; }
+  .setup-labels span.is-current { color: var(--brand); }
+  .setup-heading { font-size: 1.1rem; margin: .3rem 1.1rem .5rem; }
+
+  /* ---- Nav panel ---- */
+  .nav-panel { position: absolute; inset: 0; display: flex; justify-content: flex-end; z-index: 6; }
+  .nav-backdrop { position: absolute; inset: 0; background: rgba(20, 15, 8, .4); }
+  .nav-sheet {
+    position: relative; width: 78%; max-width: 260px; height: 100%;
+    background: var(--bg);
+    border-left: 1px solid var(--line);
+    box-shadow: -12px 0 32px -16px rgba(0,0,0,.35);
+    display: flex; flex-direction: column;
+  }
+  .nav-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: .7rem .7rem .7rem 1rem; border-bottom: 1px solid var(--line); }
+  .nav-sheet-brand { display: flex; align-items: center; gap: .5rem; font-size: .92rem; color: var(--brand); }
+  .nav-close { width: 36px; height: 36px; border-radius: 9px; border: none; background: transparent; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .nav-close:hover { background: var(--line-soft); color: var(--ink); }
+  .nav-links { padding: .6rem; display: flex; flex-direction: column; gap: .15rem; }
+  .nav-link { display: flex; align-items: center; gap: .7rem; padding: .8rem .7rem; border-radius: 10px; border: none; background: transparent; color: var(--ink); font-size: .95rem; font-weight: 600; text-align: left; cursor: pointer; border-left: 3px solid transparent; transition: background .15s ease, border-color .15s ease; }
+  .nav-link svg { color: var(--ink-soft); flex-shrink: 0; transition: color .15s ease; }
+  .nav-link:hover { background: var(--brand-wash); border-left-color: var(--brand); }
+  .nav-link:hover svg { color: var(--brand); }
+  .nav-sheet-foot { margin-top: auto; padding: .8rem 1.1rem 1rem; font-size: .68rem; color: var(--ink-soft); border-top: 1px solid var(--line); }
+
+  .callout { margin-top: 2.5rem; padding: 1.1rem 1.3rem; border: 1.5px dashed var(--line); border-radius: 16px; max-width: 68ch; }
+  .callout p { color: var(--ink-soft); font-size: .88rem; line-height: 1.55; margin: 0; }
+  .callout p + p { margin-top: .5rem; }
+  .callout strong { color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { .topbar { transition: none; } }
+</style>
+
+<div id="demo-root" data-theme="">
+
+<div class="page-frame">
+  <div class="intro">
+    <p class="eyebrow">Header + nav redesign, round 2 — for sign-off</p>
+    <h1 class="display">iOS-style leading/centered-title/trailing bar, compact height, brand-colored chrome, auto-hides while reading</h1>
+    <p class="lede">Leading hamburger (was on the right, moved to match the iOS nav-bar convention you're pointing at), centered wordmark instead of left-aligned, a reserved trailing slot for story-specific actions later. Bar height dropped from ~68px to a 48px iOS-compact bar. No border on the menu button - icon and wordmark now both use the brand color instead of default ink. Switch to "Story page" below to see three things at once: the center title swaps from "Storykins" to the actual story title, and the header auto-hides after ~2.5s idle and reappears on scroll/tap - same as Apple Books/Safari.</p>
+    <div class="controls">
+      <div class="theme-toggle" id="theme-toggle">
+        <button data-theme-btn="light" aria-pressed="true">Light</button>
+        <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+      </div>
+      <div class="mode-toggle" id="mode-toggle">
+        <button data-mode-btn="home" aria-pressed="true">Home screen</button>
+        <button data-mode-btn="setup" aria-pressed="false">Setup</button>
+        <button data-mode-btn="story" aria-pressed="false">Story page</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-wrap">
+    <div class="demo-label" id="demo-label">Home screen — header stays put</div>
+    <div class="phone">
+      <div class="phone-body" id="phone-body">
+        <div class="topbar" id="topbar">
+          <button class="icon-btn" id="menu-open" aria-label="Open menu" aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 7H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <span class="brand-title display" id="brand-title">Storykins</span>
+          <button class="icon-btn" id="trailing-btn" aria-label="Story actions" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="5" r="1.6" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+              <circle cx="12" cy="19" r="1.6" fill="currentColor"/>
+            </svg>
+          </button>
+          <span class="icon-btn spacer" id="trailing-spacer" aria-hidden="true"></span>
+        </div>
+
+        <div id="home-content" class="body-fill">Home screen content underneath — mascot greeting, shelves, genre strip…</div>
+
+        <div id="setup-content" hidden>
+          <div class="setup-dots">
+            <div class="setup-dot is-current">1</div><div class="setup-dot-line"></div>
+            <div class="setup-dot">2</div><div class="setup-dot-line"></div>
+            <div class="setup-dot">3</div>
+          </div>
+          <div class="setup-labels"><span class="is-current">Genre</span><span>Character</span><span>Customize</span></div>
+          <h2 class="setup-heading display">Genre</h2>
+          <p class="hint" style="margin: 0 1.1rem .9rem;">Setup step content underneath — genre tiles, etc.</p>
+        </div>
+
+        <div id="story-content" hidden>
+          <span class="story-badge">Fantasy</span>
+          <h2 class="story-title display">Prince Oren and the Magic Door</h2>
+          <div class="story-text">
+            <p>Prince Oren had always been different. While other princes wanted to fight dragons, Oren wanted to be their friend.</p>
+            <p>One day, Oren found an old oak door in the forest. It was hidden behind tall trees. The light around it bent and shimmered like water.</p>
+            <p>"Hello, door," Oren said kindly. "What's beyond you?"</p>
+            <p>The door creaked open. Beyond it was a garden Oren had never seen before, full of flowers that hummed soft little tunes when the wind passed through them.</p>
+            <p>A small green dragon poked its head out from behind a hedge. It looked more curious than fierce, tilting its head at the prince the way a puppy might.</p>
+            <p>"You're not here to fight me?" the dragon asked, surprised.</p>
+            <p>"Why would I?" said Oren. "You look like you'd rather show me around."</p>
+            <p>The dragon's eyes lit up. It had lived in this garden for a hundred years and no one had ever asked to see it before.</p>
+            <p>Scroll up or tap anywhere to see the header come back - try it.</p>
+          </div>
+        </div>
+
+        <div class="nav-panel" id="nav-panel" hidden>
+          <div class="nav-backdrop" id="nav-backdrop"></div>
+          <div class="nav-sheet">
+            <div class="nav-sheet-head">
+              <span class="nav-sheet-brand display">Storykins</span>
+              <button class="nav-close" id="menu-close" aria-label="Close menu">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <nav class="nav-links">
+              <button class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11L12 4L20 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10V19C6 19.55 6.45 20 7 20H17C17.55 20 18 19.55 18 19V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Home
+              </button>
+              <button class="nav-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                New story
+              </button>
+            </nav>
+            <div class="nav-sheet-foot">Storykins</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="hint" hidden>Idle ~2.5s and watch the bar slide away. Scroll or tap the page to bring it back.</p>
+  </div>
+
+  <div class="callout">
+    <p class="eyebrow">What's real vs. what's a placeholder here</p>
+    <p><strong>Real, will implement as shown:</strong> leading hamburger, centered wordmark (swaps to the story's own title - normal ink, not brand color, once you're on the story page), 48px compact height, no button border, brand-colored icon + wordmark, nav sheet with its own close button, auto-hide-on-idle/reveal-on-scroll for the story page.</p>
+    <p><strong>Placeholder, not being built yet:</strong> the trailing ⋮ button only appears here to show where it'd live - no menu is wired to it. Recommend holding off until "save story" or "custom instructions" are real features; logging as a follow-up issue rather than shipping an empty menu.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  document.getElementById("theme-toggle").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-theme-btn]");
+    if (!btn) return;
+    var v = btn.getAttribute("data-theme-btn");
+    document.querySelectorAll("#theme-toggle button").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+    document.getElementById("demo-root").setAttribute("data-theme", v);
+  });
+
+  var topbar = document.getElementById("topbar");
+  var phoneBody = document.getElementById("phone-body");
+  var homeContent = document.getElementById("home-content");
+  var setupContent = document.getElementById("setup-content");
+  var storyContent = document.getElementById("story-content");
+  var trailingBtn = document.getElementById("trailing-btn");
+  var trailingSpacer = document.getElementById("trailing-spacer");
+  var brandTitle = document.getElementById("brand-title");
+  var demoLabel = document.getElementById("demo-label");
+  var hint = document.getElementById("hint");
+  var idleTimer = null;
+
+  var MODES = {
+    home: { title: "Storykins", isBrand: true, label: "Home screen — header stays put" },
+    setup: { title: "New Story", isBrand: false, label: "Setup — header stays put, shows “New Story” instead of the app name" },
+    story: { title: "Prince Oren and the Magic Door", isBrand: false, label: "Story page — auto-hides on idle, comes back on scroll/tap" }
+  };
+  var mode = "home";
+
+  function showHeader() {
+    topbar.classList.remove("is-hidden");
+  }
+  function scheduleHide() {
+    clearTimeout(idleTimer);
+    if (mode !== "story") return;
+    idleTimer = window.setTimeout(function () { topbar.classList.add("is-hidden"); }, 2500);
+  }
+
+  phoneBody.addEventListener("scroll", function () { showHeader(); scheduleHide(); });
+  phoneBody.addEventListener("pointerdown", function () { showHeader(); scheduleHide(); });
+
+  document.getElementById("mode-toggle").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-mode-btn]");
+    if (!btn) return;
+    mode = btn.getAttribute("data-mode-btn");
+    document.querySelectorAll("#mode-toggle button").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+    var m = MODES[mode];
+    homeContent.hidden = mode !== "home";
+    setupContent.hidden = mode !== "setup";
+    storyContent.hidden = mode !== "story";
+    trailingBtn.hidden = mode !== "story";
+    trailingSpacer.hidden = mode === "story";
+    hint.hidden = mode !== "story";
+    brandTitle.textContent = m.title;
+    brandTitle.classList.toggle("is-story-title", !m.isBrand);
+    demoLabel.textContent = m.label;
+    phoneBody.scrollTop = 0;
+    showHeader();
+    scheduleHide();
+  });
+
+  var panel = document.getElementById("nav-panel");
+  var openBtn = document.getElementById("menu-open");
+  var closeBtn = document.getElementById("menu-close");
+  var backdrop = document.getElementById("nav-backdrop");
+  function open() { panel.hidden = false; openBtn.setAttribute("aria-expanded", "true"); clearTimeout(idleTimer); }
+  function close() { panel.hidden = true; openBtn.setAttribute("aria-expanded", "false"); scheduleHide(); }
+  // openBtn is only ever reachable while the panel is closed - once open, the backdrop (z-index
+  // above the topbar) physically covers it, so there's no "click it again to close" path to wire
+  // up here; close() only ever happens via the X button, the backdrop, or Escape.
+  openBtn.addEventListener("click", open);
+  openBtn.addEventListener("touchend", function (e) { e.preventDefault(); open(); });
+  [closeBtn, backdrop].forEach(function (el) {
+    el.addEventListener("click", close);
+    el.addEventListener("touchend", function (e) { e.preventDefault(); close(); });
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) close(); });
+})();
+</script>

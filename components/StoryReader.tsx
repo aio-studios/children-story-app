@@ -1,11 +1,7 @@
 import { CSSProperties } from "react";
-import { Fredoka, Nunito } from "next/font/google";
+import { fredoka, nunito } from "@/lib/fonts";
 import { CUSTOM_GENRE_ACCENT, getGenreById } from "@/lib/genres";
 import { GenreAccent, GenreSelection } from "@/lib/types";
-
-// Scoped to this component only (via CSS variables below) - the rest of the app keeps its current font.
-const fredoka = Fredoka({ subsets: ["latin"], weight: ["600"], variable: "--font-fredoka" });
-const nunito = Nunito({ subsets: ["latin"], weight: ["400", "800"], variable: "--font-nunito" });
 
 type StoryReaderProps = {
   genreSelection: GenreSelection;

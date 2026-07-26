@@ -2,6 +2,68 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-07-26
+
+### Added
+
+- 08:50 - Header/nav visual redesign ported into real code (previously approved only in an Artifact preview, see 2026-07-25's "In progress" note below). `components/AppShell.tsx` now renders an iOS-style 3-zone bar: leading hamburger, centered page-aware title, reserved trailing slot (empty for now - a future story-page kebab menu). Compact 48px height (was ~68px), brand-colored icon + wordmark instead of default ink, real inline SVG icons (`components/NavMenu.tsx`) replacing the literal `☰` character and link emoji. Center title now swaps per screen: "Storykins" (brand color) on Home, "New Story" (ink color) during setup, the actual generated story title (ink color) on the reader - driven by a new `pageTitle` prop on `AppShell`, computed in `app/page.tsx` from `view`/`generatedStory`.
+- 08:50 - Auto-hide-on-idle header, story reader only: the topbar slides away after ~2.5s idle and reappears instantly on scroll or tap (matches Apple Books/Safari reader mode), via a new `autoHide` prop on `AppShell` - Home/Setup keep the header always visible.
+- 08:50 - Two open product decisions from yesterday's UAT resolved: nav panel now slides from the **left** (matches the hamburger's new position, was previously mismatched on the right), and the setup wizard's header title is **"New Story"**.
+
+### Fixed
+
+- 08:50 - Real bug caught by actually screenshotting the open nav panel (not just checking open/close functionally): the panel rendered with a transparent background, default black text, and the system font (Arial) instead of the app's cream background, ink/brand colors, and Fredoka/Nunito - `NavMenu`'s panel is `createPortal`'d to `document.body` (needed so it can escape `.sk-topbar`'s `position: sticky` containing block), which makes it a DOM sibling of `.sk-shell`, not a descendant. Every `--sk-*` color token and `next/font`'s `--font-fredoka`/`--font-nunito` variables were scoped to `.sk-shell` only, so none of them resolved for the portaled panel. Fixed by hoisting the `--sk-*` tokens to `:root` (`app/globals.css`) and reapplying the font `.variable` classes directly on the portal's root div (`components/NavMenu.tsx`) - a pre-existing bug in the original nav menu, not something introduced by today's redesign.
+- 08:50 - Nav panel had no scroll lock: touch devices could still drag-scroll the page underneath the fixed overlay while the menu was open (iOS Safari "scroll-through"). Fixed by locking `document.body` overflow while the panel is open.
+- 08:50 - Nav panel had no focus management: closing via Escape/backdrop/link left focus on `<body>` instead of returning to the hamburger button, breaking keyboard tab order. Fixed - focus now moves to the panel's close button on open and back to the hamburger on close.
+- 08:50 - Header title had an inconsistent empty-string fallback (`??` for the text, truthy-check for the styling class) - harmless today since story titles are never empty, but fixed to use one consistent check.
+
+### Security
+
+- 09:05 - Security review: no findings. Pure client-side UI/layout work, no new API surface, no `dangerouslySetInnerHTML`/`eval`/unsafe sinks introduced.
+
+### Changed (UAT on the header/nav port above)
+
+- 10:15 - Setup stepper dots now show step icons (🧭 Genre, 🥷 Character, 🎨 Customize) instead of plain numbers, restoring a detail from the originally-approved mockup (`docs/designs/day2-decided-direction.html`, which had used 🧭/📏/💛 for its old "Who/How/Feel" step names before they were renamed to Genre/Character/Customize during build) - new `icon` field on `SetupStepper`'s `Step` type, supplied per-step from `app/page.tsx`.
+- 10:15 - Fixed a real gap left by the auto-hide header: `position: sticky` reserves its 48px of layout space even while translated off-screen - invisible on Home/Setup (header and content share the same cream background) but visible on the story page as a mismatched cream strip above the reader's separate tan "canvas" backdrop. Fixed by making the auto-hide header `position: fixed` (a true overlay, centered to match `.sk-content`'s column) instead of sticky, with `.story-reader-canvas`'s top padding bumped to compensate for the header no longer reserving that space.
+- 10:35 - Fixed a second header-related artifact: `.story-reader-glow` (the decorative color wash behind the story card) has always had a hard rectangular top edge - previously hidden because the old, always-visible ~68px header sat directly on top of it. With the header now able to auto-hide, that edge was exposed as a stray horizontal band that appeared to "start out of nowhere" when the header slid away. Fixed with a `mask-image` fading the glow's top ~60px to transparent instead of cutting it off sharply.
+- 10:45 - Setup stepper's Character icon changed 🧑 → 🥷 (user preference over the earlier neutral placeholder).
+- 10:50 - Story page's top gap tightened - `.story-reader-canvas`'s top padding (added to compensate for the header's fixed positioning) reduced from 88px to a static 64px.
+- 11:00 - Reverted a follow-up to the above (shrinking the gap further, to 20px, once the header actually hides) after user feedback: that reflowed the page content upward on every hide/reveal cycle, forcing re-focus on a timer the reader doesn't control - worse than the header just disappearing quietly. The gap is now a single static value regardless of header visibility; only the header itself moves, confirmed via Playwright (story title's bounding-box `y` is identical hidden vs. visible).
+
+### Added (follow-up, filed not built)
+
+- 10:20 - [#40](https://github.com/aio-studios/children-story-app/issues/40) - Pre-select last-used setup options (genre/character/tone/length/reading-level/lesson) for a new story, distinct from the existing "Continue story" resume feature. Filed under the Accounts & Persistence epic (#23), can likely reuse `lib/storyHistory.ts`'s existing persistence pattern.
+
+## 2026-07-25
+
+### Added
+
+- 19:00 - Home screen + setup stepper redesign (issues #29/#30), implementing the direction signed off in `docs/designs/day2-decided-direction.html`. The app no longer opens straight into the setup form - new `components/HomeScreen.tsx` is the entry point: a mascot greeting, a "Continue story" hero (shown only if a story's in progress), two hardcoded content shelves (Daily picks/Most popular - no curated-content or popularity backend yet, sample titles by design), and a genre strip that jumps straight into setup with that genre pre-selected. Setup itself is now a 3-step dot-stepper wizard (new `components/SetupStepper.tsx`) wrapping the existing Genre/Character/Customize sections unchanged - just new chrome, no logic changes to the selectors themselves.
+- 19:00 - Persistent nav menu (hamburger) on every screen - new `components/NavMenu.tsx` (Home/New story links, portaled to `document.body`) and `components/AppShell.tsx` (shared header wrapping home/setup/loading/reading/error).
+- 19:00 - "Continue story" resume, backed by `localStorage` (no accounts/Supabase yet - explicit v1 scope call, flagged as scaffolding to replace once real accounts land). New `lib/storyHistory.ts`: `saveContinueStory`/`clearContinueStory` plus a `useContinueStory()` hook built on `useSyncExternalStore` (not a plain getter - needed to read `localStorage` without a hydration-mismatch or a `set-state-in-effect` lint violation). Saves the full selection set (genre, character, length, reading level, tone, lesson), not just genre, so resuming a story and hitting "Regenerate" reproduces the exact original setup. The reader's "Back to setup" clears the slot (done with this one); navigating Home via the nav menu does not (still resumable); regenerating overwrites it.
+- 19:00 - New `lib/fonts.ts`: shared Fredoka/Nunito `next/font/google` declarations for Home/Setup/Nav, matching the storybook typography already used by `StoryReader`.
+
+### Fixed
+
+- 19:00 - Two real bugs caught by `/verify` (Playwright, iPhone 12 Pro viewport, light+dark) before shipping: (1) the "Customize" step label clipped off the right edge of the 390px viewport - the dot-stepper's label row used fixed-width centered spans instead of edge-aligned flex thirds; (2) the nav menu's dark backdrop only covered the ~65px topbar instead of the full screen - `.sk-topbar`'s `position: sticky` creates a containing block for `position: fixed` descendants, so the panel's `inset: 0` was resolving against the header, not the viewport; fixed by portaling the panel to `document.body`.
+- 19:57 - Code review (medium effort, 8-angle, 8 findings, all fixed): `localStorage` writes/reads in `lib/storyHistory.ts` had no error handling - a throw on write (e.g. Safari private browsing) silently discarded an already-successful story generation and showed a generic error instead of the reader; a throw on read had no guard at all and could crash the Home screen entirely. Both now fail soft (treated as "no continue story"). Added a shallow shape check on read so a structurally incompatible stored value can't reach downstream code. Navigating Home/New-story via the nav menu while a generation was still in flight let the stale response hijack the screen the user had already moved to, and left the double-click guard stuck until that abandoned request finished; fixed with a generation-id ref that invalidates in-flight requests on navigation. Resuming a story with a custom genre/lesson didn't restore its draft text, so switching back to a preset and then back to custom silently wiped it. Consolidated three duplicated implementations introduced by the redesign into shared ones: the new `--gc` CSS accent mechanism now reuses the existing `--accent-light`/`--accent-dark` convention from `StoryReader`; `StoryReader`'s local Fredoka/Nunito declarations now import from `lib/fonts.ts`; `HomeScreen`'s genre-accent lookup now uses a new shared `getGenreAccent()` (`lib/genres.ts`) instead of re-implementing `StoryReader`'s.
+
+### Security
+
+- 20:09 - Security review: no HIGH/MEDIUM findings. This redesign is client-side UI/state only - no `dangerouslySetInnerHTML`, no new API surface. `/api/generate-story` is unchanged and still allowlist-validates every field server-side, so a tampered `localStorage` continue-story value can't bypass it.
+
+### Changed (UAT round 2, live feedback on the shipped redesign above)
+
+- 21:00 - Home screen background/layering bug fixed: `.sk-shell` was using the mockup's tan backdrop color (`--sk-canvas`) as the main content background everywhere, when per the mockup (and the already-shipped `StoryReader`'s own canvas/page split) that tan is only the backdrop behind a cream content column. New `.sk-content` wrapper (`components/AppShell.tsx`, `app/globals.css`) fixes the color and, as a side effect, fixes an "awkward gap on laptop screens" complaint - `.sk-content` caps at 428px (matching `StoryReader`'s existing column) and centers, with the tan canvas showing through as a margin above that width instead of content stretching edge-to-edge. One sensible breakpoint, not per-iPad-model tuning (explicitly descoped as disproportionate for a mobile-first app).
+- 21:00 - Genre-strip tap now lands on Setup Step 1 (Genre, pre-highlighted) instead of skipping straight to Step 2 (Character) - the skip felt jarring with no confirmation of what was picked (`app/page.tsx`).
+- 21:00 - Added a "✨ Your own" tile to the end of Home's genre strip (`components/HomeScreen.tsx`) - custom genre had no entry point from Home before this, only from inside Setup.
+- 21:00 - Home's genre-strip shelf renamed "New · Select genre" → "Start a new story".
+- 21:00 - Daily picks/Most popular shelves: removed the item-count number from the header, and each shelf now renders its (hardcoded, placeholder) items twice so scrolling doesn't dead-end after 4 cards - a real infinite loop wasn't judged worth building for sample data that isn't real yet.
+
+### In progress, not yet shipped as of this entry (paused at ~98% of a usage window)
+
+- Header/nav visual redesign - approved through several rounds of an iterative Artifact preview, saved to `docs/designs/day2-header-nav-redesign-preview.html`, but not yet ported into real components. Two open questions before implementation: which side the nav panel should slide from, and final "New Story" vs "Story Setup" wording. **Resolved and shipped the next day - see 2026-07-26 above.**
+
 ## 2026-07-22
 
 ### Added

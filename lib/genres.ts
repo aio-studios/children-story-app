@@ -140,3 +140,9 @@ export const CUSTOM_GENRE_ACCENT: GenreAccent = { light: "#8A6D3B", dark: "#D9B8
 export function getGenreById(genreId: string): Genre | undefined {
   return GENRES.find((g) => g.id === genreId);
 }
+
+// Shared by StoryReader (reading-view badge) and HomeScreen (shelves/hero/genre strip) so genre
+// accent-color lookup has one implementation instead of two that can drift.
+export function getGenreAccent(genreId: string): GenreAccent {
+  return getGenreById(genreId)?.accent ?? CUSTOM_GENRE_ACCENT;
+}
