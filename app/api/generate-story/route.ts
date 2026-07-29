@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { anthropicClient, extractJsonBlock, HAIKU_MODEL } from "@/lib/anthropicClient";
 import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
 import { GENRES } from "@/lib/genres";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { buildStoryPrompt, StorySelections } from "@/lib/storyPrompt";
 import { LESSONS, MAX_CUSTOM_TEXT_LENGTH, READING_LEVELS, STORY_LENGTHS, TONES } from "@/lib/storyOptions";
 import { GenreSelection, Lesson, LessonSelection, SelectedCharacter } from "@/lib/types";
@@ -17,23 +18,6 @@ const RATE_LIMIT_ERROR_MESSAGE = "Whoa, one story at a time! Please wait a momen
 // where "adjust your custom entry" would be nonsensical.
 const CUSTOM_ENTRY_BLOCK_MESSAGE = "Hmm, let's try a different idea! Please adjust your custom entry and try again.";
 const STORY_BLOCK_MESSAGE = "Hmm, that story didn't turn out right. Please try again or pick different options.";
-
-// Basic per-IP stopgap, not the final rate-limiting infra (that's a separate pass before public launch).
-// In-memory only - resets on redeploy/restart, doesn't share state across serverless instances - but it's
-// enough to stop a naive script from running up the Anthropic bill the moment this route is reachable.
-// Each request can trigger up to 3 Claude calls (input safety check, generation, output safety check),
-// so this is sized lower than a naive "1 request = 1 Claude call" budget would suggest.
-const RATE_LIMIT_MAX_REQUESTS = 3;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const requestTimestamps = new Map<string, number[]>();
-
-function isRateLimited(identifier: string): boolean {
-  const now = Date.now();
-  const recent = (requestTimestamps.get(identifier) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
-  recent.push(now);
-  requestTimestamps.set(identifier, recent);
-  return recent.length > RATE_LIMIT_MAX_REQUESTS;
-}
 
 function isNonEmptyString(value: unknown, maxLength = MAX_CUSTOM_TEXT_LENGTH): value is string {
   return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
@@ -129,7 +113,8 @@ function blockUnsafe(reason: string, message: string) {
 
 export async function POST(request: Request) {
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  if (isRateLimited(clientIp)) {
+  const allowed = await checkRateLimit(clientIp);
+  if (!allowed) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR_MESSAGE }, { status: 429 });
   }
 

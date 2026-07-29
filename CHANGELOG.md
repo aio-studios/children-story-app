@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-07-28
+
+### Changed
+
+- 21:29 - Replaced the in-memory per-IP rate limiter on `POST /api/generate-story` with a shared one backed by Upstash Redis (closes #39, a blocker for #38 illustrations going live). Same limit as before (3 requests/60s per IP), but now actually holds across Vercel's serverless instances instead of resetting per-instance. New `lib/rateLimit.ts` wraps `@upstash/ratelimit`'s sliding-window limiter; the route just calls `checkRateLimit(clientIp)` in place of the old `isRateLimited()`. Fails open on a Redis error/timeout (allows the request) rather than breaking story generation over a transient infra blip - verified by temporarily pointing at a bad token and confirming requests still went through. Provisioned via Vercel's Marketplace Upstash integration, which injects credentials as `KV_REST_API_URL`/`KV_REST_API_TOKEN` (its "KV" naming), not the classic `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` the Upstash SDK's `Redis.fromEnv()` expects - `lib/rateLimit.ts` constructs the client explicitly from the actual var names instead.
+
+### Fixed
+
+- 21:29 - `vercel link`/`vercel env pull` (run to fetch the new Upstash credentials locally) had auto-appended a blanket `.env*` rule to `.gitignore`, which would have silently ignored future edits to the already-tracked `.env.example` template. Removed - the existing `.env`/`.env.local`/`.env*.local` rules already cover every real secrets file.
+
 ## 2026-07-26
 
 ### Added

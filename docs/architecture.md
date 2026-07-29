@@ -40,7 +40,7 @@ graph TD
   Page["Home · app/page.tsx<br/>state: generationState, generatedStory, generationError"]
   Route["POST /api/generate-story<br/>app/api/generate-story/route.ts"]
   Validate["validateSelections()<br/>whitelists preset IDs against GENRES/LESSONS,<br/>caps custom text at MAX_CUSTOM_TEXT_LENGTH"]
-  RateLimit["isRateLimited()<br/>in-memory per-IP counter, 3 req/min"]
+  RateLimit["checkRateLimit()<br/>lib/rateLimit.ts - Upstash Redis sliding window,<br/>3 req/min per IP, fails open on Redis error"]
   Collect["collectCustomText()<br/>null if all selections are presets - skips every check below"]
   Blocklist["containsBlockedContent()<br/>lib/contentSafety.ts - local regex, no API call"]
   InputClassify["classifySafety(customText)<br/>lib/contentSafety.ts - bundled Haiku call"]
@@ -79,7 +79,7 @@ graph TD
 
 `lib/storyOptions.ts`'s `MAX_CUSTOM_TEXT_LENGTH` (300 chars) is shared between the route's server-side validation and `maxLength` on the custom genre/character/lesson inputs, so client and server never drift on this limit. `collectCustomText()` is a hand-maintained enumeration of the 3 free-text fields (genre/character/lesson) - a future custom-text field must be added there too, or its text silently skips the whole safety layer (flagged in a code comment at the call site). Both classifier calls treat the text they judge as untrusted data (wrapped in delimiter tags, explicit anti-injection system-prompt instruction) rather than trusting the model's judgment on raw attacker-controlled input.
 
-This is a snapshot of the code as of issues #13 and #16 — re-diagram when #35 (richer block messaging/logging) changes this flow. The reading UI this route's response feeds into is now built - see the Story Reading Experience code map below.
+This is a snapshot of the code as of issues #13, #16, and #39 (shared rate limiter) — re-diagram when #35 (richer block messaging/logging) changes this flow. The reading UI this route's response feeds into is now built - see the Story Reading Experience code map below.
 
 #### Code map: setup screen — Genre & Character Selection (#4) + Story Customization Selectors (#8, #31)
 
@@ -323,4 +323,4 @@ Existing Day 1 generation flow is reused for the initial story; the conversation
 - Vercel: Next.js app + API routes. **Live as of 2026-07-22**: https://children-story-app-lac.vercel.app/ - connected to the `aio-studios/children-story-app` GitHub repo, auto-deploys on every push to `main`.
 - Supabase: managed Postgres + Auth (Day 2+, not yet provisioned).
 - All secrets via environment variables (`.env.local` locally, Vercel project settings in production) - never committed. Confirmed post-deploy: `ANTHROPIC_API_KEY` never reaches the client bundle, generation + full 3-layer safety check verified working against production.
-- Known gap before wider traffic: the per-IP rate limiter (`app/api/generate-story/route.ts`) is in-memory and doesn't share state across Vercel's serverless instances, so it's weaker in production than in a single dev server. Acceptable stopgap for a low-traffic soft launch; revisit (e.g. Upstash Redis-backed limiter) before sharing the link widely.
+- Rate limiting: `app/api/generate-story/route.ts` calls `lib/rateLimit.ts`, a shared per-IP limiter (3 requests/60s, sliding window) backed by Upstash Redis via Vercel's Marketplace integration - holds correctly across serverless instances (the prior in-memory version didn't). Fails open on a Redis error so an infra blip can't take down story generation. Vercel injects credentials as `KV_REST_API_URL`/`KV_REST_API_TOKEN` (its "KV" naming for the Upstash integration), not the classic `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`.
