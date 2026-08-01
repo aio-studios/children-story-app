@@ -332,7 +332,7 @@ export default function Home() {
             <button
               type="button"
               onClick={generateStory}
-              className="rounded-lg bg-blue-500 px-4 py-3 font-medium text-white"
+              className="sk-nav-btn sk-nav-btn-primary"
             >
               Try again
             </button>
@@ -342,7 +342,7 @@ export default function Home() {
                 setSetupStep(2);
                 setView("setup");
               }}
-              className="rounded-lg border-2 border-blue-600 px-4 py-3 text-center font-medium text-blue-600"
+              className="sk-nav-btn"
             >
               ← Back to setup
             </button>

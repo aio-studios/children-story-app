@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-01
+
+### Added
+
+- 18:45 - Header slides down from the top on first app load (one-shot `sk-topbar-enter` CSS keyframe, scoped off the auto-hide variant so it never fights that variant's centering; respects `prefers-reduced-motion`).
+- 18:45 - Story reader header now also reveals when the pointer moves near the top edge (desktop hover), on top of the existing scroll/tap triggers - new `HEADER_REVEAL_ZONE_PX` (64px) `pointermove` handler in `components/AppShell.tsx`.
+- 18:45 - Hover states for the setup stepper's Back/Next buttons (`.sk-nav-btn`): Back fills with brand-wash + brand border; Next darkens the brand fill. Previously neither had any hover feedback.
+
+### Fixed
+
+- 18:45 - Unified keyboard-focus indicator across the whole app (accessibility). Only the burger + reader buttons had a custom `:focus-visible` before; every other control (genre/character cards, pills, inputs) fell back to the browser default ring, which renders **blue on macOS** - so focus looked inconsistent (brown here, blue there) and collided visually with the blue *selection* fill on cards. Now one brand-brown ring for all interactive elements, plus a `:focus:not(:focus-visible)` reset so a mouse click/tap never leaves a lingering ring (fixes the burger's border persisting after the nav menu closed). Root cause of a stubborn sub-bug: Tailwind's `transition-colors` animates `outline-color`, so a focus-only color would fade in from the inherited ink and get stuck - fixed by pinning `outline-color` to brand at the base so there's no color delta to animate.
+- 18:45 - Nav drawer now stays within the app's centered content column instead of anchoring to the far-left viewport edge on wide screens (`.sk-nav-panel` constrained to the same `min(428px, 100%)` centered column as `.sk-content`). Caught in desktop UAT.
+- 18:45 - Setup stepper dots now line up with their labels. Restructured from connector-between-edges to equal-width columns with centered dots (connectors drawn between dot centers), and centered the labels - previously the first/last dots (e.g. the compass) sat at the container's extreme edges, ~44px off from their centered labels.
+- 18:45 - Home genre-strip chips' focus ring no longer clipped top/bottom - `overflow-x: auto` was forcing `overflow-y: auto`, so added vertical padding to `.sk-genre-strip` to give the 2px ring (+2px offset) room.
+
+### Changed
+
+- 18:45 - `next.config.ts`: added `allowedDevOrigins: ["192.168.2.86"]` so a phone/LAN device can load dev-server JS chunks by network IP - Next 16 blocks cross-origin dev requests by default, which served the HTML but silently blocked hydration (buttons appeared dead during on-device UAT). Dev-only; no production effect. Machine/network-specific value.
+
+- 17:49 - Error screen buttons now use the app's brand palette instead of hardcoded Tailwind blue (#41). "Try again"/"Back to setup" swapped from `bg-blue-500`/`border-blue-600` to the shared `.sk-nav-btn`/`.sk-nav-btn-primary` classes (same ones the setup stepper uses), so they render brand-bronze and respect dark mode. Verified light + dark at iPhone 12 Pro viewport.
+- 17:49 - Home "Continue story" hero banner no longer overflows its container (#42). `.sk-hero` set both `width: 100%` and horizontal margins under `box-sizing: border-box`, spilling past the content column; a `<button>` doesn't auto-fill width like a block `<div>`, so width is now `calc(100% - 2.2rem)` to sit flush within the same gutters as the shelves. Verified light + dark at iPhone 12 Pro viewport.
+- 17:49 - `components/AppShell.tsx`: removed a synchronous `setState` inside a `useEffect` (a real ESLint `react-hooks/set-state-in-effect` error). The header's hidden class is now gated on `autoHide` directly, so the stale-state reset is unnecessary - also more correct (Home header can't inherit a stale "hidden" state from a prior reader session). Re-verified reader auto-hide still hides on idle, reveals on tap, and Home stays visible.
+- 17:49 - `components/NavMenu.tsx`: fixed a `react-hooks/exhaustive-deps` warning by capturing `openButtonRef.current` into a local inside the effect before using it in cleanup, so closing the menu restores focus to the element that opened it (correct a11y focus-return). `npm run lint` is now clean (0 errors, 0 warnings).
+
+### Notes
+
+- 17:49 - Full-codebase review surfaced that the setup flow's inner components (Genre/Character/Customize steps) never got the Day 2 `--sk-*` theming and still render stark white/blue in dark mode - the same root cause as #41/#42, but across 6+ components. Captured as **#43** (Bug, high priority) for a proper design-preview-led pass rather than a quick patch.
+
 ## 2026-07-28
 
 ### Changed

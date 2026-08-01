@@ -57,6 +57,9 @@ export function NavMenu({ onNavigateHome, onNavigateNewStory }: NavMenuProps) {
 
   useEffect(() => {
     if (!isOpen) return;
+    // Capture the trigger button now so cleanup restores focus to the element that opened the
+    // menu, rather than reading openButtonRef.current at teardown (React ref-in-cleanup footgun).
+    const triggerButton = openButtonRef.current;
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setIsOpen(false);
     }
@@ -69,7 +72,7 @@ export function NavMenu({ onNavigateHome, onNavigateNewStory }: NavMenuProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
-      openButtonRef.current?.focus();
+      triggerButton?.focus();
     };
   }, [isOpen]);
 

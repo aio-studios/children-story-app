@@ -39,7 +39,10 @@ export function SetupStepper({ steps, currentStep, onStepChange, onBackFromFirst
     <main className="sk-setup-frame">
       <div className="sk-stepper-dots">
         {steps.map((step, index) => (
-          <div key={step.label} className="sk-dot-wrap">
+          <div key={step.label} className="sk-dot-col">
+            {index < steps.length - 1 && (
+              <div className={`sk-dot-connector ${index < currentStep ? "sk-dot-connector-done" : ""}`} />
+            )}
             <div
               className={`sk-dot ${
                 index === currentStep ? "sk-dot-current" : index < currentStep ? "sk-dot-done" : ""
@@ -47,9 +50,6 @@ export function SetupStepper({ steps, currentStep, onStepChange, onBackFromFirst
             >
               {index < currentStep ? "✓" : step.icon}
             </div>
-            {index < steps.length - 1 && (
-              <div className={`sk-dot-connector ${index < currentStep ? "sk-dot-connector-done" : ""}`} />
-            )}
           </div>
         ))}
       </div>

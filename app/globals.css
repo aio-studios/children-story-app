@@ -25,6 +25,43 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Unified keyboard-focus indicator across the whole app. Previously only a couple of themed
+   controls (the burger button, reader buttons) had a custom :focus-visible; everything else -
+   genre/character cards, pills, custom-text inputs - fell back to the browser default ring, which
+   renders blue on macOS. That made focus look inconsistent (brown here, blue there) AND made it
+   collide visually with the blue *selection* fill on cards, so a focused card and a selected card
+   looked like the same "highlight". One brand-brown ring for all interactive elements fixes both.
+
+   outline-color is pinned to brand at the BASE (not just :focus-visible) on purpose: Tailwind's
+   `transition-colors` utility (on the cards/pills) animates outline-color, so a ring that only set
+   its color on focus would try to fade from the inherited currentColor (ink) to brand - and in
+   practice stuck showing ink. Fixing the color up front leaves nothing to animate, so the ring
+   snaps on instantly in brand; only outline-width/style (not transitioned) flip on focus. */
+button,
+a,
+input,
+textarea,
+select,
+[tabindex] {
+  outline-color: var(--sk-brand);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline-width: 2px;
+  outline-style: solid;
+  outline-offset: 2px;
+}
+/* Only keyboard focus shows a ring - a mouse click or tap never leaves one lingering (this is what
+   makes the burger button's ring disappear once the nav menu closes via tap, and stops a clicked
+   card from keeping a focus ring on top of its selection state). */
+:focus:not(:focus-visible) {
+  outline-style: none;
+}
+
 /* Placeholder animation for genre cards, standing in for real GIF/video assets.
    Idle = gentle continuous loop; active = a brief, more energetic loop triggered on click. */
 @keyframes idle-loop {
@@ -91,6 +128,16 @@ body {
   40% {
     opacity: 1;
     transform: translateY(-3px);
+  }
+}
+
+/* One-shot header entrance: slides down from above on initial app load. */
+@keyframes sk-topbar-enter {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 
@@ -376,6 +423,11 @@ body {
   border-bottom: 1px solid var(--sk-line);
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Entrance plays on the base (non-autohide) header, which is what's mounted on first load (Home).
+   Scoped off .sk-topbar-autohide so it never fights that variant's translateX(-50%) centering. */
+.sk-topbar:not(.sk-topbar-autohide) {
+  animation: sk-topbar-enter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 /* Opt-in via .sk-topbar-autohide (story reader only) - toggled by AppShell after ~2.5s idle.
    `position: fixed` here (overriding the base `position: sticky` above), not just the hide
    transform - `sticky` still reserves its 48px of layout space even while translated off-screen,
@@ -398,8 +450,10 @@ body {
   transform: translateX(-50%) translateY(-100%);
 }
 @media (prefers-reduced-motion: reduce) {
-  .sk-topbar {
+  .sk-topbar,
+  .sk-topbar:not(.sk-topbar-autohide) {
     transition: none;
+    animation: none;
   }
 }
 .sk-icon-btn {
@@ -445,9 +499,16 @@ body {
   color: var(--sk-ink);
   font-weight: 600;
 }
+/* Constrained to the same centered max-width column as .sk-content (not the full viewport), so on
+   wide screens the drawer + backdrop stay within the app's "phone" column instead of anchoring to
+   the far-left viewport edge, detached from the centered content (caught in desktop UAT). */
 .sk-nav-panel {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(428px, 100%);
+  height: 100%;
   z-index: 40;
   display: flex;
   justify-content: flex-start;
@@ -459,7 +520,7 @@ body {
 }
 .sk-nav-panel-menu {
   position: relative;
-  width: min(260px, 78vw);
+  width: min(260px, 78%);
   height: 100%;
   background: var(--sk-bg);
   border-right: 1px solid var(--sk-line);
@@ -576,7 +637,7 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
-  width: 100%;
+  width: calc(100% - 2.2rem);
   text-align: left;
 }
 .sk-hero .sk-eyebrow { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; margin-bottom: 0.2rem; }
@@ -603,7 +664,9 @@ body {
   line-height: 1.25;
 }
 
-.sk-genre-strip { display: flex; gap: 0.55rem; padding: 0 1.1rem; overflow-x: auto; }
+/* Vertical padding gives the chips' focus ring room to render - `overflow-x: auto` forces
+   `overflow-y: auto`, which would otherwise clip the 2px ring (+2px offset) top and bottom. */
+.sk-genre-strip { display: flex; gap: 0.55rem; padding: 0.4rem 1.1rem; overflow-x: auto; }
 .sk-genre-chip {
   flex-shrink: 0;
   width: 58px;
@@ -625,9 +688,12 @@ body {
 /* Setup stepper */
 .sk-setup-frame { max-width: 428px; margin: 0 auto; padding: 0 1.1rem 2.5rem; }
 .sk-stepper-dots { display: flex; align-items: center; padding: 1rem 0 0.4rem; }
-.sk-stepper-dots .sk-dot-wrap { display: flex; align-items: center; flex: 1; }
-.sk-stepper-dots .sk-dot-wrap:last-child { flex: 0; }
+/* Each step is an equal-width column with its dot centered - so dots line up with the labels below
+   (which are also centered in equal thirds) instead of sitting at the container's extreme edges. */
+.sk-stepper-dots .sk-dot-col { flex: 1; display: flex; justify-content: center; position: relative; }
 .sk-dot {
+  position: relative;
+  z-index: 1;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -644,7 +710,8 @@ body {
 }
 .sk-dot.sk-dot-current { border-color: var(--sk-brand); background: var(--sk-brand); color: var(--sk-card-bg); transform: scale(1.08); }
 .sk-dot.sk-dot-done { border-color: var(--sk-brand); background: var(--sk-brand-wash); color: var(--sk-brand); }
-.sk-dot-connector { flex: 1; height: 2px; background: var(--sk-line); margin: 0 0.3rem; }
+/* Line from this dot's center to the next dot's center (one column width), drawn behind the dots. */
+.sk-dot-connector { position: absolute; top: 50%; left: 50%; width: 100%; height: 2px; transform: translateY(-50%); background: var(--sk-line); z-index: 0; }
 .sk-dot-connector.sk-dot-connector-done { background: var(--sk-brand); }
 .sk-stepper-labels { display: flex; padding: 0.35rem 0 0.7rem; }
 .sk-stepper-labels span {
@@ -657,8 +724,6 @@ body {
   white-space: nowrap;
 }
 .sk-stepper-labels span.sk-stepper-label-current { color: var(--sk-brand); }
-.sk-stepper-labels span:first-child { text-align: left; }
-.sk-stepper-labels span:last-child { text-align: right; }
 
 .sk-step-heading { font-family: var(--font-fredoka), var(--font-sans); font-weight: 600; font-size: 1.15rem; margin-bottom: 1rem; }
 
@@ -679,7 +744,14 @@ body {
   font-family: var(--font-nunito), var(--font-sans);
   font-weight: 800;
   font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
+.sk-nav-btn:not(:disabled):hover { background: var(--sk-brand-wash); border-color: var(--sk-brand); }
 .sk-nav-btn:disabled { opacity: 0.35; cursor: default; }
 .sk-nav-btn-primary { background: var(--sk-brand); border-color: var(--sk-brand); color: var(--sk-card-bg); }
+.sk-nav-btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--sk-brand) 86%, black);
+  border-color: color-mix(in srgb, var(--sk-brand) 86%, black);
+}
 .sk-step-count { font-family: var(--font-nunito), var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--sk-ink-soft); }
