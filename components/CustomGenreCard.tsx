@@ -19,20 +19,18 @@ export function CustomGenreCard({ selected, text, onSelect, onTextChange }: Cust
         onSelect();
         inputRef.current?.focus();
       }}
-      className={`flex cursor-text flex-col items-center gap-2 rounded-xl border-2 p-4 ${
-        selected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-      }`}
+      className={`sk-select-card sk-select-card-text ${selected ? "sk-select-card-selected" : ""}`}
     >
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-3xl">✏️</div>
+      <div className="sk-orb-neutral flex h-20 w-20 items-center justify-center rounded-full text-3xl">✏️</div>
       <input
         ref={inputRef}
         type="text"
         value={text}
-        placeholder="Type your own..."
+        placeholder="Type here…"
         maxLength={MAX_CUSTOM_TEXT_LENGTH}
         onFocus={onSelect}
         onChange={(e) => onTextChange(e.target.value)}
-        className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900"
+        className="sk-field"
       />
     </div>
   );

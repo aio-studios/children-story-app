@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-02
+
+### Fixed
+
+- 13:48 - Setup custom character now remembers what was typed (#43 UAT). Previously, selecting a preset character (or leaving the step) and returning to "Create your own" blanked the form; a new `customCharacterDraft` in `app/page.tsx` (mirroring the existing custom genre/lesson drafts) preserves name/traits/description, and `CharacterSelector` restores from it instead of an empty object. Verified: input survives selecting a preset + returning, and a Character→Customize→Back round-trip.
+- 13:48 - Setup stepper progress line no longer cuts through a completed step's checkmark (#43 UAT). The done-dot used the translucent `--sk-brand-wash` fill, so the brand connector behind it bled through; it's now an opaque `color-mix(--sk-brand 20%, --sk-bg)` of the same hue. Connector also thickened 2px→4px + rounded so it reads as a progress bar, not a hairline.
+- 13:48 - Custom-genre tile placeholder shortened "Type your own…" → "Type here…" (#43 UAT) so it doesn't clip on the narrow half-width card under iOS Dynamic Type / larger system fonts.
+
 ## 2026-08-01
 
 ### Added
@@ -12,6 +20,7 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Fixed
 
+- 19:46 - Setup flow (Genre/Character/Customize steps) now respects the app theme instead of rendering stark white cards + blue selection in dark mode (#43). The Day 2 redesign themed the shell/Home/Reader with the `--sk-*` tokens but never migrated the setup steps' inner controls, which still used Day-1 hardcoded Tailwind (`border-blue-500`, `bg-white`, `text-gray-900`). All 7 components (`PillSelector`, `LessonSelector`, `GenreCard`, `CharacterCard`, `CustomGenreCard`, `CustomCharacterForm`, `CharacterSelector`) now use three shared token-driven classes added to `globals.css` - `.sk-select-card` (genre/character tiles), `.sk-pill` (Length/Reading-level/Tone/Lesson), `.sk-field` (text inputs) - so selection is brand-**bronze** (matching the stepper + nav buttons, not blue) and everything tracks light/dark. Genre placeholder orbs now use each genre's own accent color (`.sk-orb-accent`, same per-genre system as Home) instead of an off-palette blue→purple gradient. Design approved in `docs/designs/setup-flow-theming-preview.html`. Verified light + dark at iPhone 12 Pro viewport across all three steps. Two `/code-review` cascade findings fixed in the same pass: hover no longer dims an already-selected card/pill's border (`:not(.-selected):hover`), and the custom-genre card keeps its text cursor (unlayered `.sk-select-card-text` beats Tailwind v4's layered `cursor-text`).
 - 18:45 - Unified keyboard-focus indicator across the whole app (accessibility). Only the burger + reader buttons had a custom `:focus-visible` before; every other control (genre/character cards, pills, inputs) fell back to the browser default ring, which renders **blue on macOS** - so focus looked inconsistent (brown here, blue there) and collided visually with the blue *selection* fill on cards. Now one brand-brown ring for all interactive elements, plus a `:focus:not(:focus-visible)` reset so a mouse click/tap never leaves a lingering ring (fixes the burger's border persisting after the nav menu closed). Root cause of a stubborn sub-bug: Tailwind's `transition-colors` animates `outline-color`, so a focus-only color would fade in from the inherited ink and get stuck - fixed by pinning `outline-color` to brand at the base so there's no color delta to animate.
 - 18:45 - Nav drawer now stays within the app's centered content column instead of anchoring to the far-left viewport edge on wide screens (`.sk-nav-panel` constrained to the same `min(428px, 100%)` centered column as `.sk-content`). Caught in desktop UAT.
 - 18:45 - Setup stepper dots now line up with their labels. Restructured from connector-between-edges to equal-width columns with centered dots (connectors drawn between dot centers), and centered the labels - previously the first/last dots (e.g. the compass) sat at the container's extreme edges, ~44px off from their centered labels.

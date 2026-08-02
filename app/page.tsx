@@ -12,7 +12,7 @@ import {
   TONES,
 } from "@/lib/storyOptions";
 import { clearContinueStory, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
-import { GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
+import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
@@ -63,6 +63,14 @@ export default function Home() {
     type: "preset",
     characterId: GENRES[0].characters[0].id,
   });
+  // Kept separate so a typed-in custom character survives selecting a preset (or leaving the step) and
+  // coming back - same reason customGenreDraft/customLessonDraft exist for their steps.
+  const [customCharacterDraft, setCustomCharacterDraft] = useState<CustomCharacter>({
+    type: "custom",
+    name: "",
+    traits: "",
+    description: "",
+  });
   const [storyLength, setStoryLength] = useState<StoryLength>(DEFAULT_STORY_LENGTH);
   const [readingLevel, setReadingLevel] = useState<ReadingLevel>(DEFAULT_READING_LEVEL);
   const [tone, setTone] = useState<Tone>(DEFAULT_TONE);
@@ -95,6 +103,13 @@ export default function Home() {
   function updateCustomGenreText(text: string) {
     setCustomGenreDraft(text);
     setGenreSelection({ type: "custom", text });
+  }
+
+  // Persist every edit to the custom character into the draft, so switching to a preset (or navigating
+  // away) and returning to "Create your own" restores what was typed instead of a blank form.
+  function handleCharacterChange(selection: SelectedCharacter) {
+    setCharacterSelection(selection);
+    if (selection.type === "custom") setCustomCharacterDraft(selection);
   }
 
   function selectPresetLesson(lessonId: Lesson) {
@@ -244,7 +259,8 @@ export default function Home() {
         <CharacterSelector
           genreSelection={genreSelection}
           characterSelection={characterSelection}
-          onChange={setCharacterSelection}
+          customDraft={customCharacterDraft}
+          onChange={handleCharacterChange}
         />
       ),
     },

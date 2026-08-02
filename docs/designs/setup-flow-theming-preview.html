@@ -1,0 +1,331 @@
+<title>Setup Flow Theming — #43 Preview</title>
+<style>
+  /* ---- App tokens, copied verbatim from app/globals.css so this preview is a true mirror ---- */
+  :root {
+    --sk-bg: #fbf7ee;
+    --sk-canvas: #dcd3c1;
+    --sk-ink: #2a2116;
+    --sk-ink-soft: #6e6250;
+    --sk-line: rgba(42, 33, 22, 0.16);
+    --sk-line-soft: rgba(42, 33, 22, 0.08);
+    --sk-brand: #8a6d3b;
+    --sk-brand-wash: rgba(138, 109, 59, 0.14);
+    --sk-card-bg: #fffdf8;
+    --sk-shadow: 0 10px 30px -12px rgba(42, 33, 22, 0.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sk-bg: #221c13;
+      --sk-canvas: #14110b;
+      --sk-ink: #f2ebdb;
+      --sk-ink-soft: #b5a890;
+      --sk-line: rgba(242, 235, 219, 0.16);
+      --sk-line-soft: rgba(242, 235, 219, 0.07);
+      --sk-brand: #d9b876;
+      --sk-brand-wash: rgba(217, 184, 118, 0.16);
+      --sk-card-bg: #241d13;
+      --sk-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+    }
+  }
+  /* Explicit toggle overrides win over the media query in both directions */
+  :root[data-theme="light"] {
+    --sk-bg: #fbf7ee; --sk-canvas: #dcd3c1; --sk-ink: #2a2116; --sk-ink-soft: #6e6250;
+    --sk-line: rgba(42, 33, 22, 0.16); --sk-line-soft: rgba(42, 33, 22, 0.08);
+    --sk-brand: #8a6d3b; --sk-brand-wash: rgba(138, 109, 59, 0.14); --sk-card-bg: #fffdf8;
+    --sk-shadow: 0 10px 30px -12px rgba(42, 33, 22, 0.28);
+  }
+  :root[data-theme="dark"] {
+    --sk-bg: #221c13; --sk-canvas: #14110b; --sk-ink: #f2ebdb; --sk-ink-soft: #b5a890;
+    --sk-line: rgba(242, 235, 219, 0.16); --sk-line-soft: rgba(242, 235, 219, 0.07);
+    --sk-brand: #d9b876; --sk-brand-wash: rgba(217, 184, 118, 0.16); --sk-card-bg: #241d13;
+    --sk-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--sk-canvas);
+    color: var(--sk-ink);
+    font-family: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px 14px 60px;
+  }
+
+  /* ---- Preview chrome (not part of the app) ---- */
+  .pv-bar {
+    max-width: 900px; margin: 0 auto 18px; display: flex; flex-wrap: wrap; gap: 10px 16px;
+    align-items: center; justify-content: space-between;
+  }
+  .pv-bar h1 { font-size: 15px; font-weight: 800; margin: 0; letter-spacing: 0.01em; }
+  .pv-bar h1 small { display: block; font-weight: 600; color: var(--sk-ink-soft); font-size: 12px; margin-top: 2px; }
+  .pv-toggle {
+    border: 1.5px solid var(--sk-line); background: var(--sk-card-bg); color: var(--sk-ink);
+    border-radius: 999px; padding: 8px 14px; font: inherit; font-weight: 800; font-size: 13px; cursor: pointer;
+  }
+  .pv-note {
+    max-width: 900px; margin: 0 auto 22px; font-size: 12.5px; line-height: 1.5; color: var(--sk-ink-soft);
+    background: var(--sk-brand-wash); border: 1px solid var(--sk-line); border-radius: 12px; padding: 10px 14px;
+  }
+  .pv-grid { max-width: 900px; margin: 0 auto; display: grid; gap: 26px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .pv-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .pv-span { grid-column: 1 / -1; }
+
+  /* ---- The app column, mirroring .sk-content + .sk-setup-frame ---- */
+  .phone {
+    background: var(--sk-bg);
+    border-radius: 22px;
+    box-shadow: var(--sk-shadow);
+    overflow: hidden;
+    max-width: 428px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .phone-head {
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--sk-line);
+    background: color-mix(in srgb, var(--sk-bg) 90%, transparent);
+    font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: 14px;
+  }
+  .frame { padding: 16px 18px 22px; }
+  .step-heading { font-family: "Fredoka", "Nunito", sans-serif; font-weight: 600; font-size: 19px; margin: 4px 0 16px; }
+  .field-label { font-size: 13.5px; font-weight: 700; margin-bottom: 8px; display: block; }
+
+  /* =====================================================================
+     PROPOSED SHARED CLASSES — the real deliverable of #43.
+     Theme these once here; every setup control opts in.
+     ===================================================================== */
+
+  /* Selection card — Genre / Character tiles */
+  .sk-select-card {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 14px; border-radius: 14px; text-align: center; cursor: pointer;
+    background: var(--sk-card-bg);
+    border: 2px solid var(--sk-line);
+    color: var(--sk-ink);
+    transition: border-color .15s ease, background .15s ease;
+    font: inherit;
+  }
+  .sk-select-card:hover { border-color: color-mix(in srgb, var(--sk-brand) 55%, var(--sk-line)); }
+  .sk-select-card[aria-pressed="true"] {
+    border-color: var(--sk-brand);
+    background: var(--sk-brand-wash);
+  }
+  .sk-select-card .name { font-size: 13.5px; font-weight: 700; }
+  .sk-select-card .desc { font-size: 11.5px; color: var(--sk-ink-soft); line-height: 1.35; }
+
+  /* Genre placeholder art — per-genre accent gradient (was blue→purple) */
+  .genre-orb {
+    width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 45%, var(--sk-card-bg)),
+      color-mix(in srgb, var(--accent) 85%, black 10%));
+  }
+  /* Character / custom placeholder — neutral brand-tinted, not gray-100 */
+  .char-orb {
+    width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    background: color-mix(in srgb, var(--sk-brand) 14%, var(--sk-card-bg));
+  }
+
+  /* Pills — Length / Reading level / Tone / Lesson */
+  .sk-pill {
+    border-radius: 999px; padding: 9px 16px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+    background: var(--sk-card-bg);
+    border: 2px solid var(--sk-line);
+    color: var(--sk-ink);
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .sk-pill:hover { border-color: color-mix(in srgb, var(--sk-brand) 55%, var(--sk-line)); }
+  .sk-pill[aria-pressed="true"] { border-color: var(--sk-brand); background: var(--sk-brand-wash); }
+
+  /* Text inputs / textareas */
+  .sk-field {
+    width: 100%; border-radius: 10px; padding: 9px 11px; font: inherit; font-size: 13.5px;
+    background: var(--sk-card-bg);
+    border: 1.5px solid var(--sk-line);
+    color: var(--sk-ink);
+  }
+  .sk-field::placeholder { color: var(--sk-ink-soft); }
+  .sk-field:focus-visible { outline: 2px solid var(--sk-brand); outline-offset: 2px; }
+
+  /* Custom-form panel (selected state container) */
+  .sk-form-panel {
+    display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 14px;
+    background: var(--sk-brand-wash); border: 2px solid var(--sk-brand);
+  }
+  .sk-form-panel label { font-size: 13px; font-weight: 700; display: flex; flex-direction: column; gap: 5px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 9px; }
+  .stack { display: flex; flex-direction: column; gap: 18px; }
+  .blurb { font-size: 12.5px; font-style: italic; color: var(--sk-ink-soft); margin: 0 0 4px; line-height: 1.4; }
+
+  .pv-caption { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--sk-ink-soft); margin: 0 0 12px; }
+</style>
+
+<div class="pv-bar">
+  <h1>Setup Flow Theming — Issue #43<small>Genre · Character · Customize steps migrated to the <code>--sk-*</code> design tokens</small></h1>
+  <button class="pv-toggle" id="themeBtn" type="button">◐ Toggle light / dark</button>
+</div>
+
+<div class="pv-note">
+  <strong>What you're looking at:</strong> the three setup steps after theming, side by side. Selection state is now brand-<em>bronze</em> (matching the stepper &amp; nav buttons), not the old blue. Genre art uses each genre's own accent color. Everything is driven by the exact same tokens the rest of the app already uses, so it tracks light/dark automatically. <strong>Click cards and pills to try selection; toggle the theme.</strong>
+</div>
+
+<div class="pv-grid">
+  <!-- GENRE STEP -->
+  <div>
+    <p class="pv-caption">Step 1 · Genre</p>
+    <div class="phone">
+      <div class="phone-head">Create a Story</div>
+      <div class="frame">
+        <h2 class="step-heading">Pick a genre</h2>
+        <div class="grid2" id="genreGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARACTER STEP -->
+  <div>
+    <p class="pv-caption">Step 2 · Character</p>
+    <div class="phone">
+      <div class="phone-head">Create a Story</div>
+      <div class="frame">
+        <h2 class="step-heading">Choose a hero</h2>
+        <p class="blurb">The map is unrolled and the boots are laced — somewhere past the hill, an adventure is waiting to be found.</p>
+        <div class="grid2" id="charGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMIZE STEP -->
+  <div class="pv-span">
+    <p class="pv-caption">Step 3 · Customize</p>
+    <div class="phone">
+      <div class="phone-head">Create a Story</div>
+      <div class="frame">
+        <h2 class="step-heading">Customize the story</h2>
+        <div class="stack">
+          <div>
+            <span class="field-label">Length</span>
+            <div class="row" data-single><button class="sk-pill" aria-pressed="true">Short</button><button class="sk-pill">Medium</button><button class="sk-pill">Long</button></div>
+          </div>
+          <div>
+            <span class="field-label">Reading level</span>
+            <div class="row" data-single><button class="sk-pill">Toddler</button><button class="sk-pill" aria-pressed="true">Early reader</button><button class="sk-pill">Confident reader</button></div>
+          </div>
+          <div>
+            <span class="field-label">Tone</span>
+            <div class="row" data-single><button class="sk-pill">Gentle</button><button class="sk-pill" aria-pressed="true">Playful</button><button class="sk-pill">Silly</button><button class="sk-pill">Cozy</button></div>
+          </div>
+          <div>
+            <span class="field-label">Lesson / value</span>
+            <div class="row" data-single id="lessonRow">
+              <button class="sk-pill">Kindness</button><button class="sk-pill">Courage</button>
+              <button class="sk-pill">Sharing</button><button class="sk-pill">Honesty</button>
+              <button class="sk-pill" aria-pressed="true" data-custom>✏️ Type your own</button>
+            </div>
+            <div style="margin-top:10px" id="lessonCustomWrap">
+              <input class="sk-field" placeholder="e.g. patience, teamwork…" value="patience" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CHARACTER FORM (selected state) -->
+  <div class="pv-span">
+    <p class="pv-caption">Custom character form (selected panel)</p>
+    <div class="phone">
+      <div class="phone-head">Create a Story</div>
+      <div class="frame">
+        <div class="sk-form-panel">
+          <label>Name<input class="sk-field" value="Milo" /></label>
+          <label>Traits<input class="sk-field" placeholder="e.g. brave, loves dinosaurs" /></label>
+          <label>Appearance / personality description<textarea class="sk-field" rows="2" placeholder="Tell us about them…"></textarea></label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Theme toggle ----
+  const btn = document.getElementById("themeBtn");
+  btn.addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const next = cur === "dark" ? "light"
+      : cur === "light" ? "dark"
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", next);
+  });
+
+  // ---- Genre tiles (real genres + accents from lib/genres.ts) ----
+  const GENRES = [
+    { icon: "🗺️", label: "Adventure", light: "#B85C27", dark: "#E8A06B" },
+    { icon: "🐉", label: "Fantasy",   light: "#7B4C9E", dark: "#C79EE8" },
+    { icon: "🌿", label: "Nature",    light: "#4C7A3F", dark: "#93CC7E" },
+    { icon: "🌙", label: "Bedtime",   light: "#3E4E86", dark: "#9AAEEF" },
+    { icon: "🌊", label: "Ocean",     light: "#1D7A8C", dark: "#7BDCEA" },
+    { icon: "✏️", label: "Your own",  light: "#8a6d3b", dark: "#d9b876", custom: true },
+  ];
+  const genreGrid = document.getElementById("genreGrid");
+  GENRES.forEach((g, i) => {
+    const b = document.createElement("button");
+    b.className = "sk-select-card";
+    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.innerHTML = `<span class="genre-orb" style="--accent:${g.light}"></span><span class="name">${g.label}</span>`;
+    b.querySelector(".genre-orb").textContent = g.icon;
+    // resolve accent for current theme
+    const applyAccent = () => {
+      const dark = (document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark";
+      b.querySelector(".genre-orb").style.setProperty("--accent", dark ? g.dark : g.light);
+    };
+    applyAccent();
+    b.addEventListener("click", () => {
+      genreGrid.querySelectorAll(".sk-select-card").forEach(c => c.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+    });
+    b._applyAccent = applyAccent;
+    genreGrid.appendChild(b);
+  });
+  // reapply accents on theme toggle
+  new MutationObserver(() => genreGrid.querySelectorAll(".sk-select-card").forEach(c => c._applyAccent && c._applyAccent()))
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // ---- Character tiles ----
+  const CHARS = [
+    { emoji: "🧭", name: "Finn the Explorer", desc: "A quick-footed boy whose compass always points somewhere exciting." },
+    { emoji: "🧗", name: "Zara the Trailblazer", desc: "A brave girl who's mapped every cave within a mile of home." },
+    { emoji: "🐐", name: "Pip the Mountain Goat", desc: "A sure-footed little goat who loves showing the way." },
+    { emoji: "✏️", name: "Create your own", desc: "", custom: true },
+  ];
+  const charGrid = document.getElementById("charGrid");
+  CHARS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.className = "sk-select-card";
+    b.setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    b.innerHTML = `<span class="char-orb">${c.emoji}</span><span class="name">${c.name}</span>${c.desc ? `<span class="desc">${c.desc}</span>` : ""}`;
+    b.addEventListener("click", () => {
+      charGrid.querySelectorAll(".sk-select-card").forEach(x => x.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+    });
+    charGrid.appendChild(b);
+  });
+
+  // ---- Pill single-select groups ----
+  document.querySelectorAll("[data-single]").forEach(group => {
+    group.addEventListener("click", e => {
+      const p = e.target.closest(".sk-pill");
+      if (!p) return;
+      group.querySelectorAll(".sk-pill").forEach(x => x.setAttribute("aria-pressed", "false"));
+      p.setAttribute("aria-pressed", "true");
+      if (group.id === "lessonRow") {
+        document.getElementById("lessonCustomWrap").style.display = p.hasAttribute("data-custom") ? "block" : "none";
+      }
+    });
+  });
+</script>

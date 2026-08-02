@@ -8,18 +8,18 @@ type CustomCharacterFormProps = {
 
 export function CustomCharacterForm({ character, onChange }: CustomCharacterFormProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border-2 border-blue-500 bg-blue-50 p-4">
-      <label className="flex flex-col gap-1 text-sm font-medium text-gray-900">
+    <div className="sk-form-panel">
+      <label className="flex flex-col gap-1 text-sm font-medium">
         Name
         <input
           type="text"
           value={character.name}
           maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, name: e.target.value })}
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
+          className="sk-field font-normal"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-gray-900">
+      <label className="flex flex-col gap-1 text-sm font-medium">
         Traits
         <input
           type="text"
@@ -27,16 +27,16 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
           placeholder="e.g. brave, loves dinosaurs"
           maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, traits: e.target.value })}
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
+          className="sk-field font-normal"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium text-gray-900">
+      <label className="flex flex-col gap-1 text-sm font-medium">
         Appearance / personality description
         <textarea
           value={character.description}
           maxLength={MAX_CUSTOM_TEXT_LENGTH}
           onChange={(e) => onChange({ ...character, description: e.target.value })}
-          className="rounded border border-gray-300 bg-white px-2 py-1 text-sm font-normal text-gray-900"
+          className="sk-field font-normal"
           rows={2}
         />
       </label>

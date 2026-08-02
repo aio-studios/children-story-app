@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState } from "react";
 import { Genre } from "@/lib/types";
 
 const ACTIVE_DURATION_MS = 5000;
@@ -41,19 +41,18 @@ export function GenreCard({ genre, selected, onSelect }: GenreCardProps) {
     <button
       type="button"
       onClick={handleClick}
-      className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors ${
-        selected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-      }`}
+      className={`sk-select-card ${selected ? "sk-select-card-selected" : ""}`}
     >
       {/* Placeholder for the real GIF/video asset (provider/format TBD) */}
       <div
-        className={`flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-300 to-purple-300 text-3xl ${
+        className={`sk-orb-accent flex h-20 w-20 items-center justify-center rounded-full text-3xl ${
           isActive ? "animate-active-loop" : "animate-idle-loop"
         }`}
+        style={{ "--accent-light": genre.accent.light, "--accent-dark": genre.accent.dark } as CSSProperties}
       >
         {genre.icon}
       </div>
-      <span className="text-sm font-medium text-gray-900">{genre.label}</span>
+      <span className="text-sm font-medium">{genre.label}</span>
     </button>
   );
 }

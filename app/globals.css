@@ -709,9 +709,12 @@ select:focus-visible,
   transition: all 0.25s ease;
 }
 .sk-dot.sk-dot-current { border-color: var(--sk-brand); background: var(--sk-brand); color: var(--sk-card-bg); transform: scale(1.08); }
-.sk-dot.sk-dot-done { border-color: var(--sk-brand); background: var(--sk-brand-wash); color: var(--sk-brand); }
-/* Line from this dot's center to the next dot's center (one column width), drawn behind the dots. */
-.sk-dot-connector { position: absolute; top: 50%; left: 50%; width: 100%; height: 2px; transform: translateY(-50%); background: var(--sk-line); z-index: 0; }
+/* Opaque fill (not the translucent --sk-brand-wash) so the brand connector line behind the dots
+   doesn't show THROUGH a completed dot and cut across its checkmark. Same look as the wash, but solid. */
+.sk-dot.sk-dot-done { border-color: var(--sk-brand); background: color-mix(in srgb, var(--sk-brand) 20%, var(--sk-bg)); color: var(--sk-brand); }
+/* Line from this dot's center to the next dot's center (one column width), drawn behind the dots.
+   4px + rounded reads as a real progress bar rather than a hairline thread. */
+.sk-dot-connector { position: absolute; top: 50%; left: 50%; width: 100%; height: 4px; border-radius: 999px; transform: translateY(-50%); background: var(--sk-line); z-index: 0; }
 .sk-dot-connector.sk-dot-connector-done { background: var(--sk-brand); }
 .sk-stepper-labels { display: flex; padding: 0.35rem 0 0.7rem; }
 .sk-stepper-labels span {
@@ -755,3 +758,82 @@ select:focus-visible,
   border-color: color-mix(in srgb, var(--sk-brand) 86%, black);
 }
 .sk-step-count { font-family: var(--font-nunito), var(--font-sans); font-size: 0.78rem; font-weight: 700; color: var(--sk-ink-soft); }
+
+/* Setup step controls (#43) - shared token-based classes so the Genre/Character/Customize steps
+   match the rest of the app in light + dark, instead of the Day-1 hardcoded blue/gray/white.
+   Approved in docs/designs/setup-flow-theming-preview.html. Selection state mirrors the stepper
+   (.sk-dot-done) and nav buttons: brand-bronze border + brand-wash fill, ink text (not colored -
+   colored-on-wash muddies in dark mode). Layout/sizing stays on the components in Tailwind; these
+   own only the themeable surface, so a control opts in with one class + a -selected modifier. */
+.sk-select-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  background: var(--sk-card-bg);
+  border: 2px solid var(--sk-line);
+  color: var(--sk-ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+/* :not(-selected) so hovering an already-selected card keeps its full-brand border instead of the
+   muted hover mix winning on specificity. */
+.sk-select-card:not(.sk-select-card-selected):hover { border-color: color-mix(in srgb, var(--sk-brand) 55%, var(--sk-line)); }
+.sk-select-card-selected { border-color: var(--sk-brand); background: var(--sk-brand-wash); }
+/* Text-input container variant (CustomGenreCard): a later unlayered rule so it wins the cursor over
+   the base pointer - Tailwind's own `cursor-text` is in the layered `utilities` layer and would lose. */
+.sk-select-card-text { cursor: text; }
+
+.sk-pill {
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--sk-card-bg);
+  border: 2px solid var(--sk-line);
+  color: var(--sk-ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.sk-pill:not(.sk-pill-selected):hover { border-color: color-mix(in srgb, var(--sk-brand) 55%, var(--sk-line)); }
+.sk-pill-selected { border-color: var(--sk-brand); background: var(--sk-brand-wash); }
+
+.sk-field {
+  width: 100%;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.875rem;
+  background: var(--sk-card-bg);
+  border: 1.5px solid var(--sk-line);
+  color: var(--sk-ink);
+}
+.sk-field::placeholder { color: var(--sk-ink-soft); }
+
+/* Selected-custom container (custom character form) - same bronze-wash + brand border as a
+   selected card, since choosing "create your own" IS the selected option for that step. */
+.sk-form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--sk-brand-wash);
+  border: 2px solid var(--sk-brand);
+}
+
+/* Genre placeholder art: the genre's own accent (--accent-light/--accent-dark set inline per
+   card, same convention as Home's hero/shelf), replacing the off-palette blue->purple gradient.
+   Character/custom orbs use a neutral brand tint (was bg-gray-100). */
+.sk-orb-accent {
+  --accent: var(--accent-light);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--accent) 45%, var(--sk-card-bg)),
+    color-mix(in srgb, var(--accent) 85%, black 10%));
+}
+@media (prefers-color-scheme: dark) {
+  .sk-orb-accent { --accent: var(--accent-dark); }
+}
+.sk-orb-neutral { background: color-mix(in srgb, var(--sk-brand) 14%, var(--sk-card-bg)); }
