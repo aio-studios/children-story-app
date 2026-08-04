@@ -17,7 +17,8 @@ import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
 import { LessonSelector } from "@/components/LessonSelector";
-import { StoryReader } from "@/components/StoryReader";
+import { IllustrationToggle } from "@/components/IllustrationToggle";
+import { CoverStatus, StoryReader } from "@/components/StoryReader";
 import { HomeScreen } from "@/components/HomeScreen";
 import { SetupStepper } from "@/components/SetupStepper";
 import { AppShell } from "@/components/AppShell";
@@ -82,6 +83,11 @@ export default function Home() {
   const [customLessonDraft, setCustomLessonDraft] = useState("");
   const [generatedStory, setGeneratedStory] = useState<{ title: string; story: string } | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  // Illustration opt-in (#38), default off. Cover state is separate from the story so text can
+  // render immediately while the image generates (or fails) in the background.
+  const [illustrate, setIllustrate] = useState(false);
+  const [coverStatus, setCoverStatus] = useState<CoverStatus>("idle");
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   // Synchronous guard against a fast double-click firing two requests before the disabled button re-renders.
   const isGeneratingRef = useRef(false);
   // Bumped whenever the user navigates away mid-generation, so a stale fetch resolving after that
@@ -127,24 +133,57 @@ export default function Home() {
     setLessonSelection({ type: "custom", text });
   }
 
+  function currentSelections() {
+    return {
+      genre: genreSelection,
+      character: characterSelection,
+      length: storyLength,
+      readingLevel,
+      tone,
+      lesson: lessonSelection,
+    };
+  }
+
+  // Non-blocking cover generation (#38): runs after the story is already on screen. Guarded by the
+  // same generationId as the story so a slow image resolving after a regenerate/nav doesn't apply.
+  async function generateCover(selections: ReturnType<typeof currentSelections>, title: string, story: string, generationId: number) {
+    setCoverStatus("loading");
+    setCoverUrl(null);
+    try {
+      const response = await fetch("/api/generate-illustration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections, title }),
+      });
+      const data = await response.json();
+      if (activeGenerationRef.current !== generationId) return;
+      if (!response.ok || typeof data.imageUrl !== "string") {
+        setCoverStatus("failed");
+        return;
+      }
+      setCoverUrl(data.imageUrl);
+      setCoverStatus("loaded");
+      saveContinueStory({ title, story, ...selections, imageUrl: data.imageUrl, savedAt: Date.now() });
+    } catch {
+      if (activeGenerationRef.current !== generationId) return;
+      setCoverStatus("failed");
+    }
+  }
+
   async function generateStory() {
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
     const generationId = ++activeGenerationRef.current;
     setView("loading");
     setGenerationError(null);
+    setCoverStatus("idle");
+    setCoverUrl(null);
+    const selections = currentSelections();
     try {
       const response = await fetch("/api/generate-story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          genre: genreSelection,
-          character: characterSelection,
-          length: storyLength,
-          readingLevel,
-          tone,
-          lesson: lessonSelection,
-        }),
+        body: JSON.stringify(selections),
       });
       const data = await response.json();
       // The user navigated away (Home/New story) while this request was still in flight -
@@ -156,18 +195,11 @@ export default function Home() {
         return;
       }
       setGeneratedStory({ title: data.title, story: data.story });
-      saveContinueStory({
-        title: data.title,
-        story: data.story,
-        genre: genreSelection,
-        character: characterSelection,
-        length: storyLength,
-        readingLevel,
-        tone,
-        lesson: lessonSelection,
-        savedAt: Date.now(),
-      });
+      saveContinueStory({ title: data.title, story: data.story, ...selections, savedAt: Date.now() });
       setView("success");
+      if (illustrate) {
+        void generateCover(selections, data.title, data.story, generationId);
+      }
     } catch {
       if (activeGenerationRef.current !== generationId) return;
       setGenerationError("Something went wrong. Please try again.");
@@ -200,6 +232,13 @@ export default function Home() {
     setLessonSelection(continueStory.lesson);
     if (continueStory.lesson.type === "custom") setCustomLessonDraft(continueStory.lesson.text);
     setGeneratedStory({ title: continueStory.title, story: continueStory.story });
+    if (continueStory.imageUrl) {
+      setCoverUrl(continueStory.imageUrl);
+      setCoverStatus("loaded");
+    } else {
+      setCoverUrl(null);
+      setCoverStatus("idle");
+    }
     setView("success");
   }
 
@@ -284,6 +323,7 @@ export default function Home() {
             onSelectCustom={selectCustomLesson}
             onCustomTextChange={updateCustomLessonText}
           />
+          <IllustrationToggle enabled={illustrate} onChange={setIllustrate} />
         </div>
       ),
     },
@@ -336,6 +376,8 @@ export default function Home() {
           genreSelection={genreSelection}
           title={generatedStory.title}
           story={generatedStory.story}
+          coverStatus={coverStatus}
+          coverUrl={coverUrl}
           onRegenerate={generateStory}
           onBackToSetup={handleBackToSetupFromReader}
         />

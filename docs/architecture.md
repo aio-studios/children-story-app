@@ -1,6 +1,6 @@
 # Architecture
 
-**Last updated:** 2026-07-25 21:17
+**Last updated:** 2026-08-03 18:40
 
 Technical design supporting [PRD.md](PRD.md). Stack decision itself lives in [persona/CTO.md](../persona/CTO.md#tech-stack); this doc covers how the pieces fit together and evolves as we build.
 
@@ -242,6 +242,53 @@ graph TD
 
 This is a snapshot of the code as of issues #20/#21/#22 — re-diagram if it goes stale.
 
+#### Code map: optional cover illustration (#38)
+
+A story's cover is generated in a **second, non-blocking call** after the story text is already on screen - so text never waits on the (slower, ~5-10s) image. Opt-in via the Customize-step toggle, default off.
+
+```mermaid
+graph TD
+  Page["Home · app/page.tsx<br/>state: illustrate, coverStatus, coverUrl"]
+  Toggle["IllustrationToggle<br/>components/IllustrationToggle.tsx<br/>(Customize step, default OFF)"]
+  Gen["generateStory() success<br/>if illustrate: void generateCover(...)"]
+  Route["POST /api/generate-illustration<br/>app/api/generate-illustration/route.ts"]
+  RateLimit["checkRateLimit('illust:'+ip)<br/>own bucket, separate from story gen"]
+  Validate["validateSelections() + title check<br/>lib/validateSelections.ts (shared with story route)"]
+  Safety["containsBlockedContent + classifySafety<br/>on custom text AND the client-supplied title"]
+  Prompt["buildImagePrompt(selections, title)<br/>lib/imagePrompt.ts - fixed storybook style +<br/>character sheet reusing describeCharacter/describeGenre"]
+  ImgClient["generateIllustration()<br/>lib/imageClient.ts"]
+  Gemini["generateImage()<br/>google.image('gemini-2.5-flash-image')"]
+  Blob[("Vercel Blob<br/>story-covers/{uuid}.{ext}")]
+  Cover["StoryCover (in StoryReader)<br/>idle | loading (shimmer) | loaded (img) | failed (fallback)"]
+  LS[("localStorage<br/>continue-story.imageUrl")]
+
+  Page -->|enabled, onChange| Toggle
+  Gen -->|selections, title| Route
+  Route --> RateLimit
+  Route --> Validate
+  Validate --> Safety
+  Safety -->|safe| Prompt
+  Prompt --> ImgClient
+  ImgClient --> Gemini
+  Gemini -->|image bytes| ImgClient
+  ImgClient -->|put| Blob
+  Blob -->|public url| Route
+  Route -->|"{imageUrl}"| Page
+  Page -->|coverStatus, coverUrl| Cover
+  Page -->|on success: saveContinueStory + imageUrl| LS
+
+  classDef stateful fill:#FBEBD6,stroke:#B5670E;
+  classDef plain fill:#EAF1FB,stroke:#4A72A8;
+  classDef safety fill:#FDE8E8,stroke:#B54A4A;
+  class Page stateful;
+  class Toggle,Gen,Route,RateLimit,Validate,Prompt,ImgClient,Gemini,Blob,Cover,LS plain;
+  class Safety safety;
+```
+
+Non-blocking guarantees, all in `app/page.tsx`: `generateCover()` is fired with `void` after `setView("success")`, guarded by the same `generationId` as the story so a slow image resolving after a Regenerate/navigation is discarded; any failure sets `coverStatus = "failed"` (a graceful in-slot fallback) and never touches the story text. The cover URL is written back into the `localStorage` continue-story slot on success (`ContinueStory.imageUrl?`, validated on read) so a resumed story shows its cover without re-generating. Gemini 2.5 Flash Image is the **first non-Anthropic AI vendor** in the stack; it sits behind the Vercel AI SDK's `generateImage`, so swapping to another `google.image(...)` model (e.g. an Imagen 4 fallback) is a one-line change in `lib/imageClient.ts`.
+
+This is a snapshot as of #38 (v1: one hero image). Re-diagram when #37 (branching) extends this to per-scene images.
+
 #### Code map: Home screen + setup stepper (#29, #30)
 
 `app/page.tsx` no longer renders the setup form directly - it's now a `view` state machine (`home | setup | loading | success | error`) wrapped in a shared shell that keeps the nav menu reachable from every screen, including mid-generation:
@@ -284,7 +331,7 @@ Tapping a genre chip on Home lands on setup Step 1 (Genre, that genre pre-highli
 `AppShell` is an iOS-style 3-zone bar (compact 48px, was ~68px): leading hamburger → `NavMenu`, centered page-aware title, reserved trailing slot (unused, for a future story-page action menu). Two new props drive the center title/behavior, computed in `app/page.tsx` from `view`/`generatedStory`:
 
 - `pageTitle?: string` - omitted on Home (shows brand-colored "Storykins"), `"New Story"` during setup, the actual story title on the reader - both non-brand cases render in ink color.
-- `autoHide?: boolean` - `true` only when `view === "success"` (story reader); the header slides away after ~2.5s idle and reappears on scroll/tap, via a `window` scroll/pointerdown listener and a `setTimeout` idle timer inside `AppShell` itself.
+- `autoHide?: boolean` - `true` only when `view === "success"` (story reader); Safari-reader behavior (#44, 2026-08-03): shown on landing, auto-hides after ~2.5s idle, **hides immediately on scroll down**, reveals on scroll up or a tap within the top ~64px strip. Implemented in `AppShell` via a direction-tracking `window` scroll listener (with a small delta threshold to ignore iOS bounce jitter), a top-strip `pointerdown`/`pointermove` reveal, and a `setTimeout` idle timer. An earlier version reappeared on *any* scroll, which wrongly revealed the header when scrolling down to read.
 
 `NavMenu`'s panel slides from the **left** (matches the hamburger's position), locks `document.body` scroll while open, and returns focus to the hamburger button on close.
 
@@ -315,7 +362,7 @@ Client -> authenticated API routes
 Existing Day 1 generation flow is reused for the initial story; the conversation table extends it rather than replacing it.
 
 ### Later
-- Image/video generation: separate API route calling an external provider (e.g. Replicate/fal.ai), decided when this phase starts.
+- Image generation: **partially shipped** as of #38 - a story cover via `/api/generate-illustration` → Gemini 2.5 Flash Image via the Vercel AI SDK, stored in Vercel Blob (see the #38 code map above). Video generation is still deferred to this phase.
 - TTS/STT: separate integration point (e.g. ElevenLabs for TTS, browser Web Speech API or Whisper for STT), decided when this phase starts.
 - Payments: Stripe, with webhook handling for subscription state; ties into the usage-cap logic from F18.
 

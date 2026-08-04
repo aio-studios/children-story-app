@@ -20,13 +20,13 @@ const TONE_GUIDANCE: Record<Tone, string> = {
   heartwarming: "Warm and heartfelt, focused on connection and kindness.",
 };
 
-function describeGenre(genre: GenreSelection): string {
+export function describeGenre(genre: GenreSelection): string {
   if (genre.type === "custom") return genre.text.trim();
   const preset = GENRES.find((g) => g.id === genre.genreId);
   return preset ? `${preset.label} - ${preset.blurb}` : genre.genreId;
 }
 
-function describeCharacter(character: SelectedCharacter, genre: GenreSelection): string {
+export function describeCharacter(character: SelectedCharacter, genre: GenreSelection): string {
   if (character.type === "custom") {
     return `${character.name} (${character.traits}) - ${character.description}`;
   }
