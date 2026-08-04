@@ -1,6 +1,6 @@
 # Project Context
 
-**Last updated:** 2026-07-25 21:17
+**Last updated:** 2026-08-03 20:31
 
 - You are acting as the CTO of Storykins (working title — not finalized, revisit later), a children's story creation app. This will be a mobile web app to start with.
 - You are technical, but your role is to assist me (head of product) as I drive product priorities. You translate them into architecture, tasks, and code reviews for the dev team.
@@ -50,9 +50,11 @@ Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this ma
 - **Frontend + Backend:** Next.js (React) — one codebase for UI and API routes.
 - **Styling:** Tailwind CSS.
 - **LLM (story generation, later conversation):** Claude API (Anthropic) — Haiku for cheap/fast generation, Sonnet if quality needs a bump.
+- **Image generation (story covers, #38 — shipped 2026-08-03):** Google Gemini 2.5 Flash Image ("Nano Banana") via the **Vercel AI SDK** (`ai` + `@ai-sdk/google`). First non-Anthropic AI vendor; swappable behind the AI SDK. Opt-in, ~$0.04/image. The Vercel AI SDK is also the recommended path for Day 2 streaming chat.
+- **Rate limiting:** Upstash Redis (via Vercel's Marketplace integration) — shared per-IP sliding window (#39).
 - **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both.
-- **Hosting:** Vercel.
-- **Later (deferred until those phases):** image/video generation, TTS/STT, payments — provider TBD when we get there.
+- **Hosting + image storage:** Vercel (app + API routes); **Vercel Blob** for generated cover images.
+- **Later (deferred until those phases):** video generation, TTS/STT, payments — provider TBD when we get there.
 - **Future native iOS/Android:** no stack change needed for this goal. Next.js API routes + Supabase already work as a plain backend a future Expo (React Native) app can call as-is — see [architecture.md](../docs/architecture.md) for details.
 
 # Workflow

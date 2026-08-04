@@ -265,6 +265,96 @@ select:focus-visible,
   white-space: nowrap;
 }
 
+/* Hero cover slot (#38): sits between the genre badge and the title. Same 4:3 rounded frame in
+   every state so the layout doesn't jump as the image loads in, fails, or (idle) is absent. */
+.story-reader-hero {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  overflow: hidden;
+  display: block;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--sr-line));
+  background: color-mix(in srgb, var(--accent) 12%, var(--sr-page));
+}
+.story-reader-hero.is-loading,
+.story-reader-hero.is-failed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 18px;
+}
+.story-reader-hero-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--accent) 10%, var(--sr-page)) 30%,
+    color-mix(in srgb, var(--accent) 24%, var(--sr-page)) 50%,
+    color-mix(in srgb, var(--accent) 10%, var(--sr-page)) 70%
+  );
+  background-size: 220% 100%;
+  animation: story-reader-hero-sweep 1.5s ease-in-out infinite;
+}
+@keyframes story-reader-hero-sweep {
+  0% { background-position: 130% 0; }
+  100% { background-position: -130% 0; }
+}
+.story-reader-hero-loading {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--sr-page) 82%, transparent);
+  padding: 7px 13px;
+  border-radius: 999px;
+}
+.story-reader-hero-spin {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-top-color: var(--accent);
+  animation: story-reader-hero-spin 0.8s linear infinite;
+}
+@keyframes story-reader-hero-spin {
+  to { transform: rotate(360deg); }
+}
+.story-reader-hero-fail-orb {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--sr-page));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--sr-page));
+}
+.story-reader-hero-fail-text {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--sr-ink-soft);
+  max-width: 24ch;
+  line-height: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-reader-hero-shimmer,
+  .story-reader-hero-spin {
+    animation: none;
+  }
+}
+
 .story-reader-title {
   font-family: var(--font-fredoka), var(--font-sans);
   font-weight: 600;
@@ -837,3 +927,65 @@ select:focus-visible,
   .sk-orb-accent { --accent: var(--accent-dark); }
 }
 .sk-orb-neutral { background: color-mix(in srgb, var(--sk-brand) 14%, var(--sk-card-bg)); }
+
+/* Illustration opt-in toggle (#38), Customize step. Bronze-wash card matching the selected-state
+   language of the other setup controls. */
+.sk-illus-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--sk-brand-wash);
+  border: 2px solid var(--sk-brand);
+}
+.sk-illus-ico {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: color-mix(in srgb, var(--sk-brand) 20%, var(--sk-bg));
+}
+.sk-illus-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sk-illus-title { font-weight: 800; font-size: 0.9375rem; color: var(--sk-ink); }
+.sk-illus-desc { font-size: 0.78rem; line-height: 1.45; color: var(--sk-ink-soft); }
+.sk-illus-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-ink-soft);
+}
+.sk-switch {
+  flex: none;
+  width: 50px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  background: color-mix(in srgb, var(--sk-ink) 22%, var(--sk-bg));
+  transition: background 0.18s;
+}
+.sk-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.18s;
+}
+.sk-switch[aria-checked="true"] { background: var(--sk-brand); }
+.sk-switch[aria-checked="true"] .sk-switch-knob { transform: translateX(20px); }
+@media (prefers-reduced-motion: reduce) {
+  .sk-switch, .sk-switch-knob { transition: none; }
+}

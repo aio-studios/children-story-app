@@ -14,6 +14,9 @@ export type ContinueStory = {
   readingLevel: ReadingLevel;
   tone: Tone;
   lesson: LessonSelection;
+  // Optional: only present when the story was generated with an illustration (#38). A resumed
+  // story restores its cover from here without re-generating (and re-paying for) the image.
+  imageUrl?: string;
   savedAt: number;
 };
 
@@ -50,6 +53,7 @@ function isValidContinueStory(value: unknown): value is ContinueStory {
     typeof v.readingLevel === "string" &&
     typeof v.tone === "string" &&
     typeof v.lesson === "object" &&
+    (v.imageUrl === undefined || typeof v.imageUrl === "string") &&
     typeof v.savedAt === "number"
   );
 }

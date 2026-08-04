@@ -3,10 +3,14 @@ import { fredoka, nunito } from "@/lib/fonts";
 import { CUSTOM_GENRE_ACCENT, getGenreById } from "@/lib/genres";
 import { GenreAccent, GenreSelection } from "@/lib/types";
 
+export type CoverStatus = "idle" | "loading" | "loaded" | "failed";
+
 type StoryReaderProps = {
   genreSelection: GenreSelection;
   title: string;
   story: string;
+  coverStatus: CoverStatus;
+  coverUrl: string | null;
   onRegenerate: () => void;
   onBackToSetup: () => void;
 };
@@ -30,7 +34,36 @@ function genreDisplay(genreSelection: GenreSelection): { icon: string; label: st
   return { icon: "✨", label, accent: CUSTOM_GENRE_ACCENT };
 }
 
-export function StoryReader({ genreSelection, title, story, onRegenerate, onBackToSetup }: StoryReaderProps) {
+function StoryCover({ status, url, icon }: { status: CoverStatus; url: string | null; icon: string }) {
+  if (status === "idle") return null;
+
+  if (status === "loading") {
+    return (
+      <div className="story-reader-hero is-loading">
+        <div className="story-reader-hero-shimmer" aria-hidden="true" />
+        <span className="story-reader-hero-loading">
+          <span className="story-reader-hero-spin" aria-hidden="true" />
+          Painting your cover…
+        </span>
+      </div>
+    );
+  }
+
+  if (status === "loaded" && url) {
+    // eslint-disable-next-line @next/next/no-img-element -- Blob-hosted covers, no next/image optimizer.
+    return <img className="story-reader-hero" src={url} alt="" />;
+  }
+
+  // Failed (or loaded with no url): graceful, non-broken fallback; the story stands on its own.
+  return (
+    <div className="story-reader-hero is-failed" role="img" aria-label="Cover illustration unavailable">
+      <span className="story-reader-hero-fail-orb" aria-hidden="true">{icon}</span>
+      <span className="story-reader-hero-fail-text">The cover didn&apos;t come through this time — but your story is all here.</span>
+    </div>
+  );
+}
+
+export function StoryReader({ genreSelection, title, story, coverStatus, coverUrl, onRegenerate, onBackToSetup }: StoryReaderProps) {
   const { icon, label, accent } = genreDisplay(genreSelection);
   const paragraphs = splitParagraphs(story);
   const accentVars = { "--accent-light": accent.light, "--accent-dark": accent.dark } as CSSProperties;
@@ -44,6 +77,7 @@ export function StoryReader({ genreSelection, title, story, onRegenerate, onBack
             <span className="story-reader-badge-icon">{icon}</span>
             <span className="story-reader-badge-label">{label}</span>
           </span>
+          <StoryCover status={coverStatus} url={coverUrl} icon={icon} />
           <h1 className="story-reader-title">{title}</h1>
           <div className="story-reader-flourish" aria-hidden="true">
             <span />

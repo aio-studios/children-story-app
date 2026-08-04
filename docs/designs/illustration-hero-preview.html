@@ -1,0 +1,569 @@
+<title>Storykins · Hero Illustration Preview (#38)</title>
+<style>
+  :root {
+    /* Studio chrome neutrals — warm, biased toward the app's bronze so it doesn't fight the device */
+    --chrome-bg: #ece6da;
+    --chrome-panel: #f7f3ea;
+    --chrome-ink: #3a3122;
+    --chrome-ink-soft: #7a6d55;
+    --chrome-line: rgba(58, 49, 34, 0.16);
+    --chrome-brand: #8a6d3b;
+    --chrome-active-bg: #8a6d3b;
+    --chrome-active-ink: #fbf7ee;
+
+    /* App tokens (mirrored from app/globals.css so the device is faithful) */
+    --sk-bg: #fbf7ee;
+    --sk-canvas: #dcd3c1;
+    --sk-ink: #2a2116;
+    --sk-ink-soft: #6e6250;
+    --sk-line: rgba(42, 33, 22, 0.16);
+    --sk-brand: #8a6d3b;
+    --sk-brand-wash: rgba(138, 109, 59, 0.14);
+    --sk-card-bg: #fffdf8;
+
+    /* Reader tokens */
+    --sr-canvas: #dcd3c1;
+    --sr-page: #fbf7ee;
+    --sr-ink: #2a2116;
+    --sr-ink-soft: #6e6250;
+    --sr-line: rgba(42, 33, 22, 0.14);
+    --sr-btn-primary-text: #fffdf8;
+
+    /* Per-genre accent (Bedtime/Adventure sample) */
+    --accent-light: #6b83c9;
+    --accent-dark: #93a6e0;
+    --accent: var(--accent-light);
+
+    --font-display: "SF Pro Rounded", ui-rounded, "Hiragino Maru Gothic ProN", "Quicksand", system-ui, sans-serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --chrome-bg: #17130d;
+      --chrome-panel: #211a11;
+      --chrome-ink: #f0e8d7;
+      --chrome-ink-soft: #a89a80;
+      --chrome-line: rgba(240, 232, 215, 0.14);
+      --chrome-brand: #d9b876;
+      --chrome-active-bg: #d9b876;
+      --chrome-active-ink: #241a10;
+
+      --sk-bg: #221c13;
+      --sk-canvas: #14110b;
+      --sk-ink: #f2ebdb;
+      --sk-ink-soft: #b5a890;
+      --sk-line: rgba(242, 235, 219, 0.16);
+      --sk-brand: #d9b876;
+      --sk-brand-wash: rgba(217, 184, 118, 0.16);
+      --sk-card-bg: #241d13;
+
+      --sr-canvas: #14110b;
+      --sr-page: #221c13;
+      --sr-ink: #f2ebdb;
+      --sr-ink-soft: #b5a890;
+      --sr-line: rgba(242, 235, 219, 0.14);
+      --sr-btn-primary-text: #241a10;
+
+      --accent: var(--accent-dark);
+    }
+  }
+  /* Explicit toggle overrides win over the media query in both directions */
+  :root[data-theme="light"] {
+    --chrome-bg: #ece6da; --chrome-panel: #f7f3ea; --chrome-ink: #3a3122; --chrome-ink-soft: #7a6d55;
+    --chrome-line: rgba(58,49,34,0.16); --chrome-brand: #8a6d3b; --chrome-active-bg: #8a6d3b; --chrome-active-ink: #fbf7ee;
+    --sk-bg:#fbf7ee; --sk-canvas:#dcd3c1; --sk-ink:#2a2116; --sk-ink-soft:#6e6250; --sk-line:rgba(42,33,22,0.16);
+    --sk-brand:#8a6d3b; --sk-brand-wash:rgba(138,109,59,0.14); --sk-card-bg:#fffdf8;
+    --sr-canvas:#dcd3c1; --sr-page:#fbf7ee; --sr-ink:#2a2116; --sr-ink-soft:#6e6250; --sr-line:rgba(42,33,22,0.14);
+    --sr-btn-primary-text:#fffdf8; --accent: var(--accent-light);
+  }
+  :root[data-theme="dark"] {
+    --chrome-bg:#17130d; --chrome-panel:#211a11; --chrome-ink:#f0e8d7; --chrome-ink-soft:#a89a80;
+    --chrome-line:rgba(240,232,215,0.14); --chrome-brand:#d9b876; --chrome-active-bg:#d9b876; --chrome-active-ink:#241a10;
+    --sk-bg:#221c13; --sk-canvas:#14110b; --sk-ink:#f2ebdb; --sk-ink-soft:#b5a890; --sk-line:rgba(242,235,219,0.16);
+    --sk-brand:#d9b876; --sk-brand-wash:rgba(217,184,118,0.16); --sk-card-bg:#241d13;
+    --sr-canvas:#14110b; --sr-page:#221c13; --sr-ink:#f2ebdb; --sr-ink-soft:#b5a890; --sr-line:rgba(242,235,219,0.14);
+    --sr-btn-primary-text:#241a10; --accent: var(--accent-dark);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--chrome-bg);
+    color: var(--chrome-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+  }
+
+  header.studio { margin-bottom: 22px; }
+  .eyebrow {
+    font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--chrome-brand); margin: 0 0 6px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 4vw, 30px); font-weight: 700; margin: 0 0 8px; letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .sub { margin: 0; max-width: 62ch; color: var(--chrome-ink-soft); font-size: 14.5px; line-height: 1.6; }
+
+  .layout { display: grid; grid-template-columns: 1fr; gap: 26px; align-items: start; }
+  @media (min-width: 720px) { .layout { grid-template-columns: 248px 1fr; } }
+
+  /* ---- Control panel ---- */
+  .controls {
+    background: var(--chrome-panel);
+    border: 1px solid var(--chrome-line);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: 16px;
+  }
+  .ctl-group { display: flex; flex-direction: column; gap: 8px; }
+  .ctl-label {
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--chrome-ink-soft);
+  }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button {
+    font-family: var(--font-body);
+    font-size: 12.5px; font-weight: 700;
+    padding: 8px 11px; border-radius: 10px;
+    border: 1px solid var(--chrome-line);
+    background: transparent; color: var(--chrome-ink);
+    cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+  }
+  .seg button:hover { border-color: var(--chrome-brand); }
+  .seg button[aria-pressed="true"] {
+    background: var(--chrome-active-bg); color: var(--chrome-active-ink); border-color: var(--chrome-active-bg);
+  }
+  .seg button:focus-visible { outline: 2px solid var(--chrome-brand); outline-offset: 2px; }
+  .ctl-note { font-size: 12px; line-height: 1.5; color: var(--chrome-ink-soft); margin: 2px 0 0; }
+  .ctl-note code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+    background: var(--sk-brand-wash); color: var(--chrome-brand); padding: 1px 5px; border-radius: 5px;
+  }
+
+  /* ---- Device ---- */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .device {
+    width: 390px; max-width: 100%;
+    border-radius: 42px;
+    padding: 10px;
+    background: #0b0a08;
+    box-shadow: 0 30px 70px -24px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.4);
+  }
+  .screen {
+    position: relative;
+    border-radius: 33px; overflow: hidden;
+    height: 760px;
+    background: var(--sr-canvas);
+    display: flex; flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 128px; height: 26px; background: #0b0a08;
+    border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; z-index: 40;
+  }
+  .device-caption { font-size: 12px; color: var(--chrome-ink-soft); }
+
+  /* App top bar (faithful-ish) */
+  .topbar {
+    height: 48px; flex: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+    background: color-mix(in srgb, var(--sk-bg) 90%, transparent);
+    border-bottom: 1px solid var(--sk-line);
+    backdrop-filter: blur(8px);
+    z-index: 30;
+  }
+  .topbar .burger { width: 22px; display: flex; flex-direction: column; gap: 4px; }
+  .topbar .burger span { height: 2px; background: var(--sk-brand); border-radius: 2px; }
+  .topbar .title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--sk-ink); }
+  .topbar .title.brand { color: var(--sk-brand); }
+  .topbar .slot { width: 22px; }
+
+  .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ---------- READER VIEW ---------- */
+  .reader-canvas {
+    min-height: 100%;
+    display: flex; justify-content: center;
+    background: var(--sr-canvas);
+    padding: 26px 18px 40px;
+  }
+  .reader-frame { --accent: var(--accent-light); position: relative; width: 100%; max-width: 360px; }
+  :root[data-theme="dark"] .reader-frame { --accent: var(--accent-dark); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .reader-frame { --accent: var(--accent-dark); } }
+  .reader-glow {
+    position: absolute; inset: -24px -8px auto -8px; height: 200px;
+    background: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 75%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 56px);
+    mask-image: linear-gradient(to bottom, transparent, black 56px);
+    pointer-events: none; z-index: 0;
+  }
+  .reader-page {
+    position: relative; z-index: 1; width: 100%;
+    background: var(--sr-page); color: var(--sr-ink);
+    border-radius: 24px; border: 1px solid var(--sr-line);
+    padding: 24px 22px 22px;
+    display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 18px 40px -16px rgba(0,0,0,0.3);
+  }
+  .badge {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px 6px 10px; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--sr-page));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--sr-page));
+    color: var(--accent);
+    font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .reader-title {
+    font-family: var(--font-display); font-weight: 700; font-size: 26px; line-height: 1.25; text-wrap: balance;
+    margin: 0;
+  }
+  .flourish { display: flex; align-items: center; gap: 8px; }
+  .flourish span { height: 1px; flex: 1; background: color-mix(in srgb, var(--accent) 45%, var(--sr-line)); }
+  .flourish i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+  .story p { font-size: 16px; line-height: 1.75; margin: 0 0 14px; color: var(--sr-ink); }
+  .story p:last-child { margin-bottom: 0; }
+  .actions { display: flex; gap: 10px; margin-top: 4px; }
+  .rbtn {
+    font-family: var(--font-body); font-size: 14px; font-weight: 800; border-radius: 14px;
+    padding: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    border: none; cursor: pointer; flex: 1;
+  }
+  .rbtn-primary { background: var(--accent); color: var(--sr-btn-primary-text); }
+  .rbtn-secondary { background: transparent; border: 2px solid var(--sr-ink); color: var(--sr-ink); padding: 10px 12px; }
+
+  /* ---- HERO IMAGE SLOT (the thing under review) ---- */
+  .hero {
+    position: relative; width: 100%; aspect-ratio: 4 / 3;
+    border-radius: 18px; overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--sr-line));
+    background: color-mix(in srgb, var(--accent) 12%, var(--sr-page));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .hero svg { display: block; width: 100%; height: 100%; }
+
+  /* loading state */
+  .hero.is-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .hero .shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(100deg,
+      color-mix(in srgb, var(--accent) 10%, var(--sr-page)) 30%,
+      color-mix(in srgb, var(--accent) 24%, var(--sr-page)) 50%,
+      color-mix(in srgb, var(--accent) 10%, var(--sr-page)) 70%);
+    background-size: 220% 100%;
+    animation: sweep 1.5s ease-in-out infinite;
+  }
+  @keyframes sweep { 0% { background-position: 130% 0; } 100% { background-position: -130% 0; } }
+  @media (prefers-reduced-motion: reduce) { .hero .shimmer { animation: none; } }
+  .hero .loading-label {
+    position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 800; letter-spacing: 0.03em; color: var(--accent);
+    background: color-mix(in srgb, var(--sr-page) 82%, transparent);
+    padding: 7px 13px; border-radius: 999px;
+  }
+  .spin { width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent); border-top-color: var(--accent);
+    animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+  /* failed state */
+  .hero.is-failed { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 18px; }
+  .hero .fail-orb {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--sr-page));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--sr-page));
+  }
+  .hero .fail-text { font-size: 12.5px; font-weight: 700; color: var(--sr-ink-soft); max-width: 22ch; line-height: 1.5; }
+
+  .caption-under {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--sr-ink-soft); margin-top: -6px;
+  }
+  .caption-under .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+
+  /* ---------- SETUP TOGGLE VIEW ---------- */
+  .setup-canvas { min-height: 100%; background: var(--sk-bg); padding: 22px 18px 40px; display: flex; flex-direction: column; gap: 18px; }
+  .setup-step-label { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sk-brand); }
+  .setup-h { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--sk-ink); margin: 0; }
+  .setup-hint { font-size: 13px; color: var(--sk-ink-soft); margin: -8px 0 4px; line-height: 1.5; }
+
+  .mock-pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mock-pill {
+    font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 12px;
+    border: 2px solid var(--sk-line); background: var(--sk-card-bg); color: var(--sk-ink-soft);
+  }
+  .mock-pill.sel { border-color: var(--sk-brand); background: var(--sk-brand-wash); color: var(--sk-ink); }
+  .mock-block-label { font-size: 13px; font-weight: 800; color: var(--sk-ink); }
+
+  .toggle-card {
+    border: 2px solid var(--sk-brand); background: var(--sk-brand-wash);
+    border-radius: 16px; padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .toggle-card .ico {
+    width: 42px; height: 42px; flex: none; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: color-mix(in srgb, var(--sk-brand) 20%, var(--sk-bg));
+  }
+  .toggle-card .body { flex: 1; min-width: 0; }
+  .toggle-card .t { font-weight: 800; font-size: 15px; color: var(--sk-ink); }
+  .toggle-card .d { font-size: 12.5px; color: var(--sk-ink-soft); line-height: 1.5; margin-top: 2px; }
+  .switch {
+    flex: none; width: 50px; height: 30px; border-radius: 999px; border: none; cursor: pointer; position: relative;
+    background: color-mix(in srgb, var(--sk-ink) 22%, var(--sk-bg)); transition: background .18s;
+  }
+  .switch .knob {
+    position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform .18s;
+  }
+  .switch[aria-checked="true"] { background: var(--sk-brand); }
+  .switch[aria-checked="true"] .knob { transform: translateX(20px); }
+  .switch:focus-visible { outline: 2px solid var(--sk-brand); outline-offset: 2px; }
+  .default-tag { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sk-ink-soft); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 8px; font-size: 12.5px; color: var(--chrome-ink-soft); }
+  .legend b { color: var(--chrome-ink); font-weight: 700; }
+
+  .footnote { margin-top: 22px; font-size: 12px; color: var(--chrome-ink-soft); line-height: 1.6; max-width: 60ch; }
+  .footnote code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+</style>
+
+<div class="wrap">
+  <header class="studio">
+    <p class="eyebrow">Storykins · Design preview</p>
+    <h1>Hero illustration in the story reader</h1>
+    <p class="sub">One AI-generated cover image per story (#38 v1), sitting at the top of the reader page. Toggle the states below — the image never blocks the story: text renders first, the picture fills in after, and a failure degrades gracefully. Setup gets a single opt-in switch, off by default.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="controls">
+      <div class="ctl-group">
+        <span class="ctl-label">Screen</span>
+        <div class="seg" id="seg-screen">
+          <button data-screen="reader" aria-pressed="true">Reader</button>
+          <button data-screen="setup" aria-pressed="false">Setup toggle</button>
+        </div>
+      </div>
+      <div class="ctl-group" id="state-group">
+        <span class="ctl-label">Image state</span>
+        <div class="seg" id="seg-state">
+          <button data-state="loaded" aria-pressed="true">Loaded</button>
+          <button data-state="loading" aria-pressed="false">Loading</button>
+          <button data-state="failed" aria-pressed="false">Failed</button>
+          <button data-state="off" aria-pressed="false">Off (no image)</button>
+        </div>
+        <p class="ctl-note">The <code>Off</code> state is exactly today's reader — nothing added when a reader didn't opt in.</p>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">Theme</span>
+        <div class="seg" id="seg-theme">
+          <button data-theme-btn="light" aria-pressed="true">Light</button>
+          <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">Notes</span>
+        <p class="ctl-note">Type is approximated — the app's Fredoka/Nunito webfonts can't load here. Placement, states &amp; color are faithful to the real <code>--sk</code>/<code>--sr</code> tokens.</p>
+      </div>
+    </aside>
+
+    <div class="stage">
+      <div class="device">
+        <div class="screen">
+          <div class="notch" aria-hidden="true"></div>
+
+          <!-- READER -->
+          <div class="topbar" data-view="reader">
+            <div class="burger" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="title">The Fox Who Forgot the Moon</div>
+            <div class="slot"></div>
+          </div>
+          <div class="scroll" data-view="reader">
+            <div class="reader-canvas">
+              <div class="reader-frame">
+                <div class="reader-glow" aria-hidden="true"></div>
+                <article class="reader-page">
+                  <span class="badge"><span aria-hidden="true">🌙</span><span>Bedtime</span></span>
+
+                  <!-- hero slot injected here -->
+                  <div id="hero-mount"></div>
+
+                  <h1 class="reader-title">The Fox Who Forgot the Moon</h1>
+                  <div class="flourish" aria-hidden="true"><span></span><i></i><span></span></div>
+                  <div class="story">
+                    <p>Little Pip the fox had a very important job. Every night, she tucked the moon into its blanket of clouds so the whole forest could sleep.</p>
+                    <p>But one sleepy evening, Pip yawned so wide that she forgot exactly where she'd left it. "Oh no," she whispered. "A forest can't sleep without its moon."</p>
+                    <p>So Pip asked the owl, the hedgehog, and even the grumpy old toad — and one by one, each friend helped her remember a little more of the way.</p>
+                  </div>
+                  <div class="actions">
+                    <button class="rbtn rbtn-primary" type="button"><span aria-hidden="true">↻</span> Regenerate</button>
+                    <button class="rbtn rbtn-secondary" type="button">← Back to setup</button>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- SETUP -->
+          <div class="topbar" data-view="setup" hidden>
+            <div class="burger" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="title">New Story</div>
+            <div class="slot"></div>
+          </div>
+          <div class="scroll" data-view="setup" hidden>
+            <div class="setup-canvas">
+              <span class="setup-step-label">Step 3 · Customize</span>
+              <h2 class="setup-h">Add the finishing touches</h2>
+              <p class="setup-hint">A quick peek at where the new illustration switch sits — below the existing options on the Customize step.</p>
+
+              <div class="mock-block-label">Length</div>
+              <div class="mock-pill-row">
+                <span class="mock-pill sel">Quick</span>
+                <span class="mock-pill">Longer</span>
+              </div>
+
+              <div class="mock-block-label">Tone</div>
+              <div class="mock-pill-row">
+                <span class="mock-pill sel">Calming</span>
+                <span class="mock-pill">Funny</span>
+                <span class="mock-pill">Exciting</span>
+              </div>
+
+              <div class="mock-block-label" style="margin-top:4px;">Illustration</div>
+              <div class="toggle-card">
+                <div class="ico" aria-hidden="true">🎨</div>
+                <div class="body">
+                  <div class="t">Add a cover picture</div>
+                  <div class="d">One AI illustration for your story's title page. Takes a few extra seconds. <span class="default-tag">Off by default</span></div>
+                </div>
+                <button class="switch" role="switch" aria-checked="false" aria-label="Add a cover picture" id="setup-switch">
+                  <span class="knob"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <p class="device-caption">iPhone 12 Pro · 390 pt logical width</p>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>Loaded</b> — the generated cover sits above the title.</span>
+    <span><b>Loading</b> — shimmer while the image generates; story is already readable.</span>
+    <span><b>Failed</b> — friendly fallback, story unaffected.</span>
+    <span><b>Off</b> — identical to today.</span>
+  </div>
+
+  <p class="footnote">The "Loaded" image is a hand-drawn SVG stand-in for what Gemini 2.5 Flash Image ("Nano Banana") would generate from the story's character sheet — used only to show placement, framing, and the rounded 4:3 slot. Real output will be a full raster illustration.</p>
+</div>
+
+<template id="tpl-loaded">
+  <div class="hero">
+    <svg viewBox="0 0 400 300" role="img" aria-label="Illustration: a small fox looking up at the moon in a starry forest">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2b3a6b"/><stop offset="1" stop-color="#6b83c9"/>
+        </linearGradient>
+        <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#fff7d6"/><stop offset="1" stop-color="#f4e2a0"/>
+        </radialGradient>
+      </defs>
+      <rect width="400" height="300" fill="url(#sky)"/>
+      <circle cx="300" cy="80" r="38" fill="url(#moon)"/>
+      <g fill="#fff" opacity="0.85">
+        <circle cx="60" cy="50" r="2"/><circle cx="120" cy="90" r="1.6"/><circle cx="180" cy="40" r="2.2"/>
+        <circle cx="240" cy="120" r="1.4"/><circle cx="90" cy="150" r="1.8"/><circle cx="350" cy="150" r="1.6"/>
+        <circle cx="150" cy="130" r="1.3"/><circle cx="30" cy="110" r="1.5"/>
+      </g>
+      <path d="M0 300 L0 235 Q60 200 120 232 Q180 264 260 226 Q330 194 400 230 L400 300 Z" fill="#24405c"/>
+      <path d="M0 300 L0 262 Q90 232 200 262 Q310 292 400 258 L400 300 Z" fill="#183049"/>
+      <g transform="translate(190 214)">
+        <ellipse cx="12" cy="46" rx="26" ry="8" fill="#0f2436" opacity="0.5"/>
+        <path d="M12 8 C 30 8 34 30 30 44 L -6 44 C -10 30 -6 8 12 8 Z" fill="#e08a4a"/>
+        <path d="M12 46 C 26 44 34 40 40 30 C 44 40 40 52 24 54 Z" fill="#e08a4a"/>
+        <path d="M40 30 C 44 40 40 52 24 54" fill="none" stroke="#f6b57a" stroke-width="2"/>
+        <circle cx="12" cy="18" r="12" fill="#ef9a5a"/>
+        <path d="M2 10 L 6 -2 L 12 8 Z" fill="#e08a4a"/>
+        <path d="M22 10 L 18 -2 L 12 8 Z" fill="#e08a4a"/>
+        <path d="M4 9 L 6 2 L 10 8 Z" fill="#ffd9b0"/>
+        <path d="M20 9 L 18 2 L 14 8 Z" fill="#ffd9b0"/>
+        <circle cx="8" cy="17" r="1.8" fill="#2a2116"/>
+        <circle cx="16" cy="17" r="1.8" fill="#2a2116"/>
+        <path d="M9 22 Q12 25 15 22" fill="none" stroke="#2a2116" stroke-width="1.4" stroke-linecap="round"/>
+        <ellipse cx="12" cy="20" rx="7" ry="4.5" fill="#fff" opacity="0.85"/>
+      </g>
+    </svg>
+  </div>
+  <div class="caption-under"><span class="dot" aria-hidden="true"></span> Cover made just for this story</div>
+</template>
+
+<template id="tpl-loading">
+  <div class="hero is-loading">
+    <div class="shimmer" aria-hidden="true"></div>
+    <span class="loading-label"><span class="spin" aria-hidden="true"></span> Painting your cover…</span>
+  </div>
+</template>
+
+<template id="tpl-failed">
+  <div class="hero is-failed" role="img" aria-label="Cover illustration unavailable">
+    <div class="fail-orb" aria-hidden="true">🌙</div>
+    <div class="fail-text">The cover didn't come through this time — but your story is all here.</div>
+  </div>
+</template>
+
+<script>
+  const root = document.documentElement;
+  const heroMount = document.getElementById('hero-mount');
+  const tpl = { loaded: 'tpl-loaded', loading: 'tpl-loading', failed: 'tpl-failed' };
+
+  function renderHero(state) {
+    heroMount.innerHTML = '';
+    if (state === 'off') return;
+    const t = document.getElementById(tpl[state]);
+    heroMount.appendChild(t.content.cloneNode(true));
+  }
+  renderHero('loaded');
+
+  function wireSeg(id, onPick) {
+    const seg = document.getElementById(id);
+    seg.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      onPick(btn);
+    });
+  }
+
+  wireSeg('seg-state', (btn) => renderHero(btn.dataset.state));
+
+  wireSeg('seg-theme', (btn) => root.setAttribute('data-theme', btn.dataset.themeBtn));
+
+  wireSeg('seg-screen', (btn) => {
+    const screen = btn.dataset.screen;
+    document.querySelectorAll('[data-view]').forEach(el => {
+      el.hidden = el.getAttribute('data-view') !== screen;
+    });
+    document.getElementById('state-group').style.opacity = screen === 'reader' ? '1' : '0.4';
+    document.getElementById('state-group').style.pointerEvents = screen === 'reader' ? 'auto' : 'none';
+  });
+
+  const sw = document.getElementById('setup-switch');
+  sw.addEventListener('click', () => {
+    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  });
+</script>
