@@ -318,16 +318,37 @@ select:focus-visible,
   padding: 7px 13px;
   border-radius: 999px;
 }
+/* Spinner: a static paintbrush centered inside a rotating ring (the ring is the ::before so the
+   brush stays upright while it spins) - reads as "painting" rather than a generic loader. */
 .story-reader-hero-spin {
-  width: 13px;
-  height: 13px;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+.story-reader-hero-spin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-top-color: var(--accent);
   animation: story-reader-hero-spin 0.8s linear infinite;
 }
 @keyframes story-reader-hero-spin {
   to { transform: rotate(360deg); }
+}
+
+/* Story-generation loading text ("Writing your story…"): match the app's body font + ink so it
+   isn't the browser-default face/color. */
+.sk-loading-text {
+  font-family: var(--font-nunito), var(--font-sans);
+  color: var(--sk-ink);
+  font-weight: 700;
 }
 .story-reader-hero-fail-orb {
   width: 46px;
@@ -350,7 +371,7 @@ select:focus-visible,
 }
 @media (prefers-reduced-motion: reduce) {
   .story-reader-hero-shimmer,
-  .story-reader-hero-spin {
+  .story-reader-hero-spin::before {
     animation: none;
   }
 }
@@ -928,16 +949,21 @@ select:focus-visible,
 }
 .sk-orb-neutral { background: color-mix(in srgb, var(--sk-brand) 14%, var(--sk-card-bg)); }
 
-/* Illustration opt-in toggle (#38), Customize step. Bronze-wash card matching the selected-state
-   language of the other setup controls. */
+/* Illustration opt-in toggle (#38), Customize step. Follows the same unselected→selected language as
+   the other setup controls: neutral/greyed when OFF, brand-bronze highlight when ON. */
 .sk-illus-card {
   display: flex;
   align-items: center;
   gap: 0.875rem;
   padding: 1rem;
   border-radius: 1rem;
+  background: var(--sk-card-bg);
+  border: 2px solid var(--sk-line);
+  transition: background 0.18s, border-color 0.18s;
+}
+.sk-illus-card.is-on {
   background: var(--sk-brand-wash);
-  border: 2px solid var(--sk-brand);
+  border-color: var(--sk-brand);
 }
 .sk-illus-ico {
   flex: none;
@@ -948,6 +974,10 @@ select:focus-visible,
   align-items: center;
   justify-content: center;
   font-size: 22px;
+  background: color-mix(in srgb, var(--sk-ink) 8%, var(--sk-card-bg));
+  transition: background 0.18s;
+}
+.sk-illus-card.is-on .sk-illus-ico {
   background: color-mix(in srgb, var(--sk-brand) 20%, var(--sk-bg));
 }
 .sk-illus-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -987,5 +1017,5 @@ select:focus-visible,
 .sk-switch[aria-checked="true"] { background: var(--sk-brand); }
 .sk-switch[aria-checked="true"] .sk-switch-knob { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) {
-  .sk-switch, .sk-switch-knob { transition: none; }
+  .sk-switch, .sk-switch-knob, .sk-illus-card, .sk-illus-ico { transition: none; }
 }

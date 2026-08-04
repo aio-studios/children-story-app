@@ -18,6 +18,9 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Fixed
 
+- 22:56 - Illustration toggle card now follows the app's unselected→selected language (#38 UAT): **greyed/neutral when OFF** (`--sk-card-bg` + `--sk-line`), **brand-bronze highlight when ON** (`--sk-brand-wash` + brand border, tinted icon tile), with a smooth color transition. Previously it was always bronze regardless of state, unlike every other selector.
+- 22:56 - Cover-loading spinner is now a **paintbrush inside the rotating ring** (🖌️ centered, static, while the ring spins via a `::before`) instead of a plain loader (#38 UAT) - reads as "painting."
+- 22:56 - Story-generation loading text ("Writing your story…") now uses the **app font + `--sk-ink`** instead of the browser-default face/color, so it matches the rest of the app in both themes.
 - 20:07 - Story-reader header auto-hide is now **directional**, matching the Safari-reader pattern (#44). Previously the header reappeared on *any* scroll, so scrolling **down** to read wrongly popped it back into view. Now: shown on landing → auto-hides after ~2.5s idle → **hides immediately on scroll down** → **reveals on scroll up** or a **tap near the top edge**. Taps down in the story body no longer force it back, so reading stays uninterrupted. A small scroll-delta threshold ignores iOS momentum/bounce jitter, and a down-scroll within the top ~64px strip is ignored (nothing to read past yet). `components/AppShell.tsx` only. Verified via scripted scroll (up/down/tap-top/body-tap) at iPhone 12 Pro viewport.
 
 ## 2026-08-02

@@ -360,7 +360,7 @@ export default function Home() {
       {view === "loading" && (
         <main className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 p-6">
           <span className="animate-pencil-write text-5xl">✏️</span>
-          <p className="flex items-center gap-1 text-base">
+          <p className="sk-loading-text flex items-center gap-1 text-base">
             Writing your story
             <span className="inline-flex gap-0.5">
               <span className="animate-dot-bounce">.</span>

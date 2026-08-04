@@ -42,7 +42,7 @@ function StoryCover({ status, url, icon }: { status: CoverStatus; url: string | 
       <div className="story-reader-hero is-loading">
         <div className="story-reader-hero-shimmer" aria-hidden="true" />
         <span className="story-reader-hero-loading">
-          <span className="story-reader-hero-spin" aria-hidden="true" />
+          <span className="story-reader-hero-spin" aria-hidden="true">🖌️</span>
           Painting your cover…
         </span>
       </div>

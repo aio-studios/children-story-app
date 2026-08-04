@@ -5,7 +5,7 @@ type IllustrationToggleProps = {
 
 export function IllustrationToggle({ enabled, onChange }: IllustrationToggleProps) {
   return (
-    <div className="sk-illus-card">
+    <div className={`sk-illus-card ${enabled ? "is-on" : ""}`}>
       <span className="sk-illus-ico" aria-hidden="true">🎨</span>
       <div className="sk-illus-body">
         <span className="sk-illus-title">Add a cover picture</span>
