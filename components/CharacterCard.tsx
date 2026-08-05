@@ -26,8 +26,8 @@ export function CharacterCard({ character, selected, onSelect }: CharacterCardPr
       ) : (
         <div className="sk-orb-neutral flex h-16 w-16 items-center justify-center rounded-full text-2xl">🧑</div>
       )}
-      <span className="text-sm font-medium">{character.name}</span>
-      <span className="text-xs text-[color:var(--sk-ink-soft)]">{character.description}</span>
+      <span className="text-body font-medium">{character.name}</span>
+      <span className="text-note text-[color:var(--sk-ink-soft)]">{character.description}</span>
     </button>
   );
 }

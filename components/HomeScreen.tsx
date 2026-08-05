@@ -99,7 +99,7 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
             >
               {genre.image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
-                <img src={genre.image} alt="" width={34} height={34} loading="lazy" className="sk-genre-chip-img" />
+                <img src={genre.image} alt="" width={46} height={46} loading="lazy" className="sk-genre-chip-img" />
               ) : (
                 genre.icon
               )}

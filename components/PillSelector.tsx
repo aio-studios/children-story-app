@@ -13,7 +13,7 @@ type PillSelectorProps<T extends string> = {
 export function PillSelector<T extends string>({ label, options, selected, onSelect, children }: PillSelectorProps<T>) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-body font-medium">{label}</span>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button

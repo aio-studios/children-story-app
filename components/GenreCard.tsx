@@ -63,7 +63,7 @@ export function GenreCard({ genre, selected, onSelect }: GenreCardProps) {
           {genre.icon}
         </div>
       )}
-      <span className="text-sm font-medium">{genre.label}</span>
+      <span className="text-body font-medium">{genre.label}</span>
     </button>
   );
 }
