@@ -10,6 +10,8 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Fixed
 
+- 14:38 - **"Create your own" CTA icon no longer washes out** (#65 follow-up). The original illustrated icon was a pale-blue book with faint stars on a cream/pink wash — near-invisible against the CTA's near-white circular frame (UAT catch). Regenerated it (same Gemini pipeline) as a **richly saturated golden storybook with brightly glowing stars on a deep twilight-blue ground**, so it reads with real contrast at 52px and pops on the bronze band in both themes. Pure asset swap — replaced `public/create-your-own.jpg` (+ its `docs/designs/source-art/create-your-own.png` source of truth); no code/CSS change (the darker art fully fills the circle-crop, so the frame background only ever shows on the emoji fallback). Verified live at iPhone 12 Pro in light + dark (icon renders, corners crop clean, no white edge).
+
 - 12:02 - **Genre strip now signals it scrolls** (#62). On Home's "Start a new story" row, exactly 5 chips fit at 390px and the 6th ("Your own") was fully off-screen — looked like 5 genres was all there was. Widened chips **66→76px** (art **40→46px**) so at common phone widths a chip **peeks ~half-visible** at the right edge as a scroll cue, and added a **right-edge fade** (`mask-image`) to both the genre strip and the Daily/Popular shelves so the "more to the right" hint holds at **any** device width, not just 390px.
 
 ### Changed
