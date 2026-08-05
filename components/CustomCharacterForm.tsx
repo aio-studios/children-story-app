@@ -9,7 +9,7 @@ type CustomCharacterFormProps = {
 export function CustomCharacterForm({ character, onChange }: CustomCharacterFormProps) {
   return (
     <div className="sk-form-panel">
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1 text-body font-medium">
         Name
         <input
           type="text"
@@ -19,7 +19,7 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
           className="sk-field font-normal"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1 text-body font-medium">
         Traits
         <input
           type="text"
@@ -30,7 +30,7 @@ export function CustomCharacterForm({ character, onChange }: CustomCharacterForm
           className="sk-field font-normal"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1 text-body font-medium">
         Appearance / personality description
         <textarea
           value={character.description}

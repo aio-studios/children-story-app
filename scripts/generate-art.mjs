@@ -38,6 +38,18 @@ function genrePrompt(label, subject, extra) {
   ].join("\n");
 }
 
+// One-off icon for the "Create your own" CTA (#65). Not a genre/character - a single bold subject that
+// reads at ~52px. Optimize routes this basename to public/ root -> /create-your-own.jpg.
+function ctaPrompt() {
+  return [
+    STYLE,
+    "A single bold friendly icon for a 'create your own story' button.",
+    "Subject: an open children's storybook lying open, its pages completely blank with no writing or letters, and a few glowing golden stars and small colorful sparkles gently floating up out of the open pages.",
+    "Centered, filling the frame, on a simple soft pastel background. One subject only, no scene clutter, no hands, no text or letters anywhere.",
+  ].join("\n");
+}
+const CTA = [{ file: "create-your-own", prompt: ctaPrompt() }];
+
 // file = source basename; genre files map genre id "sci-fi" -> "genre-scifi".
 const CHARACTERS = [
   ["char-finn", "Finn the Explorer", "A quick-footed boy with a compass that always points to somewhere exciting, never lost even when he doesn't know where he's going."],
@@ -71,7 +83,7 @@ async function exists(path) {
 
 await mkdir(OUT, { recursive: true });
 let made = 0, skipped = 0;
-for (const { file, prompt } of [...CHARACTERS, ...GENRES]) {
+for (const { file, prompt } of [...CHARACTERS, ...GENRES, ...CTA]) {
   if (await exists(`${OUT}${file}.png`)) { console.log(`skip ${file} (already approved)`); skipped++; continue; }
   let ok = false;
   for (let attempt = 1; attempt <= 4 && !ok; attempt++) {

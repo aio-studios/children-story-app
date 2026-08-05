@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-05
+
+### Added
+
+- 13:50 - **"Create your own" is now a real call-to-action** (#65). The custom-story entry used to be the blandest, most buried thing on Home — a plain ✨ emoji chip sitting *last* in the genre strip, off-screen on landing. The whole **"Start a new story" section now sits high on Home, between the Daily picks and Most popular shelves** — so a returning user's Continue hero + shelves can't push creation below the fold. Within it, custom creation is a **standalone illuminated CTA band**: bronze gradient with a soft **glow pulse + sheen sweep** (both respect `prefers-reduced-motion`), a round-framed **illustrated open-storybook icon**, a "Create your own" title, and a minimal `›` chevron — clearly the primary "make something" action, not just another genre. Below it, **"Or pick a genre"** with the preset strip (5 genres, keeping #62's peek + fade). New CTA-specific `--cta-*` tokens (themed so text stays legible on the gradient in both light and dark). The icon is generated once via the same #59 pipeline (`scripts/generate-art.mjs` → `optimize-art.mjs`, now routing one-off icons to `public/`) → `public/create-your-own.jpg`, with a graceful ✨ emoji fallback if the asset is ever missing. No behavior change — reuses the existing `onSelectCustomGenre` handler. Design approved in `docs/designs/create-your-own-cta-preview.html`; verified at iPhone 12 Pro light + dark (section visible high on landing, no overflow, icon loads, strip down to 5 presets).
+
+### Fixed
+
+- 14:38 - **"Create your own" CTA icon no longer washes out** (#65 follow-up). The original illustrated icon was a pale-blue book with faint stars on a cream/pink wash — near-invisible against the CTA's near-white circular frame (UAT catch). Regenerated it (same Gemini pipeline) as a **richly saturated golden storybook with brightly glowing stars on a deep twilight-blue ground**, so it reads with real contrast at 52px and pops on the bronze band in both themes. Pure asset swap — replaced `public/create-your-own.jpg` (+ its `docs/designs/source-art/create-your-own.png` source of truth); no code/CSS change (the darker art fully fills the circle-crop, so the frame background only ever shows on the emoji fallback). Verified live at iPhone 12 Pro in light + dark (icon renders, corners crop clean, no white edge).
+
+- 12:02 - **Genre strip now signals it scrolls** (#62). On Home's "Start a new story" row, exactly 5 chips fit at 390px and the 6th ("Your own") was fully off-screen — looked like 5 genres was all there was. Widened chips **66→76px** (art **40→46px**) so at common phone widths a chip **peeks ~half-visible** at the right edge as a scroll cue, and added a **right-edge fade** (`mask-image`) to both the genre strip and the Daily/Popular shelves so the "more to the right" hint holds at **any** device width, not just 390px.
+
+### Changed
+
+- 11:41 - **App-wide legibility pass** (#60). Text and cards read too small on a real phone (some labels were **9.6px**); bumped the whole type scale and tap-target sizing across Home, Setup, and the Reader. Genre + stepper labels **9.6–10px → 12.5px**, body text (mascot, pills, fields, card names) lands at a real **16px**, section titles **15→18px**, hero title **17→21px**, step heading **18→24px**, reader body **17→18px**. Pills, nav buttons, and text fields grew padding to clear a **~44px** tap target (measured 48–50px). Genre chips widened **58→66px** (art **34→40px**) so the larger labels don't wrap. Implemented as a single **shared type scale** — new Tailwind v4 `@theme` `--text-*` tokens (`micro`/`caption`/`note`/`body`/`heading`/`title`/`display`), each usable both as a utility class (`text-body`, …) in JSX and as `var(--text-*)` in the hand-written CSS — so sizing reads from one source and can't drift small again; rem-based so browser/OS font-size settings apply. Tailwind's built-in `text-xs`/`text-sm` are left untouched (no unaudited text shifts). Design approved in `docs/designs/legibility-pass-preview.html`; verified end-to-end at iPhone 12 Pro in light + dark (no overflow, no label wrap, all screens).
+
 ## 2026-08-04
 
 ### Added

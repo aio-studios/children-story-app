@@ -82,12 +82,38 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
       )}
 
       <Shelf title="Daily picks" items={DAILY_PICKS} />
-      <Shelf title="Most popular" items={MOST_POPULAR} />
 
+      {/* The whole "start a new story" block sits high (between shelves) so a returning user's
+          Continue hero + shelves can't push creation below the fold. */}
       <div className="sk-shelf">
         <div className="sk-shelf-head">
           <span className="sk-shelf-title">Start a new story</span>
         </div>
+
+        <button type="button" onClick={onSelectCustomGenre} className="sk-create-cta">
+          <span className="sk-create-cta-ico">
+            <span aria-hidden="true">✨</span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer. */}
+            <img
+              src="/create-your-own.jpg"
+              alt=""
+              width={52}
+              height={52}
+              loading="lazy"
+              className="sk-create-cta-img"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </span>
+          <span className="sk-create-cta-body">
+            <span className="sk-create-cta-title">Create your own</span>
+            <span className="sk-create-cta-sub">Dream up any character, world &amp; adventure</span>
+          </span>
+          <span className="sk-create-cta-arrow" aria-hidden="true">›</span>
+        </button>
+
+        <div className="sk-genre-strip-label">Or pick a genre</div>
         <div className="sk-genre-strip">
           {GENRES.map((genre) => (
             <button
@@ -99,24 +125,17 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
             >
               {genre.image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
-                <img src={genre.image} alt="" width={34} height={34} loading="lazy" className="sk-genre-chip-img" />
+                <img src={genre.image} alt="" width={46} height={46} loading="lazy" className="sk-genre-chip-img" />
               ) : (
                 genre.icon
               )}
               <span>{genre.label}</span>
             </button>
           ))}
-          <button
-            type="button"
-            onClick={onSelectCustomGenre}
-            className="sk-genre-chip"
-            style={{ "--accent-light": CUSTOM_GENRE_ACCENT.light, "--accent-dark": CUSTOM_GENRE_ACCENT.dark } as CSSProperties}
-          >
-            ✨
-            <span>Your own</span>
-          </button>
         </div>
       </div>
+
+      <Shelf title="Most popular" items={MOST_POPULAR} />
     </main>
   );
 }
