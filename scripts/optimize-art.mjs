@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 const SRC = new URL("../docs/designs/source-art/", import.meta.url).pathname;
 const CHAR_OUT = new URL("../public/characters/", import.meta.url).pathname;
 const GENRE_OUT = new URL("../public/genres/", import.meta.url).pathname;
+const PUBLIC_OUT = new URL("../public/", import.meta.url).pathname; // one-off icons (e.g. the #65 CTA)
 const SIZE = 240;
 const QUALITY = 80;
 
@@ -23,7 +24,7 @@ const files = (await readdir(SRC)).filter((f) => f.endsWith(".png"));
 let done = 0;
 for (const file of files) {
   const base = file.replace(/\.png$/, "");
-  const outDir = base.startsWith("genre-") ? GENRE_OUT : CHAR_OUT;
+  const outDir = base.startsWith("genre-") ? GENRE_OUT : base === "create-your-own" ? PUBLIC_OUT : CHAR_OUT;
   const out = `${outDir}${slugFor(base)}.jpg`;
   const r = spawnSync("sips", ["-Z", String(SIZE), "-s", "format", "jpeg", "-s", "formatOptions", String(QUALITY), `${SRC}${file}`, "--out", out], { encoding: "utf8" });
   if (r.status !== 0) { console.log(`FAIL ${file}: ${(r.stderr || "").trim()}`); continue; }

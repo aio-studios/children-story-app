@@ -4,6 +4,10 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ## 2026-08-05
 
+### Added
+
+- 13:50 - **"Create your own" is now a real call-to-action** (#65). The custom-story entry used to be the blandest, most buried thing on Home — a plain ✨ emoji chip sitting *last* in the genre strip, off-screen on landing. It's now a **standalone, always-visible CTA band** directly under "Start a new story": a bronze gradient with a soft **glow pulse + sheen sweep** (both respect `prefers-reduced-motion`), an **illustrated magic-wand icon**, a "Create your own" title, and a → arrow — clearly the primary "make something" action, not just another genre. The genre strip below is now preset-only, relabeled **"Or pick a genre"** (keeping #62's peek + fade). New CTA-specific `--cta-*` tokens (themed so text stays legible on the gradient in both light and dark). The icon is generated once via the same #59 pipeline (`scripts/generate-art.mjs` → `optimize-art.mjs`, now routing one-off icons to `public/`) → `public/create-your-own.jpg`, with a graceful ✨ emoji fallback if the asset is ever missing. No behavior change — reuses the existing `onSelectCustomGenre` handler. Design approved in `docs/designs/create-your-own-cta-preview.html`; verified at iPhone 12 Pro light + dark (CTA visible without scrolling, no overflow, icon loads, strip down to 5 presets).
+
 ### Fixed
 
 - 12:02 - **Genre strip now signals it scrolls** (#62). On Home's "Start a new story" row, exactly 5 chips fit at 390px and the 6th ("Your own") was fully off-screen — looked like 5 genres was all there was. Widened chips **66→76px** (art **40→46px**) so at common phone widths a chip **peeks ~half-visible** at the right edge as a scroll cue, and added a **right-edge fade** (`mask-image`) to both the genre strip and the Daily/Popular shelves so the "more to the right" hint holds at **any** device width, not just 390px.
