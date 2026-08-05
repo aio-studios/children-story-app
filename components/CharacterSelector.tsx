@@ -23,7 +23,7 @@ export function CharacterSelector({ genreSelection, characterSelection, customDr
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm italic text-[color:var(--sk-ink-soft)]">{genre.blurb}</p>
+      <p className="text-note italic text-[color:var(--sk-ink-soft)]">{genre.blurb}</p>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {genre.characters.map((character) => (
           <CharacterCard
@@ -41,7 +41,7 @@ export function CharacterSelector({ genreSelection, characterSelection, customDr
           }`}
         >
           <div className="sk-orb-neutral flex h-16 w-16 items-center justify-center rounded-full text-2xl">✏️</div>
-          <span className="text-sm font-medium">Create your own</span>
+          <span className="text-body font-medium">Create your own</span>
         </button>
       </div>
       {characterSelection.type === "custom" && (
