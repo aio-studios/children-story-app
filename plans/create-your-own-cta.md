@@ -1,6 +1,11 @@
 # "Create your own" CTA (#65) — Implementation Plan
 
-**Overall Progress:** `100%` — code + art + verify + reviews + docs done. Awaiting UAT; PR held until #64 merges (rebase onto main, then open clean #65 PR).
+**Overall Progress:** `100%` — code + art + verify + reviews + docs done. Awaiting final UAT; PR held until #64 merges (rebase onto main, then open clean #65 PR).
+
+## Resume point (2026-08-05 ~14:15)
+- All work on branch **`feat/create-your-own-cta`** (branched off `feat/legibility-pass`), pushed. No PR opened yet.
+- **UAT round 2 applied** (user feedback): (1) moved the *whole* "Start a new story" section — CTA + "Or pick a genre" + preset strip — to between Daily picks and Most popular (not just the CTA card); (2) icon frame now circular (`border-radius: 9999px`) so the round art isn't cropped in a square; (3) boxed → arrow replaced with a minimal `›` chevron; (4) icon regenerated as an **open storybook with floating stars** (was a magic wand). Re-verified @390px light+dark (CTA top ~388px, no overflow, icon loads, 5 preset chips).
+- **Next steps to ship:** (1) user gives final UAT sign-off on the live app; (2) user merges **PR #64** (#60/#62); (3) `git checkout feat/create-your-own-cta && git rebase main` (drops the now-merged #60/#62 commits) → open a clean #65 PR to main; (4) on merge, close #60/#62/#65 and move their board cards to Done.
 
 ## TLDR
 Promote the custom-genre entry from a bland, buried last chip in the genre strip to a **standalone, always-visible, illuminated CTA band** on Home, directly under "Start a new story". Adds an illustrated icon (via the #59 art pipeline). Genre strip becomes preset-only, relabeled "Or pick a genre". Design approved in [docs/designs/create-your-own-cta-preview.html](../docs/designs/create-your-own-cta-preview.html) (Standalone CTA band option).
