@@ -774,6 +774,8 @@ select:focus-visible,
   color: var(--sk-ink-soft);
   margin-top: 0.15rem;
 }
+/* Genre art (#59) sits where the emoji was - a small round crop centered in the chip. */
+.sk-genre-chip-img { width: 34px; height: 34px; border-radius: 9999px; object-fit: cover; margin: 0 auto; display: block; }
 
 /* Setup stepper */
 .sk-setup-frame { max-width: 428px; margin: 0 auto; padding: 0 1.1rem 2.5rem; }

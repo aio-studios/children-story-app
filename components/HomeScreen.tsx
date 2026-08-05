@@ -97,7 +97,12 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
               className="sk-genre-chip"
               style={{ "--accent-light": genre.accent.light, "--accent-dark": genre.accent.dark } as CSSProperties}
             >
-              {genre.icon}
+              {genre.image ? (
+                // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
+                <img src={genre.image} alt="" width={34} height={34} loading="lazy" className="sk-genre-chip-img" />
+              ) : (
+                genre.icon
+              )}
               <span>{genre.label}</span>
             </button>
           ))}

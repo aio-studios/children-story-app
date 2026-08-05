@@ -13,8 +13,19 @@ export function CharacterCard({ character, selected, onSelect }: CharacterCardPr
       onClick={onSelect}
       className={`sk-select-card ${selected ? "sk-select-card-selected" : ""}`}
     >
-      {/* Placeholder for real character art, decided later */}
-      <div className="sk-orb-neutral flex h-16 w-16 items-center justify-center rounded-full text-2xl">🧑</div>
+      {character.image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
+        <img
+          src={character.image}
+          alt=""
+          width={64}
+          height={64}
+          loading="lazy"
+          className="h-16 w-16 rounded-full object-cover"
+        />
+      ) : (
+        <div className="sk-orb-neutral flex h-16 w-16 items-center justify-center rounded-full text-2xl">🧑</div>
+      )}
       <span className="text-sm font-medium">{character.name}</span>
       <span className="text-xs text-[color:var(--sk-ink-soft)]">{character.description}</span>
     </button>

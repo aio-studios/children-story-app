@@ -2,6 +2,8 @@ export type PresetCharacter = {
   id: string;
   name: string;
   description: string;
+  // Optional static portrait under /public (#59); components fall back to an emoji when absent.
+  image?: string;
 };
 
 export type GenreAccent = {
@@ -15,6 +17,8 @@ export type Genre = {
   icon: string;
   blurb: string;
   accent: GenreAccent;
+  // Optional static scene under /public (#59); components fall back to `icon` when absent.
+  image?: string;
   characters: [PresetCharacter, PresetCharacter, PresetCharacter];
 };
 

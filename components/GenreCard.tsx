@@ -43,15 +43,26 @@ export function GenreCard({ genre, selected, onSelect }: GenreCardProps) {
       onClick={handleClick}
       className={`sk-select-card ${selected ? "sk-select-card-selected" : ""}`}
     >
-      {/* Placeholder for the real GIF/video asset (provider/format TBD) */}
-      <div
-        className={`sk-orb-accent flex h-20 w-20 items-center justify-center rounded-full text-3xl ${
-          isActive ? "animate-active-loop" : "animate-idle-loop"
-        }`}
-        style={{ "--accent-light": genre.accent.light, "--accent-dark": genre.accent.dark } as CSSProperties}
-      >
-        {genre.icon}
-      </div>
+      {genre.image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
+        <img
+          src={genre.image}
+          alt=""
+          width={80}
+          height={80}
+          loading="lazy"
+          className={`h-20 w-20 rounded-full object-cover ${isActive ? "animate-active-loop" : "animate-idle-loop"}`}
+        />
+      ) : (
+        <div
+          className={`sk-orb-accent flex h-20 w-20 items-center justify-center rounded-full text-3xl ${
+            isActive ? "animate-active-loop" : "animate-idle-loop"
+          }`}
+          style={{ "--accent-light": genre.accent.light, "--accent-dark": genre.accent.dark } as CSSProperties}
+        >
+          {genre.icon}
+        </div>
+      )}
       <span className="text-sm font-medium">{genre.label}</span>
     </button>
   );
