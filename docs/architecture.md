@@ -252,7 +252,7 @@ graph TD
   Toggle["IllustrationToggle<br/>components/IllustrationToggle.tsx<br/>(Customize step, default OFF)"]
   Gen["generateStory() success<br/>if illustrate: void generateCover(...)"]
   Route["POST /api/generate-illustration<br/>app/api/generate-illustration/route.ts"]
-  RateLimit["checkRateLimit('illust:'+ip)<br/>own bucket, separate from story gen"]
+  RateLimit["checkRateLimit('illust:'+ip, failClosed=true)<br/>own bucket; fails CLOSED so a Redis<br/>outage can't uncap paid image gen (#47)"]
   Validate["validateSelections() + title check<br/>lib/validateSelections.ts (shared with story route)"]
   Safety["containsBlockedContent + classifySafety<br/>on custom text AND the client-supplied title"]
   Prompt["buildImagePrompt(selections, title)<br/>lib/imagePrompt.ts - fixed storybook style +<br/>character sheet reusing describeCharacter/describeGenre"]
@@ -287,7 +287,9 @@ graph TD
 
 Non-blocking guarantees, all in `app/page.tsx`: `generateCover()` is fired with `void` after `setView("success")`, guarded by the same `generationId` as the story so a slow image resolving after a Regenerate/navigation is discarded; any failure sets `coverStatus = "failed"` (a graceful in-slot fallback) and never touches the story text. The cover URL is written back into the `localStorage` continue-story slot on success (`ContinueStory.imageUrl?`, validated on read) so a resumed story shows its cover without re-generating. Gemini 2.5 Flash Image is the **first non-Anthropic AI vendor** in the stack; it sits behind the Vercel AI SDK's `generateImage`, so swapping to another `google.image(...)` model (e.g. an Imagen 4 fallback) is a one-line change in `lib/imageClient.ts`.
 
-This is a snapshot as of #38 (v1: one hero image). Re-diagram when #37 (branching) extends this to per-scene images.
+**Blob cleanup (#46):** a superseded cover Blob is deleted once nothing references it, so storage doesn't grow unbounded. `app/page.tsx` captures the outgoing `previousImageUrl` (`coverUrl ?? continueStory?.imageUrl`) and fires a fire-and-forget `discardCover()` → `POST /api/delete-illustration` → prefix-guarded `deleteIllustration()` (`lib/imageClient.ts`, `del()` on our `story-covers/` path only, best-effort/never throws). Deletion runs only *after* the replacement commits to the slot (or the slot is cleared on "Back to setup"), so a failed generation never leaves a saved story pointing at a deleted image. Residual orphan: a cover generated for a story the user regenerates away from before the image resolves — the client never receives that URL to delete.
+
+This is a snapshot as of #38 (v1: one hero image) + #46/#47. Re-diagram when #37 (branching) extends this to per-scene images.
 
 #### Code map: Home screen + setup stepper (#29, #30)
 
@@ -370,4 +372,4 @@ Existing Day 1 generation flow is reused for the initial story; the conversation
 - Vercel: Next.js app + API routes. **Live as of 2026-07-22**: https://children-story-app-lac.vercel.app/ - connected to the `aio-studios/children-story-app` GitHub repo, auto-deploys on every push to `main`.
 - Supabase: managed Postgres + Auth (Day 2+, not yet provisioned).
 - All secrets via environment variables (`.env.local` locally, Vercel project settings in production) - never committed. Confirmed post-deploy: `ANTHROPIC_API_KEY` never reaches the client bundle, generation + full 3-layer safety check verified working against production.
-- Rate limiting: `app/api/generate-story/route.ts` calls `lib/rateLimit.ts`, a shared per-IP limiter (3 requests/60s, sliding window) backed by Upstash Redis via Vercel's Marketplace integration - holds correctly across serverless instances (the prior in-memory version didn't). Fails open on a Redis error so an infra blip can't take down story generation. Vercel injects credentials as `KV_REST_API_URL`/`KV_REST_API_TOKEN` (its "KV" naming for the Upstash integration), not the classic `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`.
+- Rate limiting: `app/api/generate-story/route.ts` calls `lib/rateLimit.ts`, a shared per-IP limiter (3 requests/60s, sliding window) backed by Upstash Redis via Vercel's Marketplace integration - holds correctly across serverless instances (the prior in-memory version didn't). Story generation fails **open** on a Redis error so an infra blip can't take down story generation; `checkRateLimit(id, failClosed=true)` lets a caller opt into failing **closed** instead, which the paid image endpoint (`/api/generate-illustration`) does so a Redis outage can't leave per-IP spend uncapped (#47). Vercel injects credentials as `KV_REST_API_URL`/`KV_REST_API_TOKEN` (its "KV" naming for the Upstash integration), not the classic `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`.

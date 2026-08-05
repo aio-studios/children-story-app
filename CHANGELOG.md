@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-04
+
+### Fixed
+
+- 21:27 - **Orphaned cover images are now cleaned up** (#46). Every illustrated story previously uploaded a new Blob and never deleted the old one, so regenerating a story, replacing it with a new one, or leaving the reader via "Back to setup" left the prior cover stranded in Vercel Blob forever (unbounded storage growth). Now a superseded cover's Blob is deleted once nothing references it - after a new/regenerated story commits to the continue slot, and when the slot is cleared. New `POST /api/generate-illustration`-adjacent route `app/api/delete-illustration/route.ts` + a prefix-guarded, best-effort `deleteIllustration()` in `lib/imageClient.ts`; the client fires the delete and never blocks on it. Deletion happens only *after* the replacement commits, so a failed generation never leaves a saved story pointing at a deleted image. Known residual: a cover generated for a story you regenerate away from before the image finishes still orphans (the client never receives that URL to delete).
+
+### Security
+
+- 21:27 - **Illustration rate limiter now fails closed** (#47). `checkRateLimit()` gained an opt-in `failClosed` flag. Story generation still fails *open* (a transient Redis outage shouldn't break stories for everyone), but the paid image endpoint (`/api/generate-illustration`) now fails *closed* - during a Redis outage it blocks rather than leaving per-IP spend on the ~$0.04/call image model uncapped. A blocked cover degrades gracefully to the story-only reader. The new delete endpoint is also per-IP rate-limited (fails open, since cleanup isn't costly).
+
+### Notes
+
+- 21:27 - Closed #41 (error-screen buttons) and #42 (Continue banner overflow) as **already fixed** - both were resolved by the 2026-07-29 UAT polish / Day-2 redesign work (`sk-nav-btn` buttons; `.sk-hero width: calc(100% - 2.2rem)`) but the issues were never closed.
+
 ## 2026-08-03
 
 ### Added

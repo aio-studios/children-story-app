@@ -144,6 +144,18 @@ export default function Home() {
     };
   }
 
+  // Fire-and-forget deletion of a cover Blob that's no longer referenced (#46) - called once the
+  // story it belonged to has been replaced or cleared, so we never delete an image the saved
+  // continue-slot still points at. Best-effort: failures are swallowed (server also no-ops on a bad URL).
+  function discardCover(url: string | null | undefined) {
+    if (!url) return;
+    void fetch("/api/delete-illustration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    }).catch(() => {});
+  }
+
   // Non-blocking cover generation (#38): runs after the story is already on screen. Guarded by the
   // same generationId as the story so a slow image resolving after a regenerate/nav doesn't apply.
   async function generateCover(selections: ReturnType<typeof currentSelections>, title: string, story: string, generationId: number) {
@@ -174,6 +186,10 @@ export default function Home() {
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
     const generationId = ++activeGenerationRef.current;
+    // The cover the outgoing story used (from the reader, or restored into the continue slot). Once
+    // this new story commits below it's orphaned, so we delete its Blob (#46). Captured before any
+    // state resets so a regenerate/new-story doesn't leave the old image behind.
+    const previousImageUrl = coverUrl ?? continueStory?.imageUrl ?? null;
     setView("loading");
     setGenerationError(null);
     setCoverStatus("idle");
@@ -196,6 +212,8 @@ export default function Home() {
       }
       setGeneratedStory({ title: data.title, story: data.story });
       saveContinueStory({ title: data.title, story: data.story, ...selections, savedAt: Date.now() });
+      // The new story now owns the continue slot (with no image yet), so the old cover is orphaned.
+      discardCover(previousImageUrl);
       setView("success");
       if (illustrate) {
         void generateCover(selections, data.title, data.story, generationId);
@@ -213,6 +231,8 @@ export default function Home() {
   // Regenerating overwrites it instead (handled inside generateStory), and navigating Home via the
   // nav menu deliberately does NOT clear it, so Home can still offer to resume this story.
   function handleBackToSetupFromReader() {
+    // Clearing the slot orphans this story's cover Blob - delete it too (#46).
+    discardCover(coverUrl);
     clearContinueStory();
     setGenerationError(null);
     setSetupStep(2);

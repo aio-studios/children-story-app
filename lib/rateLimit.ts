@@ -16,14 +16,16 @@ const ratelimit = new Ratelimit({
   prefix: "ratelimit",
 });
 
-// Fails open: if Upstash is unreachable or errors, we let the request through rather than
-// breaking story generation for everyone over a transient Redis blip.
-export async function checkRateLimit(identifier: string): Promise<boolean> {
+// On an Upstash error we default to failing OPEN (allow the request) so a transient Redis blip
+// doesn't break story generation for everyone. Callers guarding a paid endpoint (image generation)
+// pass failClosed=true: there, an outage should block rather than leave per-IP spend uncapped (#47) -
+// a missing cover degrades gracefully to the story-only reader.
+export async function checkRateLimit(identifier: string, failClosed = false): Promise<boolean> {
   try {
     const { success } = await ratelimit.limit(identifier);
     return success;
   } catch (error) {
-    console.error("Rate limit check failed, failing open:", error);
-    return true;
+    console.error(`Rate limit check failed, failing ${failClosed ? "closed" : "open"}:`, error);
+    return !failClosed;
   }
 }

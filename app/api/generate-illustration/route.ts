@@ -16,7 +16,8 @@ function isValidTitle(value: unknown): value is string {
 export async function POST(request: Request) {
   // Own rate-limit bucket, separate from story generation, since images cost more per call.
   const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  const allowed = await checkRateLimit(`illust:${clientIp}`);
+  // failClosed: unlike story generation, a Redis outage here must not leave paid image gen uncapped (#47).
+  const allowed = await checkRateLimit(`illust:${clientIp}`, true);
   if (!allowed) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR_MESSAGE }, { status: 429 });
   }
