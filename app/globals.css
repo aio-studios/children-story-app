@@ -829,7 +829,7 @@ select:focus-visible,
    docs/designs/create-your-own-cta-preview.html. Bronze --cta-* gradient (not a genre accent) + a soft
    glow pulse and sheen sweep so it reads as the primary "make something" action, distinct from genres. */
 .sk-create-cta {
-  margin: 0 1.1rem 1rem;
+  margin: 0.2rem 1.1rem 1.4rem;
   width: calc(100% - 2.2rem);
   display: flex;
   align-items: center;
@@ -901,17 +901,6 @@ select:focus-visible,
   z-index: 1;
   background: color-mix(in srgb, var(--cta-text) 16%, transparent);
 }
-/* "Or pick a genre" label above the (now preset-only) strip. */
-.sk-genre-strip-label {
-  padding: 0 1.1rem;
-  margin: 0.1rem 0 0.4rem;
-  font-size: var(--text-caption);
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--sk-ink-soft);
-}
-
 /* Setup stepper */
 .sk-setup-frame { max-width: 428px; margin: 0 auto; padding: 0 1.1rem 2.5rem; }
 .sk-stepper-dots { display: flex; align-items: center; padding: 1rem 0 0.4rem; }

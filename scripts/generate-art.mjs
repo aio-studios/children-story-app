@@ -44,8 +44,8 @@ function ctaPrompt() {
   return [
     STYLE,
     "A single bold friendly icon for a 'create your own story' button.",
-    "Subject: a glowing golden magic wand held upright with a bright shining star at its tip, trailing a few small colorful sparkles and stars.",
-    "Centered, filling the frame, on a simple soft pastel background. One subject only, no scene clutter, no hands, no text.",
+    "Subject: an open children's storybook lying open, its pages completely blank with no writing or letters, and a few glowing golden stars and small colorful sparkles gently floating up out of the open pages.",
+    "Centered, filling the frame, on a simple soft pastel background. One subject only, no scene clutter, no hands, no text or letters anywhere.",
   ].join("\n");
 }
 const CTA = [{ file: "create-your-own", prompt: ctaPrompt() }];
