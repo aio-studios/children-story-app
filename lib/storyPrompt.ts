@@ -7,13 +7,13 @@ const WORD_COUNT_TARGETS: Record<StoryLength, string> = {
   longer: "about 800-1200 words",
 };
 
-const READING_LEVEL_GUIDANCE: Record<ReadingLevel, string> = {
+export const READING_LEVEL_GUIDANCE: Record<ReadingLevel, string> = {
   toddler: "Very simple vocabulary, short sentences, lots of repetition, one idea per sentence.",
   "early-reader": "Simple vocabulary, short paragraphs, mostly short sentences.",
   "independent-reader": "Richer vocabulary, longer sentences, more descriptive language.",
 };
 
-const TONE_GUIDANCE: Record<Tone, string> = {
+export const TONE_GUIDANCE: Record<Tone, string> = {
   funny: "Playful and funny, with light humor a young child would enjoy.",
   calming: "Calm and soothing, gentle pacing, good for winding down at bedtime.",
   exciting: "Energetic and exciting, with a sense of adventure.",
@@ -35,7 +35,7 @@ export function describeCharacter(character: SelectedCharacter, genre: GenreSele
   return characterPreset ? `${characterPreset.name} - ${characterPreset.description}` : character.characterId;
 }
 
-function describeLesson(lesson: LessonSelection): string {
+export function describeLesson(lesson: LessonSelection): string {
   if (lesson.type === "custom") return lesson.text.trim();
   const preset = LESSONS.find((l) => l.id === lesson.lessonId);
   return preset?.label ?? lesson.lessonId;

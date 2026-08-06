@@ -357,6 +357,36 @@ Saving the full selection set (not just genre) matters: an earlier version resto
 
 This is a snapshot of the code as of issues #29/#30 — re-diagram if it goes stale. Deferred from this pass (tracked as a follow-up issue): a real "Saved stories" library, Account/Settings/Premium nav items - all blocked on infra (Supabase auth, #27's billing decision) that doesn't exist yet.
 
+#### Code map: interactive story mode (#37/#48/#49/#50)
+
+An **opt-in** mode (Setup toggle, `StoryModeToggle`) where a story advances one **beat** at a time. It runs entirely stateless server-side — the whole story-state lives client-side and is re-sent each beat, so it needs **no accounts/DB** (the #23 dependency in #37 only applies to *cross-session* character reuse, which this doesn't do). Classic one-shot generation is untouched and lives alongside it, selected by `mode` in `app/page.tsx`.
+
+```mermaid
+flowchart TD
+  Toggle["StoryModeToggle (Setup)<br/>mode: classic | interactive"] --> Begin["beginInteractive()<br/>app/page.tsx"]
+  Begin -->|"action: continue (opening)"| Route["POST /api/story-step<br/>app/api/story-step/route.ts"]
+  Reader["InteractiveStoryReader<br/>▶ Continue · Choose (3 + write-your-own)"] -->|"advanceInteractive(action)"| Route
+  Route -->|"validateStory + validateAction<br/>arc range derived server-side"| Safety{"free-text / choice?"}
+  Safety -->|yes| InCheck["containsBlockedContent + classifySafety<br/>(lib/contentSafety.ts)"]
+  Safety -->|no| Prompt
+  InCheck --> Prompt["buildStepPrompt(story, action)<br/>lib/stepPrompt.ts — blueprint + history + arc governor"]
+  Prompt --> Haiku["Haiku: { beatText, choices[3], isEnding }"]
+  Haiku --> OutCheck["classifySafety(beatText)"]
+  OutCheck -->|"enforce floor/cap:<br/>isEnding = mustEnd || (model && ≥min)"| Resp["{ title, beatText, choices, isEnding }"]
+  Resp --> Reader
+  Reader -->|"persistInteractive"| LS[("localStorage<br/>storykins:continue-story<br/>{mode:interactive, interactive, imageUrl?}")]
+  LS -->|"Home 'Continue' resumes mid-story"| Reader
+```
+
+Key points:
+- **Story-state** (`InteractiveStory`, `lib/interactive.ts`): a locked `selections` blueprint (immutable character/genre/tone/lesson) + `arc` (`min`/`max`/`current`) + `beats[]` history + current `choices[]` + `beatChoices[][]` (the choices offered after each beat, so **"Go back a step"** restores the previous decision point with no API call) + `ended`. Re-injected into every step's prompt so multi-turn generation can't drift. Mirrored in `interactiveStoryRef` so async cover/persist callbacks see the latest beats.
+- **Arc budget (#50):** length → beat *range* (`LENGTH_BEAT_RANGE`: quick 4–6, longer 8–12). The prompt is told the current beat and steered toward a natural ending; the route **enforces** the floor/ceiling regardless of model output (`isEnding = mustEnd || (parsed.isEnding && nextBeat >= min)`, forced true at `max`). The reader's progress bar fills toward `max` and **snaps to 100%** on `ended`.
+- **One combined Haiku call per beat** (not separate story/choices calls). Both ▶ Continue and a picked/written choice hit the same route; the action only changes the prompt.
+- **Safety:** the arc range is derived server-side (a tampered client can't lift the cap); every user-authored direction (choice text *and* free text) runs the rules filter + classifier before generation, and every generated beat runs the output classifier — same two-layer pipeline as `/api/generate-story`.
+- **Persistence** extends the continue-slot into a discriminated union on `mode` (`ClassicContinueStory | InteractiveContinueStory`, `lib/storyHistory.ts`); old classic slots stay valid (`mode` absent). `saveContinueStory` now stamps its own `savedAt` (callers no longer call `Date.now()` in render-analyzed code). Home's Continue card resumes either variant via `getContinueTitle`/`getContinueGenre`.
+- **Rate limiting:** a dedicated `checkStepRateLimit` (prefix `ratelimit:step`, 15/60s, fails open) so beat-stepping isn't throttled by the 3/60s story-start budget.
+- **Illustration:** single cover per story as in classic mode (per-beat art is deferred to #78).
+
 ### Day 2 additions
 ```
 Supabase Auth -> login/signup, session

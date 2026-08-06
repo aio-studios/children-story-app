@@ -131,7 +131,7 @@ select:focus-visible,
 
 .animate-pencil-write {
   display: inline-block;
-  animation: pencil-write 0.6s ease-in-out infinite;
+  animation: pencil-write 1.4s ease-in-out infinite;
 }
 
 @keyframes dot-bounce {
@@ -159,7 +159,7 @@ select:focus-visible,
 
 .animate-dot-bounce {
   display: inline-block;
-  animation: dot-bounce 1.2s ease-in-out infinite;
+  animation: dot-bounce 1.8s ease-in-out infinite;
 }
 
 .animate-dot-bounce-delay-1 {
@@ -314,7 +314,7 @@ select:focus-visible,
     color-mix(in srgb, var(--accent) 10%, var(--sr-page)) 70%
   );
   background-size: 220% 100%;
-  animation: story-reader-hero-sweep 1.5s ease-in-out infinite;
+  animation: story-reader-hero-sweep 3s ease-in-out infinite;
 }
 @keyframes story-reader-hero-sweep {
   0% { background-position: 130% 0; }
@@ -345,6 +345,32 @@ select:focus-visible,
 @keyframes story-reader-hero-spin {
   to { transform: rotate(360deg); }
 }
+/* Cover loader: a palette held steady with a paintbrush "dabbing" at it while the illustration
+   renders, matching the playful pencil of the story-generation loader instead of a plain spinner. */
+.story-reader-hero-palette {
+  font-size: 15px;
+  line-height: 1;
+  display: inline-block;
+  margin-right: -3px;
+  animation: story-reader-hero-palette 3.4s ease-in-out infinite;
+}
+@keyframes story-reader-hero-palette {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+.story-reader-hero-brush {
+  font-size: 15px;
+  line-height: 1;
+  display: inline-block;
+  transform-origin: 70% 90%;
+  animation: story-reader-hero-brush 1.8s ease-in-out infinite;
+}
+@keyframes story-reader-hero-brush {
+  0%, 100% { transform: rotate(-12deg) translateY(0); }
+  25% { transform: rotate(9deg) translateY(-1.5px); }
+  50% { transform: rotate(-7deg) translateY(1.5px); }
+  75% { transform: rotate(11deg) translateY(-1px); }
+}
 .story-reader-hero-fail-orb {
   width: 46px;
   height: 46px;
@@ -366,7 +392,9 @@ select:focus-visible,
 }
 @media (prefers-reduced-motion: reduce) {
   .story-reader-hero-shimmer,
-  .story-reader-hero-spin {
+  .story-reader-hero-spin,
+  .story-reader-hero-palette,
+  .story-reader-hero-brush {
     animation: none;
   }
 }
@@ -1126,4 +1154,268 @@ select:focus-visible,
 .sk-switch[aria-checked="true"] .sk-switch-knob { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) {
   .sk-switch, .sk-switch-knob { transition: none; }
+}
+
+/* Interactive reader (#37/#48/#49/#50). Direction A "Scroll & Reveal": the story accumulates in
+   the reused .story-reader-page card; a persistent dock at the bottom holds the ▶ Continue control,
+   a "Choose" steering panel, and the arc-budget progress bar. Reuses the --sr-* / --accent tokens
+   defined on .story-reader-canvas above. Design: docs/designs/interactive-reader-wireframes.html. */
+.ir-canvas {
+  flex-direction: column;
+  align-items: center;
+  /* Override .story-reader-canvas's justify-content: center - in a column that would center a short
+     story vertically; reading should start at the top. */
+  justify-content: flex-start;
+  padding-bottom: 0;
+}
+
+.ir-fresh {
+  animation: ir-rise 0.5s ease both;
+}
+@keyframes ir-rise {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ir-dock {
+  --accent: var(--accent-light);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  width: 100%;
+  max-width: 428px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--sr-page) 90%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--sr-line);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 30px -18px rgba(0, 0, 0, 0.4);
+}
+@media (prefers-color-scheme: dark) {
+  .ir-dock { --accent: var(--accent-dark); }
+}
+
+.ir-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--sr-line));
+  overflow: hidden;
+}
+.ir-progress > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, #fff 0%), var(--accent));
+  /* Snaps to full when the story ends early (#50); the width jump is the intended signal. */
+  transition: width 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-progress > i { transition: none; }
+}
+
+.ir-dock-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+.ir-continue {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--sr-btn-primary-text);
+  background: var(--accent);
+  border: none;
+  border-radius: 15px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+}
+.ir-continue-icon { display: block; flex: none; }
+.ir-choose-toggle {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--sr-page));
+  border: none;
+  border-radius: 15px;
+  padding: 14px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ir-choose-toggle[aria-expanded="true"] {
+  background: var(--accent);
+  color: var(--sr-btn-primary-text);
+}
+
+.ir-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: ir-rise 0.3s ease both;
+}
+.ir-choice-lead {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sr-ink-soft);
+  padding: 2px 2px 0;
+}
+.ir-choices { display: flex; flex-direction: column; gap: 8px; }
+.ir-choice {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sr-ink);
+  background: color-mix(in srgb, var(--accent) 6%, var(--sr-page));
+  border: 1.5px solid var(--sr-line);
+  border-radius: 13px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.ir-choice:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--sr-page)); }
+.ir-choice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.ir-choice-own { justify-content: center; color: var(--accent); font-weight: 800; border-style: dashed; }
+
+.ir-writer { display: flex; gap: 8px; }
+.ir-writer input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 15px;
+  color: var(--sr-ink);
+  background: var(--sr-page);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  padding: 11px 13px;
+}
+.ir-writer input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ir-writer button {
+  flex: none;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-weight: 800;
+  color: var(--sr-btn-primary-text);
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.ir-stepping {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 10px 0;
+}
+.ir-spin {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-top-color: var(--accent);
+  animation: story-reader-hero-spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-spin { animation: none; }
+}
+.ir-stepping-wand {
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  animation: ir-wand 2.4s ease-in-out infinite;
+}
+@keyframes ir-wand {
+  0%, 100% { transform: rotate(-10deg) translateY(0); }
+  30% { transform: rotate(12deg) translateY(-2px); }
+  60% { transform: rotate(-6deg) translateY(1px); }
+}
+/* Keyed on the message text, so each new line fades in as the copy rotates. */
+.ir-stepping-msg { animation: ir-msg-fade 0.45s ease both; }
+@keyframes ir-msg-fade {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ir-stepping-wand, .ir-stepping-msg { animation: none; }
+}
+
+.ir-error {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+.ir-error p {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 14px;
+  color: var(--sr-ink-soft);
+}
+
+.ir-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+.ir-end-stars { color: var(--accent); letter-spacing: 6px; font-size: 17px; }
+.ir-end-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--accent);
+}
+.ir-secondary-btn {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--sr-ink);
+  background: transparent;
+  border: 2px solid var(--sr-ink);
+  border-radius: 13px;
+  padding: 11px 20px;
+  cursor: pointer;
+}
+.ir-redo {
+  align-self: center;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sr-ink-soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+}
+.ir-redo:hover { color: var(--accent); }
+
+.ir-continue:focus-visible,
+.ir-choose-toggle:focus-visible,
+.ir-choice:focus-visible,
+.ir-secondary-btn:focus-visible,
+.ir-redo:focus-visible,
+.ir-writer button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
