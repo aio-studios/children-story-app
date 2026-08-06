@@ -12,13 +12,16 @@ import {
   TONES,
 } from "@/lib/storyOptions";
 import { clearContinueStory, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
-import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, Tone } from "@/lib/types";
+import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction, StepResult } from "@/lib/interactive";
+import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, StoryMode, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
 import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
 import { LessonSelector } from "@/components/LessonSelector";
 import { IllustrationToggle } from "@/components/IllustrationToggle";
+import { StoryModeToggle } from "@/components/StoryModeToggle";
 import { CoverStatus, StoryReader } from "@/components/StoryReader";
+import { InteractiveStoryReader } from "@/components/InteractiveStoryReader";
 import { HomeScreen } from "@/components/HomeScreen";
 import { SetupStepper } from "@/components/SetupStepper";
 import { AppShell } from "@/components/AppShell";
@@ -88,11 +91,45 @@ export default function Home() {
   const [illustrate, setIllustrate] = useState(false);
   const [coverStatus, setCoverStatus] = useState<CoverStatus>("idle");
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  // Mirrors coverUrl so async persistence (a beat resolving concurrently with the up-front cover)
+  // always saves the latest image instead of a stale closure value.
+  const coverUrlRef = useRef<string | null>(null);
   // Synchronous guard against a fast double-click firing two requests before the disabled button re-renders.
   const isGeneratingRef = useRef(false);
   // Bumped whenever the user navigates away mid-generation, so a stale fetch resolving after that
   // doesn't hijack the screen they've since moved to (nav menu stays reachable during "loading").
   const activeGenerationRef = useRef(0);
+
+  // Interactive mode (#37): opt-in, default classic. The story-state lives client-side and is
+  // re-sent to /api/story-step each beat; a ref mirrors it so async cover/persist callbacks always
+  // see the latest beats even if the reader has advanced since they started.
+  const [mode, setMode] = useState<StoryMode>("classic");
+  const [interactiveStory, setInteractiveStory] = useState<InteractiveStory | null>(null);
+  const interactiveStoryRef = useRef<InteractiveStory | null>(null);
+  const [isStepping, setIsStepping] = useState(false);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const isSteppingRef = useRef(false);
+  // The last advance action, so an inline "Try again" after a failed step can retry it.
+  const lastActionRef = useRef<StepAction>({ kind: "continue" });
+
+  function setStory(story: InteractiveStory) {
+    interactiveStoryRef.current = story;
+    setInteractiveStory(story);
+  }
+
+  function updateCoverUrl(url: string | null) {
+    coverUrlRef.current = url;
+    setCoverUrl(url);
+  }
+
+  // Interactive mode and illustrations are opt-in, off by default. They persist while moving through
+  // the setup steps, but should NOT carry over into the next story - reset them at every boundary
+  // where a new story begins or the current one is left for setup. Not reset at creation itself (the
+  // success view still reads `mode` to pick the reader) nor on resume (which restores mode/cover).
+  function resetOptInToggles() {
+    setMode("classic");
+    setIllustrate(false);
+  }
 
   function selectPresetGenre(genreId: string) {
     if (genreSelection.type === "preset" && genreSelection.genreId === genreId) return;
@@ -160,7 +197,7 @@ export default function Home() {
   // same generationId as the story so a slow image resolving after a regenerate/nav doesn't apply.
   async function generateCover(selections: ReturnType<typeof currentSelections>, title: string, story: string, generationId: number) {
     setCoverStatus("loading");
-    setCoverUrl(null);
+    updateCoverUrl(null);
     try {
       const response = await fetch("/api/generate-illustration", {
         method: "POST",
@@ -173,9 +210,9 @@ export default function Home() {
         setCoverStatus("failed");
         return;
       }
-      setCoverUrl(data.imageUrl);
+      updateCoverUrl(data.imageUrl);
       setCoverStatus("loaded");
-      saveContinueStory({ title, story, ...selections, imageUrl: data.imageUrl, savedAt: Date.now() });
+      saveContinueStory({ title, story, ...selections, imageUrl: data.imageUrl });
     } catch {
       if (activeGenerationRef.current !== generationId) return;
       setCoverStatus("failed");
@@ -183,6 +220,10 @@ export default function Home() {
   }
 
   async function generateStory() {
+    if (mode === "interactive") {
+      void beginInteractive();
+      return;
+    }
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
     const generationId = ++activeGenerationRef.current;
@@ -193,7 +234,7 @@ export default function Home() {
     setView("loading");
     setGenerationError(null);
     setCoverStatus("idle");
-    setCoverUrl(null);
+    updateCoverUrl(null);
     const selections = currentSelections();
     try {
       const response = await fetch("/api/generate-story", {
@@ -211,7 +252,7 @@ export default function Home() {
         return;
       }
       setGeneratedStory({ title: data.title, story: data.story });
-      saveContinueStory({ title: data.title, story: data.story, ...selections, savedAt: Date.now() });
+      saveContinueStory({ title: data.title, story: data.story, ...selections });
       // The new story now owns the continue slot (with no image yet), so the old cover is orphaned.
       discardCover(previousImageUrl);
       setView("success");
@@ -227,6 +268,167 @@ export default function Home() {
     }
   }
 
+  function persistInteractive(story: InteractiveStory, imageUrl: string | null) {
+    saveContinueStory({ mode: "interactive", interactive: story, imageUrl: imageUrl ?? undefined });
+  }
+
+  async function requestStep(story: InteractiveStory, action: StepAction): Promise<StepResult> {
+    const response = await fetch("/api/story-step", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ story, action }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? "Something went wrong. Please try again.");
+    return data as StepResult;
+  }
+
+  // Single cover for an interactive story (#38), same as classic. Persists against the LATEST beats
+  // (via the ref) so a cover arriving after the reader advanced doesn't roll the saved story back.
+  async function generateInteractiveCover(selections: ReturnType<typeof currentSelections>, title: string, generationId: number) {
+    setCoverStatus("loading");
+    updateCoverUrl(null);
+    try {
+      const response = await fetch("/api/generate-illustration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections, title }),
+      });
+      const data = await response.json();
+      if (activeGenerationRef.current !== generationId) return;
+      if (!response.ok || typeof data.imageUrl !== "string") {
+        setCoverStatus("failed");
+        return;
+      }
+      updateCoverUrl(data.imageUrl);
+      setCoverStatus("loaded");
+      if (interactiveStoryRef.current) persistInteractive(interactiveStoryRef.current, data.imageUrl);
+    } catch {
+      if (activeGenerationRef.current !== generationId) return;
+      setCoverStatus("failed");
+    }
+  }
+
+  // Starts an interactive story: seeds an empty state and generates the opening beat behind the
+  // full-screen "loading" view, then hands off to the reader for subsequent beats.
+  async function beginInteractive() {
+    if (isGeneratingRef.current) return;
+    isGeneratingRef.current = true;
+    const generationId = ++activeGenerationRef.current;
+    const previousImageUrl = coverUrl ?? continueStory?.imageUrl ?? null;
+    setView("loading");
+    setGenerationError(null);
+    setStepError(null);
+    setCoverStatus("idle");
+    updateCoverUrl(null);
+    const selections = currentSelections();
+    const range = LENGTH_BEAT_RANGE[selections.length];
+    const base: InteractiveStory = {
+      title: "",
+      selections,
+      arc: { min: range.min, max: range.max, current: 0 },
+      beats: [],
+      choices: [],
+      beatChoices: [],
+      ended: false,
+    };
+    try {
+      const res = await requestStep(base, { kind: "continue" });
+      if (activeGenerationRef.current !== generationId) return;
+      const story: InteractiveStory = {
+        title: res.title,
+        selections,
+        arc: { min: range.min, max: range.max, current: 1 },
+        beats: [res.beatText],
+        choices: res.choices,
+        beatChoices: [res.choices],
+        ended: res.isEnding,
+      };
+      setStory(story);
+      persistInteractive(story, null);
+      // The new story owns the continue slot now, so any previous cover Blob is orphaned (#46).
+      discardCover(previousImageUrl);
+      setView("success");
+      if (illustrate) void generateInteractiveCover(selections, res.title, generationId);
+    } catch (error) {
+      if (activeGenerationRef.current !== generationId) return;
+      setGenerationError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      setView("error");
+    } finally {
+      isGeneratingRef.current = false;
+    }
+  }
+
+  // Advances one beat. `base` overrides the current story (used by "Redo last part", which replays
+  // from a trimmed history). Errors surface inline in the reader dock without leaving the story.
+  async function advanceInteractive(action: StepAction, base?: InteractiveStory) {
+    const current = base ?? interactiveStoryRef.current;
+    if (!current || isSteppingRef.current) return;
+    const generationId = activeGenerationRef.current;
+    isSteppingRef.current = true;
+    lastActionRef.current = action;
+    setIsStepping(true);
+    setStepError(null);
+    try {
+      const res = await requestStep(current, action);
+      if (activeGenerationRef.current !== generationId) return;
+      const story: InteractiveStory = {
+        title: current.title || res.title,
+        selections: current.selections,
+        arc: { ...current.arc, current: current.beats.length + 1 },
+        beats: [...current.beats, res.beatText],
+        choices: res.choices,
+        beatChoices: [...current.beatChoices, res.choices],
+        ended: res.isEnding,
+      };
+      setStory(story);
+      persistInteractive(story, coverUrlRef.current);
+    } catch (error) {
+      if (activeGenerationRef.current !== generationId) return;
+      setStepError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } finally {
+      isSteppingRef.current = false;
+      setIsStepping(false);
+    }
+  }
+
+  // "Go back a step": drop the last beat and return to the previous decision point with its original
+  // choices restored (from beatChoices) - no API call, so the reader can re-pick a different direction.
+  function goBackOneBeat() {
+    const current = interactiveStoryRef.current;
+    if (!current || current.beats.length <= 1 || isSteppingRef.current) return;
+    const keep = current.beats.length - 1;
+    const beats = current.beats.slice(0, keep);
+    const beatChoices = current.beatChoices.slice(0, keep);
+    const story: InteractiveStory = {
+      ...current,
+      beats,
+      beatChoices,
+      choices: beatChoices[keep - 1] ?? [],
+      arc: { ...current.arc, current: keep },
+      ended: false,
+    };
+    setStory(story);
+    persistInteractive(story, coverUrlRef.current);
+  }
+
+  function retryStep() {
+    void advanceInteractive(lastActionRef.current);
+  }
+
+  // Leaving a finished interactive story ("Make another story") - same cleanup as the classic
+  // "Back to setup", then a fresh Setup from step 1.
+  function handleInteractiveExit() {
+    discardCover(coverUrl);
+    clearContinueStory();
+    interactiveStoryRef.current = null;
+    setInteractiveStory(null);
+    setStepError(null);
+    resetOptInToggles();
+    setSetupStep(0);
+    setView("setup");
+  }
+
   // Leaving the reader via "Back to setup" reads as "done with this one" - clears the continue slot.
   // Regenerating overwrites it instead (handled inside generateStory), and navigating Home via the
   // nav menu deliberately does NOT clear it, so Home can still offer to resume this story.
@@ -235,12 +437,38 @@ export default function Home() {
     discardCover(coverUrl);
     clearContinueStory();
     setGenerationError(null);
+    resetOptInToggles();
     setSetupStep(2);
     setView("setup");
   }
 
   function handleContinueFromHome() {
     if (!continueStory) return;
+    if (continueStory.mode === "interactive") {
+      const resumed = continueStory.interactive;
+      setMode("interactive");
+      setGenreSelection(resumed.selections.genre);
+      if (resumed.selections.genre.type === "custom") setCustomGenreDraft(resumed.selections.genre.text);
+      // Older saved stories (before per-beat choice history) have no beatChoices - rebuild a best-
+      // effort one so "Go back" works: only the current decision's options are known, earlier ones
+      // fall back to empty (the reader still offers ▶ / write-your-own there).
+      const beatChoices =
+        Array.isArray(resumed.beatChoices) && resumed.beatChoices.length === resumed.beats.length
+          ? resumed.beatChoices
+          : resumed.beats.map((_, i) => (i === resumed.beats.length - 1 ? resumed.choices : []));
+      setStory({ ...resumed, beatChoices });
+      if (continueStory.imageUrl) {
+        updateCoverUrl(continueStory.imageUrl);
+        setCoverStatus("loaded");
+      } else {
+        updateCoverUrl(null);
+        setCoverStatus("idle");
+      }
+      setStepError(null);
+      setView("success");
+      return;
+    }
+    setMode("classic");
     setGenreSelection(continueStory.genre);
     // Keep the drafts in sync too, so toggling preset -> custom -> preset -> custom again in
     // Setup doesn't overwrite the resumed text with a stale (likely empty) draft.
@@ -253,10 +481,10 @@ export default function Home() {
     if (continueStory.lesson.type === "custom") setCustomLessonDraft(continueStory.lesson.text);
     setGeneratedStory({ title: continueStory.title, story: continueStory.story });
     if (continueStory.imageUrl) {
-      setCoverUrl(continueStory.imageUrl);
+      updateCoverUrl(continueStory.imageUrl);
       setCoverStatus("loaded");
     } else {
-      setCoverUrl(null);
+      updateCoverUrl(null);
       setCoverStatus("idle");
     }
     setView("success");
@@ -266,12 +494,14 @@ export default function Home() {
   // pre-selected, but the jump to a differently-themed screen was confusing without seeing the
   // pick confirmed first. Same landing spot for the custom-genre tile below.
   function handleSelectGenreFromHome(genreId: string) {
+    resetOptInToggles();
     selectPresetGenre(genreId);
     setSetupStep(0);
     setView("setup");
   }
 
   function handleSelectCustomGenreFromHome() {
+    resetOptInToggles();
     selectCustomGenre();
     setSetupStep(0);
     setView("setup");
@@ -292,6 +522,7 @@ export default function Home() {
 
   function handleNavigateNewStory() {
     abandonInFlightGeneration();
+    resetOptInToggles();
     setSetupStep(0);
     setView("setup");
   }
@@ -343,13 +574,21 @@ export default function Home() {
             onSelectCustom={selectCustomLesson}
             onCustomTextChange={updateCustomLessonText}
           />
+          <StoryModeToggle mode={mode} onChange={setMode} />
           <IllustrationToggle enabled={illustrate} onChange={setIllustrate} />
         </div>
       ),
     },
   ];
 
-  const pageTitle = view === "setup" ? "New Story" : view === "success" ? generatedStory?.title : undefined;
+  const pageTitle =
+    view === "setup"
+      ? "New Story"
+      : view === "success"
+        ? mode === "interactive"
+          ? interactiveStory?.title
+          : generatedStory?.title
+        : undefined;
 
   return (
     <AppShell
@@ -391,7 +630,22 @@ export default function Home() {
         </main>
       )}
 
-      {view === "success" && generatedStory && (
+      {view === "success" && mode === "interactive" && interactiveStory && (
+        <InteractiveStoryReader
+          genreSelection={genreSelection}
+          story={interactiveStory}
+          coverStatus={coverStatus}
+          coverUrl={coverUrl}
+          isStepping={isStepping}
+          stepError={stepError}
+          onAdvance={advanceInteractive}
+          onRetry={retryStep}
+          onGoBack={goBackOneBeat}
+          onBackToSetup={handleInteractiveExit}
+        />
+      )}
+
+      {view === "success" && mode === "classic" && generatedStory && (
         <StoryReader
           genreSelection={genreSelection}
           title={generatedStory.title}

@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 import { CUSTOM_GENRE_ACCENT, GENRES, getGenreAccent } from "@/lib/genres";
-import { ContinueStory } from "@/lib/storyHistory";
+import { ContinueStory, getContinueGenre, getContinueTitle } from "@/lib/storyHistory";
 
 type HomeScreenProps = {
   continueStory: ContinueStory | null;
@@ -49,9 +49,10 @@ function Shelf({ title, items }: { title: string; items: { title: string; genreI
 
 export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectCustomGenre }: HomeScreenProps) {
   const isReturning = continueStory !== null;
-  const continueAccent = continueStory
-    ? continueStory.genre.type === "preset"
-      ? getGenreAccent(continueStory.genre.genreId)
+  const continueGenre = continueStory ? getContinueGenre(continueStory) : null;
+  const continueAccent = continueGenre
+    ? continueGenre.type === "preset"
+      ? getGenreAccent(continueGenre.genreId)
       : CUSTOM_GENRE_ACCENT
     : null;
 
@@ -76,7 +77,7 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
           style={{ "--accent-light": continueAccent.light, "--accent-dark": continueAccent.dark } as CSSProperties}
         >
           <span className="sk-eyebrow">Continue story</span>
-          <span className="sk-title">{continueStory.title}</span>
+          <span className="sk-title">{getContinueTitle(continueStory)}</span>
           <span className="sk-sub">Pick up where you left off</span>
         </button>
       )}

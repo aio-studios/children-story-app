@@ -35,6 +35,9 @@ export type GenreSelection = { type: "preset"; genreId: string } | { type: "cust
 
 export type StoryLength = "quick" | "longer";
 
+// Classic = today's one-shot full story; interactive = beat-by-beat branching mode (#37).
+export type StoryMode = "classic" | "interactive";
+
 export type ReadingLevel = "toddler" | "early-reader" | "independent-reader";
 
 export type Tone = "funny" | "calming" | "exciting" | "heartwarming";

@@ -24,7 +24,7 @@ function splitParagraphs(story: string): string[] {
     .filter((paragraph) => paragraph.length > 0);
 }
 
-function genreDisplay(genreSelection: GenreSelection): { icon: string; label: string; accent: GenreAccent } {
+export function genreDisplay(genreSelection: GenreSelection): { icon: string; label: string; accent: GenreAccent } {
   if (genreSelection.type === "preset") {
     const genre = getGenreById(genreSelection.genreId);
     if (genre) return { icon: genre.icon, label: genre.label, accent: genre.accent };
@@ -34,7 +34,7 @@ function genreDisplay(genreSelection: GenreSelection): { icon: string; label: st
   return { icon: "✨", label, accent: CUSTOM_GENRE_ACCENT };
 }
 
-function StoryCover({ status, url, icon }: { status: CoverStatus; url: string | null; icon: string }) {
+export function StoryCover({ status, url, icon }: { status: CoverStatus; url: string | null; icon: string }) {
   if (status === "idle") return null;
 
   if (status === "loading") {
@@ -42,7 +42,8 @@ function StoryCover({ status, url, icon }: { status: CoverStatus; url: string | 
       <div className="story-reader-hero is-loading">
         <div className="story-reader-hero-shimmer" aria-hidden="true" />
         <span className="story-reader-hero-loading">
-          <span className="story-reader-hero-spin" aria-hidden="true" />
+          <span className="story-reader-hero-palette" aria-hidden="true">🎨</span>
+          <span className="story-reader-hero-brush" aria-hidden="true">🖌️</span>
           Painting your cover…
         </span>
       </div>

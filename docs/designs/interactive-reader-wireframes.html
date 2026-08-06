@@ -1,0 +1,721 @@
+<title>Interactive Reader — Wireframe Directions</title>
+<style>
+  /* ---------- Tokens: Storykins storybook palette (from app/globals.css), theme-aware ---------- */
+  :root {
+    --studio: #e9e3d6;
+    --studio-2: #ded6c4;
+    --studio-ink: #4a4030;
+    --studio-ink-soft: #7c7059;
+
+    --bg: #fbf7ee;
+    --canvas: #e7ddca;
+    --card: #fffdf8;
+    --ink: #2a2116;
+    --ink-soft: #6e6250;
+    --line: rgba(42, 33, 22, 0.16);
+    --line-soft: rgba(42, 33, 22, 0.08);
+    --brand: #8a6d3b;
+    --accent: #b85c27;         /* Adventure genre accent (light) */
+    --accent-soft: rgba(184, 92, 39, 0.14);
+    --accent-ink: #fffdf8;
+    --shadow: 0 18px 44px -20px rgba(42, 33, 22, 0.5);
+    --bezel: #cdc4b1;
+    --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f;
+      --studio-2: #100e09;
+      --studio-ink: #d8cfbb;
+      --studio-ink-soft: #9c9079;
+
+      --bg: #221c13;
+      --canvas: #14110b;
+      --card: #2b2417;
+      --ink: #f2ebdb;
+      --ink-soft: #b5a890;
+      --line: rgba(242, 235, 219, 0.16);
+      --line-soft: rgba(242, 235, 219, 0.07);
+      --brand: #c9a866;
+      --accent: #e8a06b;       /* Adventure genre accent (dark) */
+      --accent-soft: rgba(232, 160, 107, 0.16);
+      --accent-ink: #221c13;
+      --shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
+      --bezel: #2a2418;
+      --bezel-2: #3a3222;
+    }
+  }
+  /* Viewer's explicit theme toggle stamps data-theme on :root — must win over the media query both ways. */
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b;
+    --accent: #b85c27; --accent-soft: rgba(184,92,39,0.14); --accent-ink: #fffdf8;
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866;
+    --accent: #e8a06b; --accent-soft: rgba(232,160,107,0.16); --accent-ink: #221c13;
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+
+  /* Fredoka/Nunito can't be CDN-loaded under the artifact CSP; these are deliberate rounded/humanist
+     stand-ins so the wireframe reads close to the shipped type without a silent webfont fallback. */
+  --display-fallback: "Fredoka", "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif;
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%),
+      var(--studio);
+    color: var(--studio-ink);
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: clamp(20px, 4vw, 44px) 20px 72px; }
+
+  /* ---------- Intro ---------- */
+  .intro { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+  .eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); font-weight: 800;
+  }
+  h1 {
+    font-family: "Fredoka", "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif;
+    font-weight: 700; font-size: clamp(1.7rem, 4.4vw, 2.5rem); line-height: 1.05;
+    letter-spacing: -0.01em; text-wrap: balance; margin: 0; color: var(--studio-ink);
+    max-width: 20ch;
+  }
+  .lede { margin: 0; max-width: 66ch; font-size: 1.02rem; line-height: 1.6; color: var(--studio-ink); }
+  .lede b { color: var(--accent); font-weight: 800; }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 6px; }
+  .theme-toggle {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 9px 15px; border-radius: 999px; font: inherit; font-weight: 700; font-size: 0.86rem;
+    box-shadow: 0 6px 16px -12px rgba(0,0,0,0.5);
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .hint {
+    font-size: 0.82rem; color: var(--studio-ink-soft); display: inline-flex; align-items: center; gap: 8px;
+  }
+  .hint .kbd {
+    font-family: "Fredoka", system-ui, sans-serif; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); border-radius: 7px; padding: 1px 8px;
+  }
+
+  /* ---------- Gallery ---------- */
+  .gallery {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: clamp(24px, 3vw, 40px); align-items: start;
+  }
+  .col { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .col-head { text-align: center; display: flex; flex-direction: column; gap: 7px; max-width: 340px; }
+  .col-tag {
+    align-self: center; font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase;
+    font-weight: 800; color: var(--accent); background: var(--accent-soft);
+    padding: 3px 11px; border-radius: 999px;
+  }
+  .col-name {
+    font-family: "Fredoka", "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+    font-weight: 700; font-size: 1.28rem; color: var(--studio-ink); margin: 0; letter-spacing: -0.01em;
+  }
+  .col-desc { font-size: 0.9rem; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+  .col-trade { font-size: 0.82rem; line-height: 1.45; color: var(--studio-ink); margin: 0; }
+  .col-trade b { color: var(--accent); }
+
+  /* ---------- Phone frame ---------- */
+  .phone {
+    width: 340px; max-width: 100%; height: 690px;
+    background: linear-gradient(160deg, var(--bezel-2), var(--bezel));
+    border-radius: 42px; padding: 12px;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.18);
+    position: relative;
+  }
+  .screen {
+    position: relative; width: 100%; height: 100%; border-radius: 32px; overflow: hidden;
+    background: var(--bg); color: var(--ink); display: flex; flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 122px; height: 26px; background: var(--bezel-2); border-radius: 0 0 16px 16px; z-index: 40;
+  }
+
+  /* Shared reader header inside phone */
+  .rdr-top {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 10px; gap: 10px; z-index: 20;
+  }
+  .rdr-menu, .rdr-spacer { width: 30px; height: 30px; display: grid; place-items: center; }
+  .rdr-menu span { display: block; width: 17px; height: 2px; background: var(--ink-soft); box-shadow: 0 5px 0 var(--ink-soft), 0 -5px 0 var(--ink-soft); }
+  .rdr-title {
+    font-family: "Fredoka", "Baloo 2", system-ui, sans-serif; font-weight: 600; font-size: 0.98rem;
+    color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; color: var(--accent);
+    background: var(--accent-soft); border-radius: 999px; padding: 4px 10px;
+  }
+
+  /* Progress — bar variant (Direction A) */
+  .prog-bar-wrap { flex: 0 0 auto; padding: 0 16px 6px; }
+  .prog-bar { height: 6px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+  .prog-bar > i {
+    display: block; height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--brand)));
+    transition: width 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+  .prog-cap { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--ink-soft); margin-top: 5px; font-weight: 700; letter-spacing: 0.03em; }
+
+  /* Progress — segmented dots (Direction B) */
+  .seg { flex: 0 0 auto; display: flex; gap: 5px; padding: 2px 18px 8px; }
+  .seg > i { flex: 1; height: 5px; border-radius: 999px; background: var(--line-soft); transition: background 0.5s ease; }
+  .seg > i.on { background: var(--accent); }
+
+  /* Story body (shared) */
+  .rdr-scroll { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+  .rdr-scroll::-webkit-scrollbar { width: 0; }
+
+  .cover {
+    height: 150px; margin: 4px 16px 14px; border-radius: 20px; position: relative; overflow: hidden;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(120% 120% at 20% 15%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 60%),
+      radial-gradient(120% 120% at 85% 90%, var(--accent-soft), transparent 65%),
+      linear-gradient(160deg, var(--card), var(--canvas));
+    border: 1px solid var(--line-soft);
+  }
+  .cover .orb { font-size: 2.6rem; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); }
+  .cover .cover-note { position: absolute; bottom: 8px; right: 10px; font-size: 0.62rem; color: var(--ink-soft); background: color-mix(in srgb, var(--card) 70%, transparent); padding: 2px 7px; border-radius: 6px; }
+
+  .story-title {
+    font-family: "Fredoka", "Baloo 2", system-ui, sans-serif; font-weight: 700;
+    font-size: 1.32rem; line-height: 1.12; text-wrap: balance; color: var(--ink);
+    margin: 0 18px 12px; letter-spacing: -0.01em;
+  }
+  .prose { padding: 0 18px; display: flex; flex-direction: column; gap: 13px; }
+  .prose p { margin: 0; font-size: 1.02rem; line-height: 1.62; color: var(--ink); }
+  .prose p.fresh { animation: rise 0.55s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+
+  /* Controls (shared building blocks) */
+  .continue-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    border: none; cursor: pointer; font: inherit; font-weight: 800; font-size: 1rem;
+    color: var(--accent-ink); background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 68%, var(--brand)));
+    border-radius: 15px; padding: 14px 18px; width: 100%;
+    box-shadow: 0 12px 24px -12px color-mix(in srgb, var(--accent) 80%, transparent);
+  }
+  .continue-btn:hover { filter: brightness(1.04); }
+  .continue-btn .tri { font-size: 0.9rem; }
+
+  .choice-lead { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); margin: 2px 2px 0; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    text-align: left; cursor: pointer; font: inherit; font-size: 0.95rem; font-weight: 600;
+    color: var(--ink); background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 13px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.18s ease, transform 0.12s ease, background 0.18s ease;
+  }
+  .choice:hover { border-color: var(--accent); background: var(--accent-soft); transform: translateX(2px); }
+  .choice .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; }
+  .choice.own { justify-content: center; color: var(--accent); font-weight: 800; border-style: dashed; }
+
+  .writer { display: flex; gap: 8px; }
+  .writer input {
+    flex: 1; font: inherit; font-size: 0.92rem; color: var(--ink); background: var(--card);
+    border: 1.5px solid var(--accent); border-radius: 12px; padding: 11px 13px; min-width: 0;
+  }
+  .writer input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .writer button {
+    flex: 0 0 auto; cursor: pointer; font: inherit; font-weight: 800; color: var(--accent-ink);
+    background: var(--accent); border: none; border-radius: 12px; padding: 0 15px;
+  }
+
+  .endcard { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 6px 0 2px; }
+  .endcard .the-end {
+    font-family: "Fredoka", "Baloo 2", system-ui, sans-serif; font-weight: 700; font-size: 1.15rem;
+    color: var(--accent); letter-spacing: 0.02em;
+  }
+  .endcard .stars { font-size: 1.1rem; letter-spacing: 6px; color: var(--accent); }
+  .again {
+    cursor: pointer; font: inherit; font-weight: 800; font-size: 0.92rem; color: var(--ink);
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 13px; padding: 11px 20px;
+  }
+  .again:hover { border-color: var(--accent); }
+
+  /* ===== Direction A — Scroll & Reveal: persistent bottom control bar ===== */
+  .dir-a .rdr-scroll { padding-bottom: 8px; }
+  .dir-a .dock {
+    flex: 0 0 auto; border-top: 1px solid var(--line-soft);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px); padding: 12px 16px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .dir-a .dock .row2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .dir-a .steer {
+    cursor: pointer; font: inherit; font-weight: 800; font-size: 0.9rem; color: var(--accent);
+    background: var(--accent-soft); border: none; border-radius: 15px; padding: 14px 12px; white-space: nowrap;
+  }
+  .dir-a .steer[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); }
+  .dir-a .steer-panel { display: none; flex-direction: column; gap: 8px; }
+  .dir-a .steer-panel.open { display: flex; animation: rise 0.35s ease both; }
+
+  /* ===== Direction B — Beat Cards: one beat per card ===== */
+  .dir-b .rdr-scroll { display: flex; flex-direction: column; }
+  .dir-b .card-stage { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; padding: 4px 4px 12px; }
+  .dir-b .beat-card {
+    background: var(--card); border: 1px solid var(--line-soft); border-radius: 22px;
+    margin: 0 14px; padding: 20px 18px; box-shadow: 0 14px 30px -22px rgba(0,0,0,0.55);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .dir-b .beat-card.swap { animation: cardin 0.45s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes cardin { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+  .dir-b .beat-num { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .dir-b .beat-text { font-size: 1.06rem; line-height: 1.6; color: var(--ink); margin: 0; }
+  .dir-b .card-ctrls { display: flex; flex-direction: column; gap: 9px; }
+  .dir-b .recap { text-align: center; font-size: 0.72rem; color: var(--ink-soft); padding: 8px 0 2px; }
+
+  /* ===== Direction C — Immersive Ambient: full-bleed wash + FAB sheet ===== */
+  .dir-c .screen { background:
+      radial-gradient(130% 90% at 50% 0%, color-mix(in srgb, var(--accent) 34%, var(--bg)), var(--bg) 62%),
+      radial-gradient(120% 80% at 80% 100%, var(--accent-soft), transparent 60%),
+      var(--bg); }
+  .dir-c .rdr-scroll { display: flex; flex-direction: column; justify-content: center; }
+  .dir-c .amb {
+    padding: 8px 26px 26px; display: flex; flex-direction: column; gap: 18px; align-items: center; text-align: center;
+  }
+  .dir-c .amb .glyph { font-size: 2.4rem; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.3)); }
+  .dir-c .amb-text {
+    font-size: 1.16rem; line-height: 1.66; color: var(--ink); margin: 0; max-width: 26ch;
+    animation: rise 0.6s ease both;
+  }
+  .dir-c .dots { flex: 0 0 auto; display: flex; gap: 7px; justify-content: center; padding: 0 0 14px; }
+  .dir-c .dots > i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); transition: background 0.5s ease, transform 0.5s ease; }
+  .dir-c .dots > i.on { background: var(--accent); transform: scale(1.15); }
+
+  .dir-c .fab {
+    position: absolute; right: 16px; bottom: 18px; z-index: 30;
+    cursor: pointer; font: inherit; font-weight: 800; font-size: 0.92rem; color: var(--accent-ink);
+    background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 66%, var(--brand)));
+    border: none; border-radius: 999px; padding: 13px 20px;
+    box-shadow: 0 14px 28px -12px color-mix(in srgb, var(--accent) 85%, transparent);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .dir-c .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 35;
+    background: var(--bg); border-top: 1px solid var(--line);
+    border-radius: 24px 24px 32px 32px; padding: 16px 18px 22px;
+    box-shadow: 0 -18px 40px -20px rgba(0,0,0,0.6);
+    transform: translateY(115%); transition: transform 0.42s cubic-bezier(.22,.61,.36,1);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .dir-c .sheet.open { transform: translateY(0); }
+  .dir-c .sheet .grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line); align-self: center; margin-bottom: 4px; }
+  .dir-c .sheet .close { position: absolute; top: 12px; right: 14px; cursor: pointer; background: none; border: none; color: var(--ink-soft); font-size: 1.1rem; }
+
+  .footnote {
+    margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 0.82rem; line-height: 1.6; color: var(--studio-ink-soft); max-width: 74ch;
+  }
+  .footnote b { color: var(--studio-ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Storykins · Interactive Reader · Wireframe</span>
+    <h1>Three ways to steer a story, beat by beat</h1>
+    <p class="lede">
+      Same story, same controls, three different <b>layouts</b> to compare. In interactive mode a story
+      unfolds one beat at a time: press <b>▶ Continue</b> to let the storyteller decide, pick one of
+      <b>3 directions</b> (or write your own) to steer, and watch the <b>arc-budget bar</b> fill — then
+      <b>snap to “The End”</b> when the tale wraps up naturally. Pick the direction that feels right and
+      we lock it into the plan.
+    </p>
+    <div class="toolbar">
+      <button class="theme-toggle" id="themeBtn" type="button">
+        <span id="themeIcon">🌙</span><span id="themeLabel">Dark</span>
+      </button>
+      <span class="hint">Actually try it: tap <span class="kbd">▶</span>, pick a choice, or type your own — in all three.</span>
+    </div>
+  </header>
+
+  <div class="gallery">
+    <section class="col">
+      <div class="col-head">
+        <span class="col-tag">Direction A · ✓ Chosen for v1</span>
+        <h2 class="col-name">Scroll &amp; Reveal</h2>
+        <p class="col-desc">The story grows as one continuous storybook page. A persistent bar at the bottom holds ▶ and choices.</p>
+        <p class="col-trade"><b>Best for</b> calm, immersive reading · <b>trade-off</b> controls compete with a long scroll.</p>
+      </div>
+      <div class="phone"><div class="notch"></div><div class="screen dir-a" data-variant="a"></div></div>
+    </section>
+
+    <section class="col">
+      <div class="col-head">
+        <span class="col-tag">Direction B</span>
+        <h2 class="col-name">Beat Cards</h2>
+        <p class="col-desc">One beat per card, front and centre. Tap to advance like a visual novel; segmented progress up top.</p>
+        <p class="col-trade"><b>Best for</b> focus &amp; a game-like feel · <b>trade-off</b> less “curl-up-and-read.”</p>
+      </div>
+      <div class="phone"><div class="notch"></div><div class="screen dir-b" data-variant="b"></div></div>
+    </section>
+
+    <section class="col">
+      <div class="col-head">
+        <span class="col-tag">Direction C</span>
+        <h2 class="col-name">Immersive Ambient</h2>
+        <p class="col-desc">Big text over a soft illustration wash. Controls hide behind a floating “What next?” sheet; progress as quiet dots.</p>
+        <p class="col-trade"><b>Best for</b> bedtime &amp; wonder · <b>trade-off</b> hidden controls = one extra tap.</p>
+      </div>
+      <div class="phone"><div class="notch"></div><div class="screen dir-c" data-variant="c"></div></div>
+    </section>
+  </div>
+
+  <p class="footnote">
+    <b>Reading this wireframe:</b> the story (<i>Pip and the Silver Bell</i>) and its choices are <b>identical across all three</b> on purpose — you’re judging layout, not writing. Fonts (Fredoka/Nunito) and the cover art are approximated here; the shipped app uses the real ones. Everything is <b>clickable</b>: advance to the end in each to feel the pacing and the progress-bar snap. Toggle light/dark — both are designed.
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Shared canned story — one spine; ▶ and any choice both advance one beat (a real build would
+  // branch, but for a layout wireframe the point is the interaction, not divergent plot).
+  var STORY = {
+    icon: "🗺️",
+    genre: "Adventure",
+    title: "Pip and the Silver Bell",
+    beats: [
+      { text: "High on the Whistlepeak trail, Pip the little mountain goat pressed her hooves to the cold stone and looked up. The summit was lost in a swirl of morning cloud — and somewhere up there, a silver bell was ringing.",
+        choices: ["Follow the ringing uphill", "Peek over the cliff edge", "Call out a friendly hello"] },
+      { text: "Pip climbed toward the sound, hooves clicking on the frosty rocks. Around a bend she found a snow hare shivering by a frozen stream, one paw caught fast in the ice.",
+        choices: ["Help free the hare’s paw", "Warm the ice with a hum", "Share a snack and rest"] },
+      { text: "Freed and grateful, the hare hopped along beside her. Together they followed the bell higher, to where the path split beneath a leaning pine — its song seeming to come from both ways at once.",
+        choices: ["Take the shady left path", "Climb the sunny right ridge", "Shut your eyes and just listen"] },
+      { text: "The listening led true. At the top of a windy ridge, Pip found the silver bell tangled in the nest of a wise old owl. “I’ve kept it safe,” the owl hooted, “but oh, it does love to sing.”",
+        choices: ["Ask to bring the bell home", "Offer to visit and listen", "Thank the owl and set off"] },
+      { text: "Pip carried the bell home through the softening light. As the first stars blinked awake, its gentle ring drifted down the whole mountain — a lullaby for every sleepy creature on Whistlepeak.",
+        isEnding: true }
+    ]
+  };
+  var TARGET_MAX = 6; // arc budget upper bound; the tale ends at beat 5, so the bar snaps 67% → 100%.
+
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+
+  function StoryEngine(root) {
+    this.root = root;
+    this.variant = root.getAttribute("data-variant");
+    this.revealed = 1;   // beats shown so far (intro is always shown)
+    this.ended = false;
+    this.sheetOpen = false;
+    this.build();
+    this.render();
+  }
+
+  StoryEngine.prototype.progress = function () {
+    return this.ended ? 100 : Math.round((this.revealed / TARGET_MAX) * 100);
+  };
+
+  StoryEngine.prototype.advance = function () {
+    if (this.ended) return;
+    if (this.revealed < STORY.beats.length) {
+      this.revealed++;
+      if (STORY.beats[this.revealed - 1].isEnding) this.ended = true;
+    }
+    this.justAdvanced = true;
+    this.sheetOpen = this.ended ? true : false; // C: auto-open the sheet on the ending
+    this.render();
+  };
+
+  StoryEngine.prototype.restart = function () {
+    this.revealed = 1; this.ended = false; this.justAdvanced = false; this.sheetOpen = false;
+    this.render();
+  };
+
+  // ---- shared control fragments -------------------------------------------------
+  StoryEngine.prototype.choiceList = function (includeOwn) {
+    var self = this;
+    var beat = STORY.beats[this.revealed - 1];
+    var frag = document.createDocumentFragment();
+    (beat.choices || []).forEach(function (label) {
+      var b = el("button", "choice");
+      b.type = "button";
+      b.appendChild(el("span", "dot"));
+      b.appendChild(el("span", null, label));
+      b.addEventListener("click", function () { self.advance(); });
+      frag.appendChild(b);
+    });
+    if (includeOwn) {
+      var own = el("button", "choice own", "✎  Write your own…");
+      own.type = "button";
+      own.addEventListener("click", function () { self.showWriter(own); });
+      frag.appendChild(own);
+    }
+    return frag;
+  };
+
+  StoryEngine.prototype.showWriter = function (ownBtn) {
+    var self = this;
+    var w = el("div", "writer");
+    var input = el("input");
+    input.type = "text";
+    input.placeholder = "…and then Pip decided to";
+    var go = el("button", null, "Go");
+    go.type = "button";
+    function submit() { self.advance(); }
+    go.addEventListener("click", submit);
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+    w.appendChild(input); w.appendChild(go);
+    ownBtn.replaceWith(w);
+    input.focus();
+  };
+
+  StoryEngine.prototype.continueBtn = function () {
+    var self = this;
+    var b = el("button", "continue-btn");
+    b.type = "button";
+    b.appendChild(el("span", "tri", "▶"));
+    b.appendChild(el("span", null, "Continue"));
+    b.addEventListener("click", function () { self.advance(); });
+    return b;
+  };
+
+  StoryEngine.prototype.endBlock = function () {
+    var self = this;
+    var wrap = el("div", "endcard");
+    wrap.appendChild(el("div", "stars", "✦ ✦ ✦"));
+    wrap.appendChild(el("div", "the-end", "The End"));
+    var again = el("button", "again", "↻  Read it again");
+    again.type = "button";
+    again.addEventListener("click", function () { self.restart(); });
+    wrap.appendChild(again);
+    return wrap;
+  };
+
+  // ---- build shells per variant -------------------------------------------------
+  StoryEngine.prototype.build = function () {
+    var top = el("div", "rdr-top");
+    var menu = el("div", "rdr-menu"); menu.appendChild(el("span"));
+    top.appendChild(menu);
+    top.appendChild(el("div", "rdr-title", STORY.title));
+    top.appendChild(el("div", "rdr-spacer"));
+    this.root.appendChild(top);
+
+    if (this.variant === "a") this.buildA();
+    else if (this.variant === "b") this.buildB();
+    else this.buildC();
+  };
+
+  StoryEngine.prototype.buildA = function () {
+    var pb = el("div", "prog-bar-wrap");
+    var bar = el("div", "prog-bar"); this.fill = el("i"); bar.appendChild(this.fill);
+    pb.appendChild(bar);
+    this.root.appendChild(pb);
+
+    this.scroll = el("div", "rdr-scroll");
+    var cover = el("div", "cover");
+    cover.appendChild(el("span", "orb", STORY.icon));
+    cover.appendChild(el("span", "cover-note", "cover art"));
+    this.scroll.appendChild(cover);
+    var badge = el("span", "badge");
+    badge.appendChild(el("span", null, STORY.icon));
+    badge.appendChild(el("span", null, STORY.genre));
+    var badgeWrap = el("div"); badgeWrap.style.padding = "0 18px 8px"; badgeWrap.appendChild(badge);
+    this.scroll.appendChild(badgeWrap);
+    this.scroll.appendChild(el("h1", "story-title", STORY.title));
+    this.prose = el("div", "prose");
+    this.scroll.appendChild(this.prose);
+    this.root.appendChild(this.scroll);
+
+    this.dock = el("div", "dock");
+    this.root.appendChild(this.dock);
+  };
+
+  StoryEngine.prototype.buildB = function () {
+    this.seg = el("div", "seg");
+    for (var i = 0; i < TARGET_MAX; i++) this.seg.appendChild(el("i"));
+    this.root.appendChild(this.seg);
+
+    this.scroll = el("div", "rdr-scroll");
+    this.stage = el("div", "card-stage");
+    this.scroll.appendChild(this.stage);
+    this.root.appendChild(this.scroll);
+  };
+
+  StoryEngine.prototype.buildC = function () {
+    this.scroll = el("div", "rdr-scroll");
+    this.amb = el("div", "amb");
+    this.scroll.appendChild(this.amb);
+    this.root.appendChild(this.scroll);
+
+    this.dots = el("div", "dots");
+    for (var i = 0; i < TARGET_MAX; i++) this.dots.appendChild(el("i"));
+    this.root.appendChild(this.dots);
+
+    var self = this;
+    this.fab = el("button", "fab");
+    this.fab.type = "button";
+    this.fab.innerHTML = "";
+    this.fab.appendChild(el("span", null, "✦"));
+    this.fabLabel = el("span", null, "What next?");
+    this.fab.appendChild(this.fabLabel);
+    this.fab.addEventListener("click", function () { self.sheetOpen = true; self.render(); });
+    this.root.appendChild(this.fab);
+
+    this.sheet = el("div", "sheet");
+    this.sheet.appendChild(el("div", "grab"));
+    var close = el("button", "close", "✕"); close.type = "button";
+    close.addEventListener("click", function () { self.sheetOpen = false; self.render(); });
+    this.sheet.appendChild(close);
+    this.sheetBody = el("div"); this.sheetBody.style.display = "flex";
+    this.sheetBody.style.flexDirection = "column"; this.sheetBody.style.gap = "10px";
+    this.sheet.appendChild(this.sheetBody);
+    this.root.appendChild(this.sheet);
+  };
+
+  // ---- render per variant -------------------------------------------------------
+  StoryEngine.prototype.render = function () {
+    if (this.variant === "a") this.renderA();
+    else if (this.variant === "b") this.renderB();
+    else this.renderC();
+    this.justAdvanced = false;
+  };
+
+  StoryEngine.prototype.renderA = function () {
+    // Story paragraphs (rebuild, marking the newest as fresh for the rise-in animation)
+    this.prose.innerHTML = "";
+    for (var i = 0; i < this.revealed; i++) {
+      var p = el("p", i === this.revealed - 1 && this.justAdvanced ? "fresh" : null, STORY.beats[i].text);
+      this.prose.appendChild(p);
+    }
+    // Progress (bar only — the fill level is the arc indicator; no beat counter)
+    this.fill.style.width = this.progress() + "%";
+
+    // Dock
+    this.dock.innerHTML = "";
+    if (this.ended) {
+      this.dock.appendChild(this.endBlock());
+    } else {
+      var row = el("div", "row2");
+      row.appendChild(this.continueBtn());
+      var steer = el("button", "steer", "Choose ▾");
+      steer.type = "button";
+      var panel = el("div", "steer-panel");
+      panel.appendChild(el("div", "choice-lead", "Or steer the story"));
+      panel.appendChild(this.choiceList(true));
+      var self = this;
+      steer.addEventListener("click", function () {
+        var open = panel.classList.toggle("open");
+        steer.setAttribute("aria-expanded", open ? "true" : "false");
+        steer.textContent = open ? "Choose ▴" : "Choose ▾";
+        if (open) self.scroll.scrollTo({ top: self.scroll.scrollHeight, behavior: "smooth" });
+      });
+      row.appendChild(steer);
+      this.dock.appendChild(row);
+      this.dock.appendChild(panel);
+    }
+    if (this.justAdvanced) {
+      var s = this.scroll;
+      requestAnimationFrame(function () { s.scrollTo({ top: s.scrollHeight, behavior: "smooth" }); });
+    }
+  };
+
+  StoryEngine.prototype.renderB = function () {
+    var self = this;
+    // segmented progress
+    var segs = this.seg.children;
+    var lit = this.ended ? TARGET_MAX : this.revealed;
+    for (var i = 0; i < segs.length; i++) segs[i].className = i < lit ? "on" : "";
+
+    this.stage.innerHTML = "";
+    var card = el("div", "beat-card swap");
+    if (this.revealed > 1) {
+      card.appendChild(el("div", "recap", "◂ " + (this.revealed - 1) + " beat" + (this.revealed - 1 === 1 ? "" : "s") + " behind you"));
+    }
+    card.appendChild(el("div", "beat-num", this.ended ? "The finale" : "Beat " + this.revealed + " of ~" + TARGET_MAX));
+    card.appendChild(el("p", "beat-text", STORY.beats[this.revealed - 1].text));
+
+    var ctrls = el("div", "card-ctrls");
+    if (this.ended) {
+      ctrls.appendChild(this.endBlock());
+    } else {
+      ctrls.appendChild(this.continueBtn());
+      ctrls.appendChild(el("div", "choice-lead", "Or pick a path"));
+      ctrls.appendChild(this.choiceList(true));
+    }
+    card.appendChild(ctrls);
+    this.stage.appendChild(card);
+  };
+
+  StoryEngine.prototype.renderC = function () {
+    // ambient text (current beat only)
+    this.amb.innerHTML = "";
+    this.amb.appendChild(el("div", "glyph", this.ended ? "✦" : STORY.icon));
+    this.amb.appendChild(el("p", "amb-text", STORY.beats[this.revealed - 1].text));
+
+    // dots
+    var dots = this.dots.children;
+    var lit = this.ended ? TARGET_MAX : this.revealed;
+    for (var i = 0; i < dots.length; i++) dots[i].className = i < lit ? "on" : "";
+
+    // sheet body
+    this.sheetBody.innerHTML = "";
+    if (this.ended) {
+      this.sheetBody.appendChild(this.endBlock());
+    } else {
+      this.sheetBody.appendChild(this.continueBtn());
+      this.sheetBody.appendChild(el("div", "choice-lead", "Or steer the story"));
+      this.sheetBody.appendChild(this.choiceList(true));
+    }
+
+    // fab + sheet open state
+    this.fabLabel.textContent = this.ended ? "The End" : "What next?";
+    this.sheet.classList.toggle("open", this.sheetOpen);
+    this.fab.style.display = this.sheetOpen ? "none" : "inline-flex";
+  };
+
+  document.querySelectorAll(".screen[data-variant]").forEach(function (root) {
+    new StoryEngine(root);
+  });
+
+  // ---- theme toggle (composes with the viewer's own data-theme stamping) --------
+  var btn = document.getElementById("themeBtn");
+  var icon = document.getElementById("themeIcon");
+  var label = document.getElementById("themeLabel");
+  function current() {
+    var attr = document.documentElement.getAttribute("data-theme");
+    if (attr) return attr;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function sync() {
+    var isDark = current() === "dark";
+    icon.textContent = isDark ? "☀️" : "🌙";
+    label.textContent = isDark ? "Light" : "Dark";
+  }
+  btn.addEventListener("click", function () {
+    var next = current() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    sync();
+  });
+  sync();
+})();
+</script>
