@@ -1,0 +1,365 @@
+<title>Home (Create-first) — Responsive</title>
+<style>
+  :root {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+      --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+      --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+      --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%), var(--studio); color: var(--studio-ink); font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 8px; }
+  header.page .lede { max-width: 680px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 36px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .ff-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 6px; }
+  .ff { cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 13px; padding: 10px 15px; font: inherit; font-weight: 800; font-size: 13px; color: var(--studio-ink-soft); display: flex; align-items: center; gap: 8px; transition: transform .1s, box-shadow .1s; }
+  .ff:hover { transform: translateY(-1px); }
+  .ff[aria-selected="true"] { background: var(--card); color: var(--ink); border-color: color-mix(in srgb,var(--brand) 55%, var(--line)); box-shadow: var(--shadow-sm); }
+  .ff:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .ff .em { font-size: 15px; } .ff small { font-weight: 700; color: var(--studio-ink-soft); font-size: 11px; }
+
+  .stage { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 16px; }
+  @media (min-width: 940px) { .stage { grid-template-columns: 300px 1fr; align-items: start; } }
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 8px; }
+  .notes h2 { font-size: 15px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 14px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0 0 6px; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-soft); font-size: 12.5px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .notes .navmode { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); background: var(--brand-wash); border-radius: 8px; padding: 7px 10px; margin-top: 6px; }
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 10px; }
+
+  .device-scroll { overflow-x: auto; padding: 6px 2px 14px; }
+  .device-scroll::-webkit-scrollbar { height: 8px; }
+  .device-wrap { display: flex; justify-content: center; min-width: min-content; }
+  .device { border-radius: 34px; padding: 11px; background: linear-gradient(160deg, var(--bezel), var(--bezel-2)); box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05); }
+  .device.ipad { border-radius: 26px; padding: 14px; }
+  .screen { position: relative; border-radius: 26px; overflow: hidden; background: var(--bg); color: var(--ink); display: flex; }
+  .device.ipad .screen { border-radius: 14px; }
+
+  .view { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+  .view.mode-bottom { display: block; }
+  .content { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; overflow-y: auto; }
+  .content::-webkit-scrollbar { width: 0; }
+  .c-head { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: linear-gradient(to bottom, var(--bg) 76%, transparent); }
+  .c-head .ttl { flex: 1; font-size: 17px; font-weight: 800; color: var(--ink); }
+  .c-head .ttl.brand { color: var(--brand); }
+  .icon-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; font-size: 16px; box-shadow: var(--shadow-sm); }
+  .icon-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* bottom-mode top header */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; gap: 8px; height: 62px; padding: 16px 14px 0; background: linear-gradient(to bottom, var(--bg) 66%, transparent); }
+  .topbar .brand { flex: 1; font-size: 18px; font-weight: 800; color: var(--brand); }
+  .bottom-scroll { position: absolute; inset: 0; overflow-y: auto; }
+  .bottom-scroll::-webkit-scrollbar { width: 0; }
+
+  /* ---- content blocks ---- */
+  .pad { padding: 0 16px; }
+  .greet { display: flex; align-items: center; gap: 11px; padding: 4px 16px 12px; }
+  .greet .owl { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 23px; background: var(--brand-wash); flex: none; }
+  .greet .hi { font-size: 11px; color: var(--ink-soft); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+  .greet .nm { display: block; font-size: 18px; font-weight: 800; line-height: 1.15; margin-top: 2px; }
+
+  /* GIANT continue hero with % progress */
+  .chero { position: relative; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; cursor: pointer; --a: #B85C27; box-shadow: var(--shadow-sm); text-align: left; width: 100%; display: block; }
+  .chero .art { height: 168px; background: radial-gradient(120% 92% at 20% 12%, color-mix(in srgb,var(--a) 80%, white 18%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
+  .chero.tall .art { height: 232px; }
+  .chero .emoji { position: absolute; top: 26px; right: 20px; font-size: 60px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.3)); opacity: .96; }
+  .chero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.82) 4%, rgba(0,0,0,0.12) 52%, transparent 74%); }
+  .chero .cap { position: absolute; left: 18px; right: 18px; bottom: 20px; color: #fff; }
+  .chero .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
+  .chero .tt { font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; line-height: 1.1; }
+  .chero.tall .tt { font-size: 26px; }
+  .chero .meta { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .chero .pct { font-size: 26px; font-weight: 800; line-height: 1; }
+  .chero .mlabel { font-size: 12px; opacity: .92; font-weight: 700; }
+  .chero .resume { margin-left: auto; font-size: 12.5px; font-weight: 800; background: #fff; color: #2a2116; padding: 9px 15px; border-radius: 999px; }
+  .chero .pbar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(255,255,255,0.26); }
+  .chero .pbar i { display: block; height: 100%; background: #fff; }
+
+  .qh { font-size: 21px; font-weight: 800; padding: 0 16px; margin: 6px 0 12px; }
+  .gtiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 16px; }
+  .gtiles.six { grid-template-columns: repeat(6, 1fr); }
+  .gtiles.split3 { grid-template-columns: 1fr 1fr 1fr; }
+  .gtile { --a: var(--brand); position: relative; aspect-ratio: 1/1.08; border-radius: 15px; overflow: hidden; border: 1px solid var(--line); padding: 0; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .gtile .art { position: absolute; inset: 0; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 80%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 45%, #000 12%)); }
+  .gtile .emoji { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%); font-size: 30px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+  .gtile .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
+  .gtile .nm { position: absolute; left: 7px; right: 7px; bottom: 6px; color: #fff; font-size: 11px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+  .gtile.own .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 9px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 9px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 18px); }
+  .gtile.own .emoji { color: var(--brand); } .gtile.own .nm { color: var(--ink); text-shadow: none; } .gtile.own .scrim { display: none; }
+
+  .sect-label { padding: 8px 16px 8px; font-size: 12px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+  .row { margin: 2px 0 20px; }
+  .row .rh { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 11px; }
+  .row .rh .rt { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+  .row .rh .more { font-size: 12px; font-weight: 800; color: var(--brand); cursor: pointer; }
+  .rail-h { display: flex; gap: 11px; overflow-x: auto; padding: 0 16px 4px; scroll-snap-type: x proximity; }
+  .rail-h::-webkit-scrollbar { height: 0; }
+  .cc { --a: var(--brand); scroll-snap-align: start; flex: 0 0 140px; aspect-ratio: 3/4; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid var(--line); cursor: pointer; box-shadow: var(--shadow-sm); text-align: left; }
+  .cc .art { position: absolute; inset: 0; background: radial-gradient(120% 82% at 26% 14%, color-mix(in srgb,var(--a) 80%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 14%)); }
+  .cc .emoji { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 44px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+  .cc .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.78) 6%, rgba(0,0,0,0.1) 48%, transparent 66%); }
+  .cc .lvl { position: absolute; top: 9px; left: 9px; font-size: 10px; font-weight: 800; color: #fff; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); padding: 3px 8px; border-radius: 999px; }
+  .cc .foot { position: absolute; left: 10px; right: 10px; bottom: 10px; color: #fff; }
+  .cc .foot .t { font-size: 13px; font-weight: 800; line-height: 1.22; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .cc .foot .bd { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .cc .foot .bd .b { font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 999px; background: rgba(255,255,255,0.92); color: #2a2116; }
+  .cc .foot .bd .b.g { background: color-mix(in srgb,var(--a) 86%, black 4%); color: #fff; }
+
+  /* landscape split: continue + create side by side */
+  .split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; padding: 12px 16px 4px; align-items: start; }
+  .split .chero .art { height: 100%; min-height: 190px; }
+  .split .chero { height: 100%; }
+
+  /* nav shells */
+  .tab-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; height: 74px; display: flex; align-items: stretch; justify-content: space-around; padding: 6px 8px 16px; background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border-top: 1px solid var(--line); }
+  .tb-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: transparent; cursor: pointer; color: var(--ink-soft); font: inherit; font-size: 10.5px; font-weight: 700; }
+  .tb-item .ic { font-size: 21px; line-height: 1; }
+  .tb-item[aria-selected="true"] { color: var(--brand); }
+  .tb-create { flex: 0 0 auto; align-self: center; margin-top: -24px; }
+  .tb-create button { width: 58px; height: 58px; border-radius: 50%; border: 4px solid var(--bg); background: var(--brand); color: var(--card); font-size: 26px; cursor: pointer; box-shadow: var(--shadow); display: grid; place-items: center; }
+  .tb-create .cl { display: block; text-align: center; font-size: 9px; font-weight: 800; color: var(--brand); margin-top: 2px; }
+  .tb-item:focus-visible, .tb-create button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 10px; }
+
+  .rail { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0; background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border-right: 1px solid var(--line); z-index: 10; }
+  .rail .create { width: 44px; height: 44px; border-radius: 15px; border: 0; background: var(--brand); color: var(--card); font-size: 22px; cursor: pointer; display: grid; place-items: center; box-shadow: var(--shadow-sm); margin-bottom: 4px; }
+  .rail .ri { width: 46px; height: 42px; border: 0; background: transparent; border-radius: 12px; cursor: pointer; color: var(--ink-soft); font-size: 20px; display: grid; place-items: center; }
+  .rail .ri[aria-selected="true"] { background: var(--brand-wash); color: var(--brand); }
+  .rail .spacer { flex: 1; }
+  .rail .create:focus-visible, .rail .ri:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .sidebar { flex: 0 0 214px; display: flex; flex-direction: column; padding: 20px 14px 16px; background: color-mix(in srgb, var(--canvas) 55%, var(--bg)); border-right: 1px solid var(--line); z-index: 10; transition: margin-left .3s cubic-bezier(.4,0,.2,1); }
+  .sidebar.collapsed { margin-left: -214px; }
+  .sidebar .brand { font-size: 21px; font-weight: 800; color: var(--brand); padding: 0 8px 16px; }
+  .sidebar .create { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--brand); color: var(--card); font: inherit; font-weight: 800; font-size: 15px; padding: 12px; border-radius: 14px; cursor: pointer; box-shadow: var(--shadow-sm); margin-bottom: 14px; }
+  .sidebar .lnk { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; text-align: left; }
+  .sidebar .lnk .ic { font-size: 18px; width: 22px; text-align: center; }
+  .sidebar .lnk[aria-selected="true"] { background: var(--brand-wash); color: var(--brand); }
+  .sidebar .lnk:hover { background: var(--canvas); }
+  .sidebar .grp { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); padding: 12px 12px 4px; }
+  .sidebar .spacer { flex: 1; }
+  .sidebar .create:focus-visible, .sidebar .lnk:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .nav-arrow { position: absolute; top: calc(50% - 30px); z-index: 35; width: 30px; height: 60px; border: 1px solid var(--line); border-left: 0; background: var(--card); color: var(--brand); border-radius: 0 16px 16px 0; box-shadow: var(--shadow-sm); cursor: pointer; display: grid; place-items: center; font-size: 22px; font-weight: 800; left: 0; transition: left .3s cubic-bezier(.4,0,.2,1); }
+  .nav-arrow.open { left: 214px; }
+  .nav-arrow:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .legend { margin-top: 32px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .tb-wrapx { overflow-x: auto; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · #61 Home (Create-first) · #75 landscape · iPad</div>
+      <h1 class="title disp">Home, with a giant Continue card</h1>
+      <p class="sub">The chosen Create-first home: “What story today?” stays at the top, with a <b>big Continue card showing % read</b> (from your scroll position, saved between visits) right below it — adapted into the nav shell across phone, landscape & iPad. Flip form factors and themes.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="ff-tabs" role="tablist" aria-label="Form factor">
+    <button class="ff" role="tab" aria-selected="true" data-ff="phone-p"><span class="em">📱</span> Phone <small>Portrait</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="phone-l"><span class="em">📱</span> Phone <small>Landscape</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="ipad-p"><span class="em">▧</span> iPad <small>Portrait</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="ipad-l"><span class="em">▭</span> iPad <small>Landscape</small></button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div>
+      <p class="phone-hint">↑ Interactive — scroll, tap genre tiles & the Continue card, use the nav. iPad sidebar collapses via its edge arrow.</p>
+      <div class="device-scroll"><div class="device-wrap"><div class="device" id="device"><div class="screen" id="screen"><div class="view" id="view"></div></div></div></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">How Home adapts (Create-first, one language)</h2>
+    <div class="tb-wrapx">
+    <table>
+      <thead><tr><th>Form factor</th><th>Nav</th><th>Above the fold</th><th>Continue card</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Phone · Portrait</td><td>Bottom bar + Create</td><td>Create block (genre tiles 3-col), then big Continue card</td><td>Full-width, % + progress bar</td></tr>
+        <tr><td class="dq">Phone · Landscape</td><td>Left icon rail</td><td>Create block (tiles 6-up), then big Continue card</td><td>Full-width below create</td></tr>
+        <tr><td class="dq">iPad</td><td>Collapsible sidebar</td><td>Create block (tiles 6-up), then Continue card</td><td>Extra-tall; % + resume</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sub" style="margin-top:12px;">The <b>% read</b> is derived from the reader's scroll position and persisted (localStorage today, account later), so the Continue card always reflects real progress and the bar fills accordingly. Build note: covers are pre-generated & cached (#38), never generated on scroll.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(m){ if(m==="system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", m); tbtns.forEach(function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set")===m)); }); }
+  tbtns.forEach(function(b){ b.addEventListener("click", function(){ setTheme(b.getAttribute("data-theme-set")); }); });
+
+  var GEN = { Adventure:"#B85C27", Fantasy:"#7B4C9E", Animals:"#4C7A3F", Bedtime:"#3E4E86", "Sci-fi":"#1D7A8C" };
+  var GENRES = [ {l:"Adventure",e:"🗺️",a:"#B85C27"},{l:"Fantasy",e:"🐉",a:"#7B4C9E"},{l:"Animals",e:"🦊",a:"#4C7A3F"},{l:"Bedtime",e:"🌙",a:"#3E4E86"},{l:"Sci-fi",e:"🚀",a:"#1D7A8C"} ];
+  var S = [
+    {t:"The Kindness Dragon",g:"Fantasy",e:"🐉",lv:"Early reader",ln:"~2 min",own:true},
+    {t:"Coco's Very Big Shortcut",g:"Animals",e:"🦊",lv:"Toddler",ln:"~2 min",own:true},
+    {t:"Nova Builds a Friend",g:"Sci-fi",e:"🤖",lv:"Independent",ln:"~10 min"},
+    {t:"Willow and the Last Star",g:"Bedtime",e:"🧚",lv:"Early reader",ln:"~2 min",own:true},
+    {t:"Pip Climbs the Cloud Peak",g:"Adventure",e:"🐐",lv:"Early reader",ln:"~10 min"},
+    {t:"Ember's Tiny Spark",g:"Fantasy",e:"🐲",lv:"Toddler",ln:"~2 min"},
+    {t:"Blip's Beeping Adventure",g:"Sci-fi",e:"✨",lv:"Early reader",ln:"~2 min"},
+    {t:"Luna's First Spell",g:"Fantasy",e:"🧙‍♀️",lv:"Early reader",ln:"~2 min"},
+    {t:"Baxter's Honey Hunt",g:"Animals",e:"🐻",lv:"Toddler",ln:"~2 min"},
+    {t:"Cosmo Meets a Comet",g:"Sci-fi",e:"👨‍🚀",lv:"Early reader",ln:"~10 min"}
+  ];
+  var TABS = [ {id:"home",label:"Home",ic:"🏠"},{id:"fav",label:"Favourites",ic:"⭐"},{id:"music",label:"Music",ic:"🎵"} ];
+  var FF = {
+    "phone-p": { w:342, h:722, dev:"phone", nav:"bottom", layout:"stack", n:"Portrait: “What story today?” leads, then the big Continue card, then discovery rows. Bottom bar + Create." },
+    "phone-l": { w:722, h:360, dev:"phone", nav:"rail", layout:"split", n:"Landscape: create block up top with genre tiles in one row, big Continue card below. Nav is the compact icon rail (#75)." },
+    "ipad-p": { w:540, h:718, dev:"ipad", nav:"sidebar", layout:"wide", n:"iPad portrait: create block + genre tiles in one 6-up row, then an extra-tall Continue card. Collapsible sidebar." },
+    "ipad-l": { w:760, h:560, dev:"ipad", nav:"sidebar", layout:"wide", n:"iPad landscape: same, wider — collapse the sidebar (edge arrow) for a near full-bleed browse." }
+  };
+
+  function el(t,c,h){ var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; }
+  var view=document.getElementById("view"), screen=document.getElementById("screen"), device=document.getElementById("device"), notesEl=document.getElementById("notes");
+  var ff="phone-p", tab="home", ipadNavOpen=true;
+
+  function renderNotes(){
+    var f=FF[ff]; notesEl.innerHTML="";
+    notesEl.appendChild(el("h2","disp","Home · "+({"phone-p":"Phone Portrait","phone-l":"Phone Landscape","ipad-p":"iPad Portrait","ipad-l":"iPad Landscape"})[ff]));
+    notesEl.appendChild(el("p","tagline","Create-first home in the chosen nav shell, with the giant Continue card (% read)."));
+    notesEl.appendChild(el("div","navmode","Nav: "+({bottom:"Bottom bar + Create",rail:"Compact icon rail",sidebar:"Left sidebar (collapsible)"})[f.nav]));
+    var ul=el("ul");
+    ["Giant Continue card shows % read + a progress bar, from saved scroll position.","Create block (“What story today?”) leads — works with zero backend.","Discovery rows below degrade gracefully from your own stories → curated feeds.","Genre / reading-level / length badges on every cover card."].forEach(function(t){ var li=el("li"); li.appendChild(el("span","tick","▹")); li.appendChild(el("span",null,t)); ul.appendChild(li); });
+    notesEl.appendChild(ul);
+    var p=el("p","tagline"); p.style.marginTop="4px"; p.textContent=f.n; notesEl.appendChild(p);
+  }
+
+  function coverCard(s){
+    var a=GEN[s.g]||"var(--brand)"; var c=el("button","cc"); c.type="button"; c.setAttribute("style","--a:"+a);
+    c.innerHTML="<span class='art'></span><span class='scrim'></span><span class='lvl'>"+s.lv+"</span><span class='emoji'>"+s.e+"</span><span class='foot'><span class='t'>"+s.t+"</span><span class='bd'><span class='b g'>"+s.g+"</span><span class='b'>"+s.ln+"</span></span></span>";
+    return c;
+  }
+  function row(title, items){
+    var r=el("div","row"); var rh=el("div","rh"); rh.appendChild(el("span","rt",title)); rh.appendChild(el("span","more","See all ›")); r.appendChild(rh);
+    var rl=el("div","rail-h"); items.forEach(function(s){ rl.appendChild(coverCard(s)); }); r.appendChild(rl); return r;
+  }
+  function continueHero(tall){
+    var c=el("button","chero"+(tall?" tall":"")); c.type="button";
+    c.innerHTML="<span class='art'></span><span class='emoji'>🧭</span><span class='scrim'></span>"+
+      "<span class='cap'><span class='kx'>Continue story</span><span class='tt disp'>Finn and the Whispering Cave</span>"+
+      "<span class='meta'><span class='pct'>62%</span><span class='mlabel'>read · about 4 min left</span><span class='resume'>▶ Resume</span></span></span>"+
+      "<span class='pbar'><i style='width:62%'></i></span>";
+    return c;
+  }
+  function genreTiles(cls){
+    var g=el("div","gtiles "+(cls||""));
+    GENRES.forEach(function(x){ var t=el("button","gtile"); t.type="button"; t.setAttribute("style","--a:"+x.a); t.innerHTML="<span class='art'></span><span class='emoji'>"+x.e+"</span><span class='scrim'></span><span class='nm'>"+x.l+"</span>"; g.appendChild(t); });
+    var own=el("button","gtile own"); own.type="button"; own.innerHTML="<span class='art'></span><span class='emoji'>✏️</span><span class='scrim'></span><span class='nm'>Your own</span>"; g.appendChild(own);
+    return g;
+  }
+  function greet(){ var g=el("div","greet"); g.innerHTML="<span class='owl'>🦉</span><span><span class='hi'>Good evening</span><span class='nm disp'>Hi there, Explorer!</span></span>"; return g; }
+
+  function homeBody(layout){
+    var wide = layout==="wide", split = layout==="split";
+    var frag=document.createDocumentFragment();
+    frag.appendChild(greet());
+    // 1) Create block stays at the top — the app's primary job.
+    frag.appendChild(el("div","qh disp","What story today?"));
+    frag.appendChild(genreTiles(wide || split ? "six" : ""));
+    // 2) Continue as a big card, right below create.
+    var wrapc=el("div","pad"); wrapc.appendChild(continueHero(wide)); frag.appendChild(wrapc);
+    // 3) Discovery rows.
+    frag.appendChild(el("div","sect-label","Discover"));
+    frag.appendChild(row("Popular this week", S.slice(1,9)));
+    frag.appendChild(row("Quick stories · under 5 min", S.filter(function(s){return s.ln==="~2 min";})));
+    if (wide) frag.appendChild(row("Fresh from the studio", S.slice(3,10)));
+    return frag;
+  }
+
+  function render(){
+    var f=FF[ff]; renderNotes();
+    device.className="device"+(f.dev==="ipad"?" ipad":"");
+    screen.style.width=f.w+"px"; screen.style.height=f.h+"px";
+    view.className="view"+(f.nav==="bottom"?" mode-bottom":"");
+    view.innerHTML="";
+
+    if (f.nav==="bottom") {
+      var top=el("div","topbar"); top.appendChild(el("span","brand","Storykins")); var pf=el("button","icon-btn","🙂"); pf.setAttribute("aria-label","Profile"); top.appendChild(pf);
+      var sc=el("div","bottom-scroll"); var pt=el("div"); pt.style.height="60px"; sc.appendChild(pt); sc.appendChild(homeBody("stack")); var pb=el("div"); pb.style.height="92px"; sc.appendChild(pb);
+      view.appendChild(sc); view.appendChild(top);
+      var bar=el("div","tab-bar"); [TABS[0],TABS[1],"create",TABS[2],{id:"more",label:"More",ic:"⋯"}].forEach(function(t){
+        if(t==="create"){ var cr=el("div","tb-create"); var cb=el("button",null,"✎"); cb.type="button"; cb.setAttribute("aria-label","Create story"); cr.appendChild(cb); cr.appendChild(el("span","cl","Create")); bar.appendChild(cr); return; }
+        var b=el("button","tb-item"); b.type="button"; b.setAttribute("aria-selected",String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label; bar.appendChild(b);
+      }); view.appendChild(bar);
+    } else if (f.nav==="rail") {
+      var rail=el("div","rail"); var cbtn=el("button","create","✎"); cbtn.type="button"; cbtn.setAttribute("aria-label","Create story"); rail.appendChild(cbtn);
+      TABS.forEach(function(t){ var b=el("button","ri"); b.type="button"; b.setAttribute("aria-selected",String(t.id===tab)); b.setAttribute("aria-label",t.label); b.textContent=t.ic; rail.appendChild(b); });
+      rail.appendChild(el("div","spacer")); var mb=el("button","ri","⋯"); mb.setAttribute("aria-label","More"); rail.appendChild(mb);
+      var content=el("div","content"); content.appendChild(homeBody("split"));
+      view.appendChild(rail); view.appendChild(content);
+    } else {
+      var sb=el("div","sidebar"+(ipadNavOpen?"":" collapsed")); sb.appendChild(el("div","brand","Storykins"));
+      var sc2=el("button","create","<span>✎</span> Create"); sc2.type="button"; sb.appendChild(sc2);
+      sb.appendChild(el("div","grp","Browse"));
+      TABS.forEach(function(t){ var b=el("button","lnk"); b.type="button"; b.setAttribute("aria-selected",String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label; sb.appendChild(b); });
+      sb.appendChild(el("div","spacer")); [["⚙️","Settings"],["ℹ️","About"]].forEach(function(x){ var b=el("button","lnk"); b.type="button"; b.innerHTML="<span class='ic'>"+x[0]+"</span>"+x[1]; sb.appendChild(b); });
+      var content2=el("div","content");
+      var ch=el("div","c-head"); ch.appendChild(el("span","ttl","Good evening")); var pf2=el("button","icon-btn","🙂"); pf2.setAttribute("aria-label","Profile"); ch.appendChild(pf2); content2.appendChild(ch);
+      content2.appendChild(homeBody("wide"));
+      view.appendChild(sb); view.appendChild(content2);
+      var arrow=el("button","nav-arrow"+(ipadNavOpen?" open":""), ipadNavOpen?"❮":"❯"); arrow.type="button"; arrow.setAttribute("aria-label", ipadNavOpen?"Hide menu":"Show menu");
+      arrow.addEventListener("click", function(){ ipadNavOpen=!ipadNavOpen; sb.classList.toggle("collapsed", !ipadNavOpen); arrow.classList.toggle("open", ipadNavOpen); arrow.innerHTML=ipadNavOpen?"❮":"❯"; });
+      view.appendChild(arrow);
+    }
+  }
+
+  var ffBtns=Array.prototype.slice.call(document.querySelectorAll(".ff"));
+  ffBtns.forEach(function(b){ b.addEventListener("click", function(){ ff=b.getAttribute("data-ff"); ffBtns.forEach(function(x){ x.setAttribute("aria-selected",String(x===b)); }); tab="home"; ipadNavOpen=true; render(); }); });
+  render();
+})();
+</script>

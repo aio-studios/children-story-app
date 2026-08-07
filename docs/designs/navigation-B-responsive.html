@@ -1,0 +1,392 @@
+<title>Navigation B — Responsive (Phone · Landscape · iPad)</title>
+<style>
+  :root {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+      --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+      --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+      --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%), var(--studio); color: var(--studio-ink); font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 8px; }
+  header.page .lede { max-width: 680px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 36px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .ff-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 6px; }
+  .ff { cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 13px; padding: 10px 15px; font: inherit; font-weight: 800; font-size: 13px; color: var(--studio-ink-soft); display: flex; align-items: center; gap: 8px; transition: transform .1s, box-shadow .1s; }
+  .ff:hover { transform: translateY(-1px); }
+  .ff[aria-selected="true"] { background: var(--card); color: var(--ink); border-color: color-mix(in srgb,var(--brand) 55%, var(--line)); box-shadow: var(--shadow-sm); }
+  .ff:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .ff .em { font-size: 15px; }
+  .ff small { font-weight: 700; color: var(--studio-ink-soft); font-size: 11px; }
+
+  .stage { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 16px; }
+  @media (min-width: 940px) { .stage { grid-template-columns: 300px 1fr; align-items: start; } }
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 8px; }
+  .notes h2 { font-size: 15px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 14px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0 0 6px; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-soft); font-size: 12.5px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .notes .navmode { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); background: var(--brand-wash); border-radius: 8px; padding: 7px 10px; margin-top: 6px; }
+
+  .device-scroll { overflow-x: auto; padding: 6px 2px 14px; }
+  .device-scroll::-webkit-scrollbar { height: 8px; }
+  .device-wrap { display: flex; justify-content: center; min-width: min-content; }
+  .device { border-radius: 34px; padding: 11px; background: linear-gradient(160deg, var(--bezel), var(--bezel-2)); box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05); }
+  .device.ipad { border-radius: 26px; padding: 14px; }
+  .screen { position: relative; border-radius: 26px; overflow: hidden; background: var(--bg); color: var(--ink); display: flex; }
+  .device.ipad .screen { border-radius: 14px; }
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 10px; }
+
+  /* view is a flex row [nav][content] except bottom mode which stacks */
+  .view { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+  .view.mode-bottom { display: block; }
+
+  /* content column */
+  .content { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; overflow-y: auto; }
+  .content::-webkit-scrollbar { width: 0; }
+  .c-head { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: linear-gradient(to bottom, var(--bg) 76%, transparent); }
+  .c-head .ttl { flex: 1; font-size: 17px; font-weight: 800; color: var(--ink); }
+  .c-head .ttl.brand { color: var(--brand); }
+  .icon-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; font-size: 16px; box-shadow: var(--shadow-sm); }
+  .icon-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .c-body { padding: 0 0 20px; }
+
+  /* bottom-mode header (portrait) */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; gap: 8px; height: 62px; padding: 16px 14px 0; background: linear-gradient(to bottom, var(--bg) 66%, transparent); }
+  .topbar .brand { flex: 1; font-size: 18px; font-weight: 800; color: var(--brand); }
+  .bottom-scroll { position: absolute; inset: 0; overflow-y: auto; }
+  .bottom-scroll::-webkit-scrollbar { width: 0; }
+
+  /* ------ home content ------ */
+  .hero { margin: 4px 16px 18px; border-radius: 20px; overflow: hidden; position: relative; box-shadow: var(--shadow-sm); }
+  .hero .art { height: 150px; background: radial-gradient(120% 90% at 22% 14%, #E8A06B, transparent 58%), linear-gradient(150deg, #B85C27, #6d3f1e); }
+  .hero.tall .art { height: 210px; }
+  .hero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.66), transparent 60%); }
+  .hero .cap { position: absolute; left: 16px; right: 16px; bottom: 14px; color: #fff; }
+  .hero .cap .kx { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: .9; }
+  .hero .cap .tt { font-size: 20px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+  .hero .cap .btn { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 800; background: #fff; color: #2a2116; padding: 7px 13px; border-radius: 999px; }
+
+  .shelf { margin: 0 0 20px; }
+  .shelf h3 { font-size: 14.5px; font-weight: 800; margin: 0 0 10px; padding: 0 16px; }
+  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 4px; }
+  .strip::-webkit-scrollbar { height: 0; }
+  .g-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 0 16px; }
+  .g-chip { --a: var(--brand); flex: 0 0 96px; height: 116px; border-radius: 15px; position: relative; overflow: hidden; border: 0; padding: 0; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .g-wrap .g-chip { flex: none; width: auto; height: 128px; }
+  .g-chip .art { position: absolute; inset: 0; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 45%, #000 12%)); }
+  .g-chip .emoji { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+  .g-chip .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
+  .g-chip .nm { position: absolute; left: 8px; right: 8px; bottom: 8px; color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+
+  .card-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 0 16px; }
+  .rcard { flex: 0 0 150px; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .card-wrap .rcard { flex: none; }
+  .rcard .cv { --a: var(--brand); height: 92px; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 70%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 12%)); position: relative; }
+  .rcard .cv .e { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 30px; }
+  .rcard .mt { padding: 9px 11px 12px; }
+  .rcard .mt .tt { font-size: 12.5px; font-weight: 800; line-height: 1.25; }
+  .rcard .mt .gg { font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+
+  .propose { margin: 0 16px 14px; font-size: 11px; color: var(--ink-soft); background: var(--brand-wash); border: 1px dashed color-mix(in srgb,var(--brand) 40%, var(--line)); border-radius: 10px; padding: 8px 11px; }
+  .pagehead { padding: 2px 16px 12px; }
+  .pagehead h2 { font-size: 20px; margin: 0; }
+  .music-list { padding: 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .mrow { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); background: var(--card); border-radius: 13px; padding: 10px 12px; }
+  .mrow .ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; background: var(--brand-wash); }
+  .mrow .mt { flex: 1; } .mrow .mt .tt { font-size: 13px; font-weight: 800; } .mrow .mt .du { font-size: 11px; color: var(--ink-soft); }
+  .mrow .pl { font-size: 17px; color: var(--brand); }
+
+  /* ---------- NAV: bottom bar (phone portrait) ---------- */
+  .tab-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 40; height: 74px; display: flex; align-items: stretch; justify-content: space-around; padding: 6px 8px 16px; background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border-top: 1px solid var(--line); }
+  .tb-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: transparent; cursor: pointer; color: var(--ink-soft); font: inherit; font-size: 10.5px; font-weight: 700; }
+  .tb-item .ic { font-size: 21px; line-height: 1; }
+  .tb-item[aria-selected="true"] { color: var(--brand); }
+  .tb-item:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 10px; }
+  .tb-create { flex: 0 0 auto; align-self: center; margin-top: -24px; }
+  .tb-create button { width: 58px; height: 58px; border-radius: 50%; border: 4px solid var(--bg); background: var(--brand); color: var(--card); font-size: 26px; cursor: pointer; box-shadow: var(--shadow); display: grid; place-items: center; }
+  .tb-create button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .tb-create .cl { display: block; text-align: center; font-size: 9px; font-weight: 800; color: var(--brand); margin-top: 2px; }
+
+  /* ---------- NAV: compact rail (phone landscape) ---------- */
+  .rail { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0; background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border-right: 1px solid var(--line); z-index: 10; }
+  .rail .create { width: 44px; height: 44px; border-radius: 15px; border: 0; background: var(--brand); color: var(--card); font-size: 22px; cursor: pointer; display: grid; place-items: center; box-shadow: var(--shadow-sm); margin-bottom: 4px; }
+  .rail .create:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .rail .ri { width: 46px; height: 42px; border: 0; background: transparent; border-radius: 12px; cursor: pointer; color: var(--ink-soft); font-size: 20px; display: grid; place-items: center; }
+  .rail .ri[aria-selected="true"] { background: var(--brand-wash); color: var(--brand); }
+  .rail .ri:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .rail .spacer { flex: 1; }
+
+  /* ---------- NAV: sidebar (iPad) ---------- */
+  .sidebar { flex: 0 0 214px; display: flex; flex-direction: column; padding: 20px 14px 16px; background: color-mix(in srgb, var(--canvas) 55%, var(--bg)); border-right: 1px solid var(--line); z-index: 10; transition: margin-left .3s cubic-bezier(.4,0,.2,1); }
+  .sidebar.collapsed { margin-left: -214px; }
+  /* big drawer handle — slides the sidebar out and back; content reflows to fill */
+  .nav-arrow { position: absolute; top: calc(50% - 30px); z-index: 35; width: 30px; height: 60px; border: 1px solid var(--line); border-left: 0; background: var(--card); color: var(--brand); border-radius: 0 16px 16px 0; box-shadow: var(--shadow-sm); cursor: pointer; display: grid; place-items: center; font-size: 22px; font-weight: 800; left: 0; transition: left .3s cubic-bezier(.4,0,.2,1); }
+  .nav-arrow.open { left: 214px; }
+  .nav-arrow:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .sidebar .brand { font-size: 21px; font-weight: 800; color: var(--brand); padding: 0 8px 16px; }
+  .sidebar .create { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--brand); color: var(--card); font: inherit; font-weight: 800; font-size: 15px; padding: 12px; border-radius: 14px; cursor: pointer; box-shadow: var(--shadow-sm); margin-bottom: 14px; }
+  .sidebar .create:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .sidebar .lnk { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; text-align: left; }
+  .sidebar .lnk .ic { font-size: 18px; width: 22px; text-align: center; }
+  .sidebar .lnk[aria-selected="true"] { background: var(--brand-wash); color: var(--brand); }
+  .sidebar .lnk:hover { background: var(--canvas); }
+  .sidebar .lnk:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .sidebar .grp { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); padding: 12px 12px 4px; }
+  .sidebar .spacer { flex: 1; }
+
+  .legend { margin-top: 32px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .tb-wrapx { overflow-x: auto; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · #73 nav · #75 landscape · iPad</div>
+      <h1 class="title disp">Navigation B, adapted to every screen</h1>
+      <p class="sub">The chosen bottom-bar direction isn't one layout — it <b>adapts</b>: bottom bar on phone portrait, a compact icon rail in landscape, a full sidebar on iPad (where content also goes multi-column). Same nav model, same content, right shape for each device. Flip form factors and themes below.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="ff-tabs" role="tablist" aria-label="Form factor">
+    <button class="ff" role="tab" aria-selected="true" data-ff="phone-p"><span class="em">📱</span> Phone <small>Portrait</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="phone-l"><span class="em">📱</span> Phone <small>Landscape</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="ipad-p"><span class="em">▧</span> iPad <small>Portrait</small></button>
+    <button class="ff" role="tab" aria-selected="false" data-ff="ipad-l"><span class="em">▭</span> iPad <small>Landscape</small></button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div>
+      <p class="phone-hint">↑ Interactive — tap tabs/Create in each layout. Wide frames scroll horizontally on this page.</p>
+      <div class="device-scroll">
+        <div class="device-wrap">
+          <div class="device" id="device">
+            <div class="screen" id="screen"><div class="view" id="view"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">The adaptive rule (one nav model, three shapes)</h2>
+    <div class="tb-wrapx">
+    <table>
+      <thead><tr><th>Form factor</th><th>Nav shape</th><th>Why</th><th>Content</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Phone · Portrait</td><td><b>Bottom bar + center Create</b></td><td>Thumb zone; the app's default</td><td>Single-column shelves</td></tr>
+        <tr><td class="dq">Phone · Landscape</td><td><b>Compact left icon rail</b></td><td>Vertical space is scarce — a bottom bar would steal ~20% of height (#75)</td><td>Shelves keep flowing; more per row</td></tr>
+        <tr><td class="dq">iPad · Portrait/Landscape</td><td><b>Left sidebar (icons + labels)</b></td><td>Native tablet pattern; a stretched bottom bar looks lost</td><td>Multi-column grids; taller hero</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sub" style="margin-top:12px;">Breakpoint logic (for build): nav shape keys off available width + orientation — compact width & portrait → bottom bar; short height (landscape phone) → rail; ≥ tablet width → sidebar. Create is always one tap away in every shape.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(mode) { if (mode === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode); tbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set") === mode)); }); }
+  tbtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); }); });
+
+  var GENRES = [ { label:"Adventure", e:"🗺️", a:"#B85C27" }, { label:"Fantasy", e:"🐉", a:"#7B4C9E" }, { label:"Animals", e:"🦊", a:"#4C7A3F" }, { label:"Bedtime", e:"🌙", a:"#3E4E86" }, { label:"Sci-fi", e:"🚀", a:"#1D7A8C" } ];
+  var RECENT = [ { t:"Finn and the Whispering Cave", g:"Adventure", e:"🧭", a:"#B85C27" }, { t:"Luna's First Spell", g:"Fantasy", e:"🧙‍♀️", a:"#7B4C9E" }, { t:"Baxter's Honey Hunt", g:"Animals", e:"🐻", a:"#4C7A3F" }, { t:"Cosmo Meets a Comet", g:"Sci-fi", e:"👨‍🚀", a:"#1D7A8C" } ];
+  var FAVS = [ { t:"The Sleepy Otter's Moon", g:"Bedtime", e:"🦦", a:"#3E4E86" }, { t:"Cosmo Meets a Comet", g:"Sci-fi", e:"👨‍🚀", a:"#1D7A8C" }, { t:"Coco's Clever Shortcut", g:"Animals", e:"🦊", a:"#4C7A3F" }, { t:"Ember's Tiny Spark", g:"Fantasy", e:"🐲", a:"#7B4C9E" } ];
+  var MUSIC = [ { t:"Twinkle Lullaby", d:"2:14", e:"🌟" }, { t:"Moonlit Meadow", d:"3:02", e:"🌙" }, { t:"Starship Dreams", d:"2:48", e:"🚀" }, { t:"The Sleepy Forest", d:"4:10", e:"🌲" } ];
+  var TABS = [ { id:"home", label:"Home", ic:"🏠" }, { id:"fav", label:"Favourites", ic:"⭐" }, { id:"music", label:"Music", ic:"🎵" } ];
+
+  var FF = {
+    "phone-p": { w:342, h:718, dev:"phone", nav:"bottom", wide:false,
+      note:"Default phone view. Bottom bar sits in the thumb zone with Create dead-center — the app's primary action is always one tap away." },
+    "phone-l": { w:718, h:360, dev:"phone", nav:"rail", wide:true,
+      note:"Landscape. A bottom bar would eat ~20% of the (now short) height, so nav collapses to a slim left icon rail. Content keeps flowing — this is the #75 win." },
+    "ipad-p": { w:540, h:718, dev:"ipad", nav:"sidebar", wide:false,
+      note:"iPad portrait. Full sidebar with labels — the native tablet pattern. The extra width lets shelves become multi-column grids instead of a stretched single column." },
+    "ipad-l": { w:760, h:558, dev:"ipad", nav:"sidebar", wide:true,
+      note:"iPad landscape. Same sidebar; even more content columns. A phone's bottom bar stretched this wide would look lost — the sidebar earns the space." }
+  };
+  var NOTE_TAG = "Direction B (Bottom bar + Create) — the chosen nav model, shown in its correct shape for this device.";
+
+  function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+  var view = document.getElementById("view");
+  var screen = document.getElementById("screen");
+  var device = document.getElementById("device");
+  var notesEl = document.getElementById("notes");
+  var ff = "phone-p", tab = "home", ipadNavOpen = true;
+
+  function renderNotes() {
+    var f = FF[ff]; notesEl.innerHTML = "";
+    notesEl.appendChild(el("h2","disp","Navigation B · " + ({"phone-p":"Phone Portrait","phone-l":"Phone Landscape","ipad-p":"iPad Portrait","ipad-l":"iPad Landscape"})[ff]));
+    notesEl.appendChild(el("p","tagline", NOTE_TAG));
+    notesEl.appendChild(el("div","navmode", "Nav: " + ({bottom:"Bottom bar + Create",rail:"Compact icon rail",sidebar:"Left sidebar"})[f.nav]));
+    var ul = el("ul");
+    var pts = ({
+      "phone-p":["Bottom bar reserves space — content never hides behind it.","Center Create = the app's whole purpose, always reachable.","3 destinations + Create + More sheet."],
+      "phone-l":["Rail is 64px vs a ~74px bottom bar — reclaims scarce height.","Create pinned to the top of the rail; tabs below.","Shelves show more items per row in the wider viewport."],
+      "ipad-p":["Sidebar with labels — reads as a real tablet app.","Collapsible: tap the big edge arrow (❮) to slide it away; content reflows to full width.","Genre + Recent become multi-column grids, not stretched rows."],
+      "ipad-l":["Widest content: 4–5 genre tiles and card grids per row.","Collapse the sidebar for a distraction-free, full-bleed reading/browse view.","No stretched-phone feeling — the space is used, not padded."]
+    })[ff];
+    pts.forEach(function (t) { var li = el("li"); li.appendChild(el("span","tick","▹")); li.appendChild(el("span",null,t)); ul.appendChild(li); });
+    notesEl.appendChild(ul);
+    var p2 = el("p","tagline"); p2.style.marginTop = "4px"; p2.textContent = f.note; notesEl.appendChild(p2);
+  }
+
+  // ---- content (dev = phone|ipad decides grid vs strip) ----
+  function homeContent(wideGrid) {
+    var f = document.createDocumentFragment();
+    var hero = el("div","hero" + (wideGrid ? " tall" : ""));
+    hero.innerHTML = "<div class='art'></div><div class='scrim'></div><div class='cap'><div class='kx'>Continue</div><div class='tt disp'>Finn and the Whispering Cave</div><span class='btn'>▶ Keep reading</span></div>";
+    f.appendChild(hero);
+    var gs = el("div","shelf"); gs.appendChild(el("h3",null,"Start a new story"));
+    var gcont = el("div", wideGrid ? "g-wrap" : "strip");
+    GENRES.forEach(function (g) { var c = el("button","g-chip"); c.type="button"; c.setAttribute("style","--a:"+g.a); c.innerHTML="<span class='art'></span><span class='emoji'>"+g.e+"</span><span class='scrim'></span><span class='nm'>"+g.label+"</span>"; gcont.appendChild(c); });
+    gs.appendChild(gcont); f.appendChild(gs);
+    var rs = el("div","shelf"); rs.appendChild(el("h3",null,"Recently created"));
+    var rcont = el("div", wideGrid ? "card-wrap" : "strip");
+    RECENT.forEach(function (r) { var c = el("div","rcard"); c.innerHTML="<div class='cv' style='--a:"+r.a+"'><span class='e'>"+r.e+"</span></div><div class='mt'><div class='tt'>"+r.t+"</div><div class='gg'>"+r.g+"</div></div>"; rcont.appendChild(c); });
+    rs.appendChild(rcont); f.appendChild(rs);
+    return f;
+  }
+  function favContent() {
+    var f = document.createDocumentFragment();
+    f.appendChild(el("div","pagehead","<h2 class='disp'>Favourites</h2>"));
+    f.appendChild(el("div","propose","Proposed destination — not built yet (scope separately per #73)."));
+    var grid = el("div","card-wrap");
+    FAVS.forEach(function (r) { var c = el("div","rcard"); c.innerHTML="<div class='cv' style='--a:"+r.a+"'><span class='e'>"+r.e+"</span></div><div class='mt'><div class='tt'>"+r.t+"</div><div class='gg'>"+r.g+"</div></div>"; grid.appendChild(c); });
+    f.appendChild(grid); return f;
+  }
+  function musicContent() {
+    var f = document.createDocumentFragment();
+    f.appendChild(el("div","pagehead","<h2 class='disp'>Music &amp; lullabies</h2>"));
+    f.appendChild(el("div","propose","Proposed destination — not built yet (scope separately per #73)."));
+    var list = el("div","music-list");
+    MUSIC.forEach(function (m) { var r = el("div","mrow"); r.innerHTML="<div class='ic'>"+m.e+"</div><div class='mt'><div class='tt'>"+m.t+"</div><div class='du'>"+m.d+"</div></div><div class='pl'>▶</div>"; list.appendChild(r); });
+    f.appendChild(list); return f;
+  }
+  function pageBody(wideGrid) { return tab === "home" ? homeContent(wideGrid) : tab === "fav" ? favContent() : musicContent(); }
+  function pageTitle() { return tab === "home" ? "Storykins" : tab === "fav" ? "Favourites" : "Music"; }
+
+  function createBtnRail() { var b = el("button","create","✎"); b.type="button"; b.setAttribute("aria-label","Create story"); return b; }
+
+  function render() {
+    var f = FF[ff];
+    device.className = "device" + (f.dev === "ipad" ? " ipad" : "");
+    screen.style.width = f.w + "px"; screen.style.height = f.h + "px";
+    view.className = "view" + (f.nav === "bottom" ? " mode-bottom" : "");
+    view.innerHTML = "";
+    renderNotes();
+
+    if (f.nav === "bottom") {
+      var top = el("div","topbar");
+      top.appendChild(el("span","brand", pageTitle()));
+      top.appendChild((function(){ var b=el("button","icon-btn","🙂"); b.setAttribute("aria-label","Profile"); return b; })());
+      var scroll = el("div","bottom-scroll");
+      var pt = el("div"); pt.style.height = "60px"; scroll.appendChild(pt);
+      scroll.appendChild(pageBody(false));
+      var pb = el("div"); pb.style.height = "92px"; scroll.appendChild(pb);
+      view.appendChild(scroll); view.appendChild(top);
+      var bar = el("div","tab-bar");
+      var slots = [ TABS[0], TABS[1], "create", TABS[2], { id:"more", label:"More", ic:"⋯" } ];
+      slots.forEach(function (t) {
+        if (t === "create") { var cr = el("div","tb-create"); var cb = el("button",null,"✎"); cb.type="button"; cb.setAttribute("aria-label","Create story"); cr.appendChild(cb); cr.appendChild(el("span","cl","Create")); bar.appendChild(cr); return; }
+        var b = el("button","tb-item"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label;
+        if (t.id!=="more") b.addEventListener("click", function () { tab=t.id; render(); });
+        bar.appendChild(b);
+      });
+      view.appendChild(bar);
+    } else if (f.nav === "rail") {
+      var rail = el("div","rail");
+      rail.appendChild(createBtnRail());
+      TABS.forEach(function (t) { var b = el("button","ri"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.setAttribute("aria-label", t.label); b.textContent = t.ic; b.addEventListener("click", function () { tab=t.id; render(); }); rail.appendChild(b); });
+      rail.appendChild(el("div","spacer"));
+      rail.appendChild((function(){ var b=el("button","ri","⋯"); b.setAttribute("aria-label","More"); return b; })());
+      var content = el("div","content");
+      var ch = el("div","c-head"); ch.appendChild(el("span","ttl" + (tab==="home"?" brand":""), pageTitle())); ch.appendChild((function(){ var b=el("button","icon-btn","🙂"); b.setAttribute("aria-label","Profile"); return b; })());
+      content.appendChild(ch);
+      var cb2 = el("div","c-body"); cb2.appendChild(pageBody(true)); content.appendChild(cb2);
+      view.appendChild(rail); view.appendChild(content);
+    } else {
+      var sb = el("div","sidebar" + (ipadNavOpen ? "" : " collapsed"));
+      sb.appendChild(el("div","brand","Storykins"));
+      sb.appendChild((function(){ var b=el("button","create","<span>✎</span> Create"); b.type="button"; return b; })());
+      sb.appendChild(el("div","grp","Browse"));
+      TABS.forEach(function (t) { var b = el("button","lnk"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label; b.addEventListener("click", function () { tab=t.id; render(); }); sb.appendChild(b); });
+      sb.appendChild(el("div","spacer"));
+      [["⚙️","Settings"],["ℹ️","About"]].forEach(function (x) { var b=el("button","lnk"); b.type="button"; b.innerHTML="<span class='ic'>"+x[0]+"</span>"+x[1]; sb.appendChild(b); });
+      var content2 = el("div","content");
+      var ch2 = el("div","c-head"); ch2.appendChild(el("span","ttl", tab==="home" ? "Good evening" : pageTitle())); ch2.appendChild((function(){ var b=el("button","icon-btn","🙂"); b.setAttribute("aria-label","Profile"); return b; })());
+      content2.appendChild(ch2);
+      var cb3 = el("div","c-body"); cb3.appendChild(pageBody(true)); content2.appendChild(cb3);
+      view.appendChild(sb); view.appendChild(content2);
+      var arrow = el("button","nav-arrow" + (ipadNavOpen ? " open" : ""), ipadNavOpen ? "❮" : "❯");
+      arrow.type = "button";
+      arrow.setAttribute("aria-label", ipadNavOpen ? "Hide menu" : "Show menu");
+      arrow.addEventListener("click", function () {
+        ipadNavOpen = !ipadNavOpen;
+        // toggle classes on the live elements so the slide animates (no full re-render)
+        sb.classList.toggle("collapsed", !ipadNavOpen);
+        arrow.classList.toggle("open", ipadNavOpen);
+        arrow.innerHTML = ipadNavOpen ? "❮" : "❯";
+        arrow.setAttribute("aria-label", ipadNavOpen ? "Hide menu" : "Show menu");
+      });
+      view.appendChild(arrow);
+    }
+  }
+
+  var ffBtns = Array.prototype.slice.call(document.querySelectorAll(".ff"));
+  ffBtns.forEach(function (b) { b.addEventListener("click", function () { ff = b.getAttribute("data-ff"); ffBtns.forEach(function (x) { x.setAttribute("aria-selected", String(x===b)); }); tab = "home"; ipadNavOpen = true; render(); }); });
+  render();
+})();
+</script>

@@ -1,0 +1,345 @@
+<title>Home — Wireframe Directions</title>
+<style>
+  :root {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+      --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+      --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+      --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.74); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --glass: rgba(43,36,23,0.72); --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%), var(--studio); color: var(--studio-ink); font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  code { background: var(--studio-2); padding: 1px 6px; border-radius: 6px; font-size: 0.88em; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 8px; }
+  header.page .lede { max-width: 660px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 38px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 10px; }
+  .tab { flex: 1 1 240px; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 16px; padding: 14px 16px; transition: transform .12s, box-shadow .12s, border-color .12s; }
+  .tab:hover { transform: translateY(-1px); }
+  .tab[aria-selected="true"] { background: var(--card); border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: var(--shadow); color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .tab .k { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: var(--brand); color: var(--card); font-size: 12px; font-weight: 800; margin-right: 8px; }
+  .tab .tname { font-weight: 800; font-size: 15px; }
+  .tab .tdesc { font-size: 12.5px; color: var(--studio-ink-soft); margin-top: 6px; line-height: 1.45; }
+
+  .stage { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 20px; }
+  @media (min-width: 900px) { .stage { grid-template-columns: 340px 1fr; align-items: start; } }
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 8px; }
+  .notes h2 { font-size: 16px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 14px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0 0 6px; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-soft); font-size: 12.5px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .notes .dep { font-size: 11.5px; color: var(--studio-ink-soft); background: var(--brand-wash); border-radius: 9px; padding: 9px 11px; margin-top: 4px; line-height: 1.45; }
+  .notes .dep b { color: var(--ink); }
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 12px; }
+
+  .device-wrap { display: flex; justify-content: center; }
+  .device { width: 390px; max-width: 100%; border-radius: 44px; padding: 12px; background: linear-gradient(160deg, var(--bezel), var(--bezel-2)); box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05); }
+  .screen { position: relative; height: 780px; border-radius: 34px; overflow: hidden; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 128px; height: 26px; background: var(--bezel); border-radius: 0 0 16px 16px; z-index: 60; }
+  .statusbar { position: absolute; top: 0; left: 0; right: 0; height: 30px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 22px 2px; font-size: 12px; font-weight: 700; color: var(--ink); z-index: 55; pointer-events: none; }
+  .view { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  .home-scroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .home-scroll::-webkit-scrollbar { width: 0; }
+
+  /* greeting */
+  .greet { display: flex; align-items: center; gap: 11px; padding: 40px 16px 10px; }
+  .greet .owl { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: var(--brand-wash); flex: none; }
+  .greet .gt { flex: 1; }
+  .greet .gt .hi { font-size: 11px; color: var(--ink-soft); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; }
+  .greet .gt .nm { display: block; font-size: 18px; font-weight: 800; line-height: 1.15; margin-top: 2px; }
+  .greet .prof { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; font-size: 18px; cursor: pointer; }
+
+  /* rows */
+  .row { margin: 8px 0 22px; }
+  .row .rh { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 11px; }
+  .row .rh .rt { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+  .row .rh .more { font-size: 12px; font-weight: 800; color: var(--brand); cursor: pointer; }
+  .rail { display: flex; gap: 11px; overflow-x: auto; padding: 0 16px 4px; scroll-snap-type: x proximity; }
+  .rail::-webkit-scrollbar { height: 0; }
+
+  /* cover card w/ badges (#61) */
+  .cc { --a: var(--brand); scroll-snap-align: start; flex: 0 0 140px; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid var(--line); padding: 0; cursor: pointer; box-shadow: var(--shadow-sm); text-align: left; }
+  .cc.tall { aspect-ratio: 3 / 4; }
+  .cc .art { position: absolute; inset: 0; background: radial-gradient(120% 82% at 26% 14%, color-mix(in srgb,var(--a) 80%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 14%)); }
+  .cc .emoji { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 46px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+  .cc .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.78) 6%, rgba(0,0,0,0.1) 48%, transparent 66%); }
+  .cc .lvl { position: absolute; top: 9px; left: 9px; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; color: #fff; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); padding: 3px 8px; border-radius: 999px; }
+  .cc .foot { position: absolute; left: 10px; right: 10px; bottom: 10px; color: #fff; }
+  .cc .foot .tt { font-size: 13px; font-weight: 800; line-height: 1.22; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .cc .foot .bd { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  .cc .foot .bd .b { font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 999px; background: rgba(255,255,255,0.92); color: #2a2116; }
+  .cc .foot .bd .b.g { background: color-mix(in srgb,var(--a) 86%, black 4%); color: #fff; }
+  .cc:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  /* featured hero (dir 1) */
+  .feat { margin: 8px 16px 22px; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; position: relative; box-shadow: var(--shadow); cursor: pointer; --a: #7B4C9E; }
+  .feat .art { height: 230px; background: radial-gradient(120% 84% at 24% 12%, color-mix(in srgb,var(--a) 82%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
+  .feat .emoji { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); font-size: 84px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.32)); }
+  .feat .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 8%, transparent 62%); }
+  .feat .cap { position: absolute; left: 16px; right: 16px; bottom: 15px; color: #fff; }
+  .feat .cap .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
+  .feat .cap .tt { font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; }
+  .feat .cap .bd { display: flex; gap: 6px; margin: 9px 0; }
+  .feat .cap .bd .b { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.9); color: #2a2116; }
+  .feat .cap .play { display: inline-block; font-size: 13px; font-weight: 800; background: #fff; color: #2a2116; padding: 9px 16px; border-radius: 999px; }
+
+  /* continue hero (dir 3) */
+  .cont { margin: 8px 16px 22px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; position: relative; box-shadow: var(--shadow-sm); cursor: pointer; --a: #B85C27; }
+  .cont .art { height: 150px; background: radial-gradient(120% 90% at 22% 14%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 14%)); }
+  .cont .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 62%); }
+  .cont .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,0.3); }
+  .cont .bar i { display: block; height: 100%; width: 62%; background: #fff; }
+  .cont .cap { position: absolute; left: 15px; right: 15px; bottom: 14px; color: #fff; }
+  .cont .cap .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: .9; }
+  .cont .cap .tt { font-size: 19px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+  .cont .cap .sb { font-size: 12px; opacity: .92; margin-top: 2px; }
+
+  /* create-first panel (dir 2) */
+  .createp { margin: 4px 16px 18px; }
+  .createp .q { font-size: 22px; font-weight: 800; margin: 4px 0 12px; }
+  .gtiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
+  .gtile { --a: var(--brand); position: relative; aspect-ratio: 1/1.08; border-radius: 15px; overflow: hidden; border: 1px solid var(--line); padding: 0; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .gtile .art { position: absolute; inset: 0; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 80%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 45%, #000 12%)); }
+  .gtile .emoji { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 30px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+  .gtile .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
+  .gtile .nm { position: absolute; left: 7px; right: 7px; bottom: 6px; color: #fff; font-size: 11px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+  .gtile.own .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 9px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 9px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 18px); }
+  .gtile.own .emoji { color: var(--brand); }
+  .gtile.own .nm { color: var(--ink); text-shadow: none; }
+  .gtile.own .scrim { display: none; }
+  .createp .hintrow { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 12px; color: var(--ink-soft); }
+
+  .sect-label { padding: 6px 16px 8px; font-size: 12px; font-weight: 800; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .legend { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .legend .yes { color: var(--brand); font-weight: 800; }
+  .tb-wrapx { overflow-x: auto; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · Issue #61 · Home / discovery</div>
+      <h1 class="title disp">What is Home for?</h1>
+      <p class="sub">Three answers — discover, create, or return — each shown as a real scrolling home in the setup-B language, with genre / reading-level / length badges per #61. Cover art is stand-in (real covers come from #38's pipeline). Scroll, switch rows, flip themes.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Directions">
+    <button class="tab" role="tab" aria-selected="true" data-dir="1">
+      <div><span class="k">1</span><span class="tname">Netflix discovery</span></div>
+      <div class="tdesc">#61 literal: featured hero + endless curated rows of cover cards. Max wow — leans hardest on a content backend that doesn't exist yet.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="2">
+      <div><span class="k">2</span><span class="tname">Create-first</span></div>
+      <div class="tdesc">Top of screen is “make a story” (genres + custom); discovery rows sit below the fold. Honest about today — the top works with zero backend.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="3">
+      <div><span class="k">3</span><span class="tname">Continue + Library</span></div>
+      <div class="tdesc">Centers your own stories — Continue hero + “Your library”, works today from localStorage. Curated rows are additive, warmer, less firehose.</div>
+    </button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div>
+      <p class="phone-hint">↑ Scroll the phone, drag rows sideways, tap cards. 390px frame.</p>
+      <div class="device-wrap">
+        <div class="device">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="statusbar"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+            <div class="view" id="view"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">Trade-offs & what each needs to ship</h2>
+    <div class="tb-wrapx">
+    <table>
+      <thead><tr><th>Dimension</th><th>1 · Discovery</th><th>2 · Create-first</th><th>3 · Continue + Library</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Home's primary job</td><td>Browse others' stories</td><td>Make a new story</td><td>Return to your stories</td></tr>
+        <tr><td class="dq">Backend needed to ship</td><td>Most — stories DB, feeds, popularity, cached covers</td><td class="yes">Least up top — creation is local; rows fill in later</td><td class="yes">Little — your library is localStorage today</td></tr>
+        <tr><td class="dq">Portfolio "wow"</td><td class="yes">Highest</td><td>Medium</td><td>Medium-warm</td></tr>
+        <tr><td class="dq">Empty-state risk</td><td>High (rows look bare with no content)</td><td class="yes">Low (create is always full)</td><td>Medium (few stories early on)</td></tr>
+        <tr><td class="dq">Badges (genre/level/length)</td><td>On every card + hero</td><td>On discovery cards</td><td>On library + curated cards</td></tr>
+        <tr><td class="dq">Best when</td><td>There's a big story catalog</td><td>Creation is the core loop</td><td>Kids revisit favourites often</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(mode) { if (mode === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode); tbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set") === mode)); }); }
+  tbtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); }); });
+
+  var GEN = {
+    Adventure:{ a:"#B85C27" }, Fantasy:{ a:"#7B4C9E" }, Animals:{ a:"#4C7A3F" }, Bedtime:{ a:"#3E4E86" }, "Sci-fi":{ a:"#1D7A8C" }
+  };
+  // reading level: T=Toddler, E=Early reader, I=Independent ; length label
+  var S = [
+    { t:"The Kindness Dragon", g:"Fantasy", e:"🐉", lv:"Early reader", ln:"~2 min", own:true },
+    { t:"Coco's Very Big Shortcut", g:"Animals", e:"🦊", lv:"Toddler", ln:"~2 min", own:true },
+    { t:"Nova Builds a Friend", g:"Sci-fi", e:"🤖", lv:"Independent", ln:"~10 min" },
+    { t:"Willow and the Last Star", g:"Bedtime", e:"🧚", lv:"Early reader", ln:"~2 min", own:true },
+    { t:"Ember's Tiny Spark", g:"Fantasy", e:"🐲", lv:"Toddler", ln:"~2 min" },
+    { t:"Pip Climbs the Cloud Peak", g:"Adventure", e:"🐐", lv:"Early reader", ln:"~10 min" },
+    { t:"Snug's Goodnight Hug", g:"Bedtime", e:"🦉", lv:"Toddler", ln:"~2 min" },
+    { t:"Blip's Beeping Adventure", g:"Sci-fi", e:"✨", lv:"Early reader", ln:"~2 min" },
+    { t:"Finn and the Whispering Cave", g:"Adventure", e:"🧭", lv:"Independent", ln:"~10 min", own:true },
+    { t:"Luna's First Spell", g:"Fantasy", e:"🧙‍♀️", lv:"Early reader", ln:"~2 min" },
+    { t:"Baxter's Honey Hunt", g:"Animals", e:"🐻", lv:"Toddler", ln:"~2 min" },
+    { t:"Cosmo Meets a Comet", g:"Sci-fi", e:"👨‍🚀", lv:"Early reader", ln:"~10 min" },
+    { t:"Zara and the Hidden Map", g:"Adventure", e:"🥾", lv:"Independent", ln:"~10 min" },
+    { t:"Sammy's Sleepy Splash", g:"Bedtime", e:"🦦", lv:"Toddler", ln:"~2 min" }
+  ];
+  var GENRES = [ { l:"Adventure", e:"🗺️", a:"#B85C27" }, { l:"Fantasy", e:"🐉", a:"#7B4C9E" }, { l:"Animals", e:"🦊", a:"#4C7A3F" }, { l:"Bedtime", e:"🌙", a:"#3E4E86" }, { l:"Sci-fi", e:"🚀", a:"#1D7A8C" } ];
+  function pick(pred, n) { var r = S.filter(pred); return r.slice(0, n || r.length); }
+
+  var NOTES = {
+    "1": { h:"1 · Netflix discovery", tag:"#61 as written. A featured story up top, then endless curated rows of cover cards — Daily picks, Popular, Quick stories, per-genre. Badges on every card.",
+      pts:["Featured hero spotlights one story with big cover + badges + Play.","Rows: Continue, Daily picks, Popular, Quick stories, Fantasy, Bedtime…","Vertical infinite scroll; each row scrolls sideways.","Every card carries genre / reading-level / length badges."],
+      dep:["Heaviest dependency: ","needs a stories DB, popularity/curation feeds, and pre-generated cached covers (#38) — none exist yet. Rows look empty until there's a catalog."] },
+    "2": { h:"2 · Create-first", tag:"Home leads with the app's actual job — making a story. Genre tiles + custom sit at the very top; discovery rows are a reward for scrolling down.",
+      pts:["Top: “What story today?” + 5 genre tiles + Create-your-own.","Zero backend needed above the fold — creation is fully local.","Discovery rows (Popular, Daily) appear below, degrade gracefully when empty.","Fastest path to the core loop; least empty-state risk."],
+      dep:["Lightest to ship: ","the create block works today; discovery rows can start as just your own recent stories and grow into curated feeds later."] },
+    "3": { h:"3 · Continue + Library", tag:"A personal bookshelf. Big Continue card, then “Your library” of stories you've made, with curated rows as extras. Warm and returning-user friendly.",
+      pts:["Continue hero with a progress bar — resume in one tap.","“Your library” = your created stories (works from localStorage today).","“More like yours” / Popular rows are additive discovery.","Feels owned and cosy rather than a content firehose."],
+      dep:["Nearly no new backend: ","your library is local story history now; curated rows layer on when the content model lands."] }
+  };
+
+  function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+  var view = document.getElementById("view");
+  var notesEl = document.getElementById("notes");
+  var dir = "1";
+
+  function renderNotes() {
+    var n = NOTES[dir]; notesEl.innerHTML = "";
+    notesEl.appendChild(el("h2","disp",n.h));
+    notesEl.appendChild(el("p","tagline",n.tag));
+    var ul = el("ul"); n.pts.forEach(function (t) { var li = el("li"); li.appendChild(el("span","tick","▹")); li.appendChild(el("span",null,t)); ul.appendChild(li); }); notesEl.appendChild(ul);
+    var d = el("div","dep"); d.innerHTML = "<b>"+n.dep[0]+"</b>"+n.dep[1]; notesEl.appendChild(d);
+  }
+
+  function coverCard(s) {
+    var a = (GEN[s.g] || {}).a || "var(--brand)";
+    var c = el("button","cc tall"); c.type="button"; c.setAttribute("style","--a:"+a);
+    c.innerHTML = "<span class='art'></span><span class='scrim'></span><span class='lvl'>"+s.lv+"</span><span class='emoji'>"+s.e+"</span>"+
+      "<span class='foot'><span class='tt'>"+s.t+"</span><span class='bd'><span class='b g'>"+s.g+"</span><span class='b'>"+s.ln+"</span></span></span>";
+    return c;
+  }
+  function rowEl(title, items, more) {
+    var r = el("div","row");
+    var rh = el("div","rh"); rh.appendChild(el("span","rt",title)); if (more!==false) rh.appendChild(el("span","more","See all ›")); r.appendChild(rh);
+    var rail = el("div","rail"); items.forEach(function (s) { rail.appendChild(coverCard(s)); }); r.appendChild(rail);
+    return r;
+  }
+  function greet() {
+    var g = el("div","greet");
+    g.innerHTML = "<span class='owl'>🦉</span><span class='gt'><span class='hi'>Good evening</span><span class='nm disp'>Hi there, Explorer!</span></span>";
+    var p = el("span","prof","🙂"); g.appendChild(p); return g;
+  }
+
+  function render() {
+    renderNotes(); view.innerHTML = "";
+    var scroll = el("div","home-scroll");
+
+    if (dir === "1") {
+      scroll.appendChild(greet());
+      var feat = el("div","feat");
+      feat.innerHTML = "<span class='art'></span><span class='emoji'>🐉</span><span class='scrim'></span><span class='cap'><span class='kx'>Featured today</span><span class='tt disp'>The Kindness Dragon</span><span class='bd'><span class='b'>Fantasy</span><span class='b'>Early reader</span><span class='b'>~2 min</span></span><span class='play'>▶ Read now</span></span>";
+      scroll.appendChild(feat);
+      scroll.appendChild(rowEl("Continue", pick(function(s){return s.own;}, 4)));
+      scroll.appendChild(rowEl("Daily picks", S.slice(0,6)));
+      scroll.appendChild(rowEl("Popular this week", S.slice(4,10)));
+      scroll.appendChild(rowEl("Quick stories · under 5 min", pick(function(s){return s.ln==="~2 min";})));
+      scroll.appendChild(rowEl("Fantasy worlds", pick(function(s){return s.g==="Fantasy";})));
+      scroll.appendChild(rowEl("Bedtime & calm", pick(function(s){return s.g==="Bedtime";})));
+    } else if (dir === "2") {
+      scroll.appendChild(greet());
+      var cp = el("div","createp");
+      cp.appendChild(el("div","q disp","What story today?"));
+      var gt = el("div","gtiles");
+      GENRES.forEach(function (g) { var t = el("button","gtile"); t.type="button"; t.setAttribute("style","--a:"+g.a); t.innerHTML="<span class='art'></span><span class='emoji'>"+g.e+"</span><span class='scrim'></span><span class='nm'>"+g.l+"</span>"; gt.appendChild(t); });
+      var own = el("button","gtile own"); own.type="button"; own.innerHTML="<span class='art'></span><span class='emoji'>✏️</span><span class='scrim'></span><span class='nm'>Your own</span>"; gt.appendChild(own);
+      cp.appendChild(gt);
+      scroll.appendChild(cp);
+      scroll.appendChild(el("div","sect-label","Discover"));
+      scroll.appendChild(rowEl("Continue reading", pick(function(s){return s.own;}, 4)));
+      scroll.appendChild(rowEl("Popular this week", S.slice(2,8)));
+      scroll.appendChild(rowEl("Daily picks", S.slice(6,12)));
+    } else {
+      scroll.appendChild(greet());
+      var cont = el("div","cont");
+      cont.innerHTML = "<span class='art'></span><span class='scrim'></span><span class='bar'><i></i></span><span class='cap'><span class='kx'>Continue story</span><span class='tt disp'>Finn and the Whispering Cave</span><span class='sb'>You're 62% through · Adventure</span></span>";
+      scroll.appendChild(cont);
+      scroll.appendChild(rowEl("Your library", pick(function(s){return s.own;})));
+      scroll.appendChild(rowEl("More like your stories", S.slice(4,10)));
+      scroll.appendChild(rowEl("Popular this week", S.slice(1,7)));
+    }
+    var pad = el("div"); pad.style.height = "28px"; scroll.appendChild(pad);
+    view.appendChild(scroll);
+  }
+
+  var tabsBtns = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  tabsBtns.forEach(function (t) { t.addEventListener("click", function () { dir = t.getAttribute("data-dir"); tabsBtns.forEach(function (x) { x.setAttribute("aria-selected", String(x===t)); }); render(); }); });
+  render();
+})();
+</script>

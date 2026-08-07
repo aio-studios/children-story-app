@@ -1,0 +1,794 @@
+<title>Setup Flow — Wireframe Directions</title>
+<style>
+  /* ---------- Tokens: Storykins storybook palette (from app/globals.css), theme-aware ---------- */
+  :root {
+    --studio: #e9e3d6;
+    --studio-2: #ded6c4;
+    --studio-ink: #4a4030;
+    --studio-ink-soft: #7c7059;
+
+    --bg: #fbf7ee;
+    --canvas: #e7ddca;
+    --card: #fffdf8;
+    --ink: #2a2116;
+    --ink-soft: #6e6250;
+    --line: rgba(42, 33, 22, 0.16);
+    --line-soft: rgba(42, 33, 22, 0.08);
+    --brand: #8a6d3b;
+    --brand-wash: rgba(138, 109, 59, 0.14);
+    --shadow: 0 18px 44px -20px rgba(42, 33, 22, 0.5);
+    --shadow-sm: 0 8px 20px -12px rgba(42, 33, 22, 0.4);
+    --bezel: #cdc4b1;
+    --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f;
+      --studio-2: #100e09;
+      --studio-ink: #d8cfbb;
+      --studio-ink-soft: #9c9079;
+
+      --bg: #221c13;
+      --canvas: #14110b;
+      --card: #2b2417;
+      --ink: #f2ebdb;
+      --ink-soft: #b5a890;
+      --line: rgba(242, 235, 219, 0.16);
+      --line-soft: rgba(242, 235, 219, 0.07);
+      --brand: #c9a866;
+      --brand-wash: rgba(217, 184, 118, 0.16);
+      --shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
+      --shadow-sm: 0 8px 20px -12px rgba(0, 0, 0, 0.6);
+      --bezel: #2a2418;
+      --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%),
+      var(--studio);
+    color: var(--studio-ink);
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  /* Rounded display stand-in for Fredoka (webfonts blocked by artifact CSP). */
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+
+  a { color: inherit; }
+
+  /* ---------- Page shell ---------- */
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 8px; }
+  header.page .lede { max-width: 640px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 38px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- Direction tabs ---------- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 10px; }
+  .tab { flex: 1 1 240px; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 16px; padding: 14px 16px; transition: transform .12s ease, box-shadow .12s ease, border-color .12s; }
+  .tab:hover { transform: translateY(-1px); }
+  .tab[aria-selected="true"] { background: var(--card); border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: var(--shadow); color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .tab .k { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: var(--brand); color: var(--card); font-size: 12px; font-weight: 800; margin-right: 8px; }
+  .tab .tname { font-weight: 800; font-size: 15px; }
+  .tab .tdesc { font-size: 12.5px; color: var(--studio-ink-soft); margin-top: 6px; line-height: 1.45; }
+
+  /* ---------- Stage: notes + phone ---------- */
+  .stage { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 20px; }
+  @media (min-width: 900px) { .stage { grid-template-columns: 340px 1fr; align-items: start; } }
+
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 6px; }
+  .notes h2 { font-size: 16px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 14px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .notes .pnq { color: var(--ink); font-weight: 700; }
+  .notes .verdict { display: flex; gap: 10px; padding: 12px 0 16px; font-size: 12.5px; color: var(--studio-ink-soft); }
+  .notes .verdict b { color: var(--ink); }
+
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 12px; }
+
+  /* ---------- Phone frame ---------- */
+  .device-wrap { display: flex; justify-content: center; }
+  .device {
+    width: 390px; max-width: 100%;
+    border-radius: 44px;
+    padding: 12px;
+    background: linear-gradient(160deg, var(--bezel), var(--bezel-2));
+    box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05);
+  }
+  .screen {
+    position: relative;
+    height: 720px;
+    border-radius: 34px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    display: flex; flex-direction: column;
+  }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 128px; height: 26px; background: var(--bezel); border-radius: 0 0 16px 16px; z-index: 40; }
+  .statusbar { flex: none; height: 30px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 22px 2px; font-size: 12px; font-weight: 700; color: var(--ink); }
+
+  .view { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .scroll::-webkit-scrollbar { width: 0; }
+
+  /* per-genre accent resolution (mirrors app: light/dark chosen by theme) */
+  .themed { --accent: var(--a-light); }
+  @media (prefers-color-scheme: dark) { .themed { --accent: var(--a-dark); } }
+  :root[data-theme="dark"] .themed { --accent: var(--a-dark); }
+  :root[data-theme="light"] .themed { --accent: var(--a-light); }
+
+  /* ---------- shared setup chrome ---------- */
+  .top-chip-row { flex: none; display: flex; align-items: center; gap: 10px; padding: 6px 16px 2px; min-height: 40px; }
+  .back-chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px 7px 10px; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .back-chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .back-chip:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); }
+
+  .step-dots { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 16px 8px; }
+  .sd { display: flex; align-items: center; gap: 6px; }
+  .sd .dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; background: var(--canvas); color: var(--ink-soft); border: 1px solid var(--line); font-weight: 700; }
+  .sd .dot.cur { background: var(--brand); color: var(--card); border-color: transparent; box-shadow: 0 0 0 4px var(--brand-wash); }
+  .sd .dot.done { background: color-mix(in srgb, var(--brand) 22%, var(--card)); color: var(--brand); border-color: transparent; }
+  .sd .bar { width: 22px; height: 2px; border-radius: 2px; background: var(--line); }
+  .sd .bar.done { background: var(--brand); }
+
+  .setup-h { flex: none; text-align: center; padding: 4px 20px 10px; }
+  .setup-h .k { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand); }
+  .setup-h h3 { font-size: 22px; margin: 3px 0 2px; }
+  .setup-h p { font-size: 13px; color: var(--ink-soft); margin: 0; }
+
+  /* ---------- genre tiles (full-bleed image treatment) ---------- */
+  .genre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 6px 16px 20px; }
+  .tile { position: relative; aspect-ratio: 1 / 1.06; border-radius: 20px; overflow: hidden; border: 0; cursor: pointer; padding: 0; text-align: left; box-shadow: var(--shadow-sm); }
+  .tile .art { position: absolute; inset: 0; background:
+      radial-gradient(120% 80% at 20% 12%, color-mix(in srgb, var(--a) 78%, white 22%), transparent 60%),
+      linear-gradient(155deg, var(--a), color-mix(in srgb, var(--a) 45%, #000 12%)); }
+  .tile .emoji { position: absolute; top: 42%; left: 50%; transform: translate(-50%,-50%); font-size: 58px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.28)); }
+  .tile .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.62) 4%, rgba(0,0,0,0.12) 42%, transparent 66%); }
+  .tile .lbl { position: absolute; left: 12px; right: 12px; bottom: 11px; color: #fff; }
+  .tile .lbl .nm { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+  .tile[aria-pressed="true"] { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .tile:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .tile.custom .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 12px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 12px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 24px); }
+  .tile.custom .emoji { color: var(--brand); }
+  .tile.custom .lbl .nm { color: var(--ink); text-shadow: none; }
+  .tile.custom .scrim { background: linear-gradient(to top, color-mix(in srgb, var(--bg) 88%, transparent) 6%, transparent 52%); }
+
+  .tile.wide { grid-column: 1 / -1; aspect-ratio: auto; min-height: 92px; display: flex; align-items: center; }
+  .tile.wide .art { position: absolute; }
+  .tile.wide .row { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 16px; width: 100%; }
+  .tile.wide .cust-emoji { font-size: 34px; color: var(--brand); }
+  .tile.wide .cust-txt .nm { font-size: 16px; font-weight: 800; color: var(--ink); }
+  .tile.wide .cust-txt .sub2 { font-size: 12px; color: var(--ink-soft); }
+  .tile.wide .plus { margin-left: auto; font-size: 22px; color: var(--brand); }
+
+  /* custom expand-in-place */
+  .cust-expand { grid-column: 1/-1; background: var(--card); border: 1px solid color-mix(in srgb,var(--brand) 40%, var(--line)); border-radius: 18px; padding: 14px; box-shadow: var(--shadow-sm); }
+  .cust-expand .nm { font-weight: 800; font-size: 15px; margin-bottom: 3px; }
+  .cust-expand p { font-size: 12px; color: var(--ink-soft); margin: 0 0 10px; }
+  .cust-expand .field { display: flex; gap: 8px; }
+  .cust-expand input { flex: 1; font: inherit; font-size: 14px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .cust-expand input:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .cust-expand .go { font: inherit; font-weight: 800; font-size: 14px; border: 0; border-radius: 12px; padding: 0 16px; background: var(--brand); color: var(--card); cursor: pointer; }
+  .cust-expand .go:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ---------- character cards ---------- */
+  .char-hero-band { flex: none; text-align: center; padding: 2px 20px 8px; }
+  .char-band-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--bg)); border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent); padding: 5px 12px; border-radius: 999px; }
+  .char-list { display: flex; flex-direction: column; gap: 12px; padding: 6px 16px 20px; }
+  .char-card { display: flex; align-items: center; gap: 14px; text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 13px 15px; box-shadow: var(--shadow-sm); }
+  .char-card:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  .char-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb,var(--accent) 55%, transparent), var(--shadow-sm); }
+  .char-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .char-orb { flex: none; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; font-size: 34px; background:
+      radial-gradient(90% 90% at 30% 22%, color-mix(in srgb, var(--accent) 40%, var(--card)), color-mix(in srgb, var(--accent) 16%, var(--card))); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); animation: breathe 4.5s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+  @media (prefers-reduced-motion: reduce) { .char-orb, .disp, * { animation: none !important; } }
+  .char-meta .nm { font-size: 15.5px; font-weight: 800; }
+  .char-meta .desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; margin-top: 2px; }
+
+  /* ---------- customize ---------- */
+  .cust-body { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+  .cust-group .glabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); margin-bottom: 8px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font: inherit; font-size: 13px; font-weight: 700; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--brand); color: var(--card); border-color: transparent; }
+  .pill:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .toggle-row .tt { font-size: 13.5px; font-weight: 700; }
+  .toggle-row .td { font-size: 11.5px; color: var(--ink-soft); }
+  .sw { flex: none; width: 44px; height: 26px; border-radius: 999px; background: var(--canvas); border: 1px solid var(--line); position: relative; cursor: pointer; }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--card); box-shadow: var(--shadow-sm); transition: left .16s ease; }
+  .sw[aria-pressed="true"] { background: var(--brand); border-color: transparent; }
+  .sw[aria-pressed="true"]::after { left: 20px; }
+  .sw:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .create-bar { flex: none; padding: 12px 16px 16px; border-top: 1px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); }
+  .create-btn { width: 100%; font: inherit; font-weight: 800; font-size: 16px; padding: 15px; border-radius: 16px; border: 0; background: var(--brand); color: var(--card); cursor: pointer; box-shadow: var(--shadow-sm); }
+  .create-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .create-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* ---------- Direction B: immersive deck ---------- */
+  .bstage { position: absolute; inset: 0; transition: background .4s ease; }
+  .bstage.themed { background:
+      radial-gradient(130% 70% at 50% -6%, color-mix(in srgb, var(--accent) 42%, var(--bg)), var(--bg) 62%); }
+  .deck-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .deck-scroller { flex: 1 1 auto; display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 10px 40px 6px; align-items: stretch; }
+  .deck-scroller::-webkit-scrollbar { height: 0; }
+  .bcard { scroll-snap-align: center; flex: 0 0 84%; border-radius: 26px; overflow: hidden; position: relative; border: 0; padding: 0; cursor: pointer; box-shadow: var(--shadow); }
+  .bcard .art { position: absolute; inset: 0; background:
+      radial-gradient(110% 70% at 26% 14%, color-mix(in srgb, var(--a) 82%, white 18%), transparent 58%),
+      linear-gradient(155deg, var(--a), color-mix(in srgb, var(--a) 42%, #000 14%)); }
+  .bcard .emoji { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); font-size: 96px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3)); }
+  .bcard .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 8%, rgba(0,0,0,0.1) 48%, transparent 70%); }
+  .bcard .cap { position: absolute; left: 20px; right: 20px; bottom: 20px; color: #fff; text-align: left; }
+  .bcard .cap .nm { font-size: 26px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+  .bcard .cap .bl { font-size: 13px; line-height: 1.5; margin-top: 6px; opacity: .95; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .bcard.custom .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 32px); }
+  .bcard.custom .emoji { color: var(--brand); }
+  .bcard.custom .cap .nm, .bcard.custom .cap .bl { color: var(--ink); text-shadow: none; }
+  .bcard.custom .scrim { background: linear-gradient(to top, color-mix(in srgb,var(--bg) 80%, transparent) 10%, transparent 55%); }
+  .bcard:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; }
+  .deck-dots { flex: none; display: flex; justify-content: center; gap: 7px; padding: 12px 0 6px; }
+  .deck-dots .dd { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .deck-dots .dd.on { background: var(--accent); width: 22px; border-radius: 4px; }
+  .deck-cta { flex: none; padding: 6px 20px 18px; }
+  .deck-cta .hint { text-align: center; font-size: 12px; color: var(--ink-soft); margin: 0 0 10px; }
+  .deck-cta .go { width: 100%; font: inherit; font-weight: 800; font-size: 16px; padding: 15px; border-radius: 16px; border: 0; background: var(--accent); color: #fff; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .deck-cta .go:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* character deck reuses bcard but circular hero */
+  .bhero .emoji { font-size: 108px; top: 38%; }
+
+  /* ---------- Direction C: continuous canvas ---------- */
+  .canvas-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; scroll-behavior: smooth; }
+  .canvas-scroll::-webkit-scrollbar { width: 0; }
+  .rail { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line-soft); }
+  .rail .seg { flex: 1; height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .rail .seg i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .35s ease; }
+  .rail .seg.on i { width: 100%; }
+  .rail .rl { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .csec { padding: 16px 16px 8px; scroll-margin-top: 60px; }
+  .csec .ch { font-size: 18px; font-weight: 800; margin: 0 0 3px; }
+  .csec .cp { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 12px; }
+  .csec.locked { opacity: .38; filter: grayscale(0.4); pointer-events: none; }
+  .csec .num { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--brand); color: var(--card); font-size: 11px; font-weight: 800; margin-right: 7px; vertical-align: 2px; }
+  .cgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
+  .cgrid .ctile { position: relative; aspect-ratio: 1/1.15; border-radius: 15px; overflow: hidden; border: 0; padding: 0; cursor: pointer; }
+  .cgrid .ctile .art { position: absolute; inset: 0; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 45%, #000 12%)); }
+  .cgrid .ctile .emoji { position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; filter: drop-shadow(0 3px 4px rgba(0,0,0,0.3)); }
+  .cgrid .ctile .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 62%); }
+  .cgrid .ctile .nm { position: absolute; left: 7px; right: 7px; bottom: 6px; color: #fff; font-size: 11.5px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+  .cgrid .ctile[aria-pressed="true"] { outline: 3px solid var(--brand); outline-offset: 1px; }
+  .cgrid .ctile:focus-visible { outline: 3px solid var(--brand); outline-offset: 1px; }
+  .cgrid .ctile.cst .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 10px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 10px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 20px); }
+  .cgrid .ctile.cst .emoji { color: var(--brand); }
+  .cgrid .ctile.cst .nm { color: var(--ink); text-shadow: none; }
+  .cgrid .ctile.cst .scrim { display: none; }
+  .crow { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .crow::-webkit-scrollbar { height: 0; }
+  .crow .chc { flex: 0 0 132px; text-align: center; cursor: pointer; border: 1px solid var(--line); background: var(--card); border-radius: 16px; padding: 12px 10px; box-shadow: var(--shadow-sm); }
+  .crow .chc[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb,var(--accent) 55%, transparent); }
+  .crow .chc:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .crow .chc .o { width: 56px; height: 56px; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; background: radial-gradient(90% 90% at 30% 22%, color-mix(in srgb,var(--accent) 40%, var(--card)), color-mix(in srgb,var(--accent) 16%, var(--card))); border: 1px solid color-mix(in srgb,var(--accent) 40%, var(--line)); }
+  .crow .chc .nm { font-size: 12.5px; font-weight: 800; }
+  .crow .chc .desc { font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin-top: 3px; }
+
+  .legend { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .legend .yes { color: var(--brand); font-weight: 800; }
+  .tb-wrap { overflow-x: auto; }
+
+  .hide { display: none !important; }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · Issue #79 · Setup-flow redesign</div>
+      <h1 class="title disp">Three ways to pick a story</h1>
+      <p class="sub">Genre → Character → Customize, rethought so selection auto-advances and the art does the talking. Same real content in all three — tap through each, flip light/dark. Pick a direction (or a mix) to take into <code>/create-plan</code>.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Directions">
+    <button class="tab" role="tab" aria-selected="true" data-dir="A">
+      <div><span class="k">A</span><span class="tname">Tap-through</span></div>
+      <div class="tdesc">Keeps the 3 steps. Tap a tile → jumps forward. Full-bleed art tiles, back chip top-left, custom card expands in place.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="B">
+      <div><span class="k">B</span><span class="tname">Immersive deck</span></div>
+      <div class="tdesc">One world at a time. Swipe big themed hero cards; the whole screen themes to the focused genre. Most cinematic.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="C">
+      <div><span class="k">C</span><span class="tname">Continuous canvas</span></div>
+      <div class="tdesc">No step screens. One scroll that reveals Character then Customize as you choose; page themes live. Densest, most modern.</div>
+    </button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div>
+      <p class="phone-hint">↑ Interactive — tap tiles/cards, use Back, toggle switches. iPhone-ish 390px frame.</p>
+      <div class="device-wrap">
+        <div class="device">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="statusbar"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+            <div class="view" id="view"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">How each answers the open questions in #79</h2>
+    <div class="tb-wrap">
+    <table>
+      <thead><tr><th>Decision (#79)</th><th>A · Tap-through</th><th>B · Immersive deck</th><th>C · Continuous canvas</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Auto-advance</td><td>Tap genre/hero → next step</td><td>Tap card or "Start" → next</td><td>Select → next section reveals + scrolls</td></tr>
+        <tr><td class="dq">Back affordance</td><td>Top-left chip (per step)</td><td>Top-left chip (per stage)</td><td>Scroll up / rail; nothing to "go back" from</td></tr>
+        <tr><td class="dq">Genre art</td><td>Full-bleed 2-col tiles</td><td>Full-screen hero cards</td><td>Compact 3-col full-bleed tiles</td></tr>
+        <tr><td class="dq">Custom-genre card</td><td>Expands in place → Start →</td><td>Last card in the deck</td><td>Last tile → inline input reveals</td></tr>
+        <tr><td class="dq">Progress visible?</td><td class="yes">Yes — step dots</td><td>Light — stage chip only</td><td class="yes">Yes — sticky rail</td></tr>
+        <tr><td class="dq">Home genre chip lands on…</td><td>Character (themed)</td><td>Hero deck for that world</td><td>Scrolls to Character, genre pre-set</td></tr>
+        <tr><td class="dq">Risk</td><td class="dq">Familiar; least "wow"</td><td class="dq">Swipe discoverability; fewer seen at once</td><td class="dq">Dense; scroll can feel long on small phones</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- theme ----------
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(mode) {
+    if (mode === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", mode);
+    tbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set") === mode)); });
+  }
+  tbtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); }); });
+
+  // ---------- data (real Storykins content; emoji stand in for the shipped /public art) ----------
+  var GENRES = [
+    { id:"adventure", label:"Adventure", icon:"🗺️", l:"#B85C27", d:"#E8A06B",
+      blurb:"The map is unrolled and the boots are laced — somewhere past the hill, an adventure is waiting.",
+      chars:[
+        { nm:"Finn the Explorer", e:"🧭", desc:"A quick-footed boy with a compass that always points somewhere exciting." },
+        { nm:"Zara the Trailblazer", e:"🥾", desc:"A brave girl who's mapped every cave within a mile of home." },
+        { nm:"Pip the Mountain Goat", e:"🐐", desc:"A sure-footed goat who's climbed higher than anyone in the valley." } ] },
+    { id:"fantasy", label:"Fantasy", icon:"🐉", l:"#7B4C9E", d:"#C79EE8",
+      blurb:"Beyond the old oak door, a kingdom of magic waits for someone brave enough to knock.",
+      chars:[
+        { nm:"Prince Oren", e:"🤴", desc:"A prince who'd rather befriend a dragon than fight one." },
+        { nm:"Luna the Apprentice Witch", e:"🧙‍♀️", desc:"A curious young witch still learning her spells." },
+        { nm:"Ember the Baby Dragon", e:"🐲", desc:"A small dragon who blows tiny sparks but has a giant heart." } ] },
+    { id:"animals", label:"Animals", icon:"🦊", l:"#4C7A3F", d:"#93CC7E",
+      blurb:"Deep in the meadow, the animals are just waking up for a day full of surprises.",
+      chars:[
+        { nm:"Baxter the Bear Cub", e:"🐻", desc:"A gentle bear cub always hungry for honey and hugs." },
+        { nm:"Coco the Clever Fox", e:"🦊", desc:"A quick-witted fox who knows every shortcut through the forest." },
+        { nm:"Nimbus the Cloud Sheep", e:"🐑", desc:"A fluffy sheep convinced he's part cloud." } ] },
+    { id:"bedtime", label:"Bedtime", icon:"🌙", l:"#3E4E86", d:"#9AAEEF",
+      blurb:"The stars are blinking on one by one, and the world is getting ready for the softest part of the day.",
+      chars:[
+        { nm:"Sammy the Sleepy Otter", e:"🦦", desc:"An otter who fights his yawns but always loses (happily) to sleep." },
+        { nm:"Willow the Moon Fairy", e:"🧚", desc:"A gentle fairy who sprinkles dream-dust over rooftops." },
+        { nm:"Snug the Blanket Owl", e:"🦉", desc:"A soft owl who wraps its wings around anyone needing a hug." } ] },
+    { id:"scifi", label:"Sci-fi", icon:"🚀", l:"#1D7A8C", d:"#7BDCEA",
+      blurb:"The countdown has started and a brand-new galaxy is just one launch away.",
+      chars:[
+        { nm:"Cosmo the Space Cadet", e:"👨‍🚀", desc:"A cheerful astronaut-in-training, more excited about aliens than afraid." },
+        { nm:"Nova the Robot Engineer", e:"🤖", desc:"A girl who builds gadgets out of everything, including her robot best friend." },
+        { nm:"Blip the Star Critter", e:"✨", desc:"A tiny space creature made of starlight who speaks in cheerful beeps." } ] }
+  ];
+  var CUSTOMIZE = {
+    length: ["Quick (~2 min)", "Longer (~10 min)"],
+    level: ["Toddler", "Early reader", "Independent reader"],
+    tone: ["Funny", "Calming / bedtime", "Exciting", "Heartwarming"],
+    lesson: ["Kindness", "Courage", "Sharing", "Honesty", "Perseverance"]
+  };
+  var DEFAULTS = { length:"Quick (~2 min)", level:"Early reader", tone:"Heartwarming", lesson:"Kindness" };
+
+  var NOTES = {
+    A: { h:"A · Tap-through", tag:"The current 3-step stepper, sped up. Least new; safest bet if we want to ship the #79 wins without re-teaching the flow.",
+      pnq:["Tapping a tile advances instantly — no more Back/Next buttons to hunt for.","Full-bleed art tiles replace the little 80px circles; title sits on a legibility scrim.","Custom-genre card expands in place (no 3D flip — reduced-motion-safe) with a Start → once you type.","Step dots stay, so progress is always legible."],
+      verdict:["Best for:", " familiarity + clear progress. The predictable pick — but the one least likely to make anyone say “whoa.”"] },
+    B: { h:"B · Immersive deck", tag:"One world at a time. The whole screen themes to the card in focus — closest to a native, storefront-y app.",
+      pnq:["Big hero cards you swipe through; genre blurb shown right on the card.","Background + accents theme live to the focused world — very app-native.","Tap a card or the “Start” button to commit; heroes are a second swipe deck.","Custom genre is simply the last card in the deck."],
+      verdict:["Best for:", " wow-factor + immersion. Risk: you see one genre at a time, and swipe-to-browse isn't as obvious as a grid."] },
+    C: { h:"C · Continuous canvas", tag:"No step screens at all. One scroll that grows as you choose — genre, then hero, then customize — with a sticky progress rail.",
+      pnq:["Pick a genre → the Character section unlocks and the page scrolls to it.","Page themes live to the chosen world as you go.","Everything stays on one surface — scroll up to change anything, no “back” needed.","Sticky rail shows how far along you are; “Create story” bar appears when ready."],
+      verdict:["Best for:", " modern, frictionless feel. Risk: denser, and on a small phone the scroll can feel long."] }
+  };
+
+  // ---------- helpers ----------
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function accentStyle(g) { return "--a-light:" + g.l + ";--a-dark:" + g.d + ";"; }
+
+  var view = document.getElementById("view");
+  var notesEl = document.getElementById("notes");
+  var current = "A";
+  // per-direction ephemeral state
+  var stateA = { step:0, genre:null, char:null, custOpen:false };
+  var stateB = { stage:0, genre:null, char:null };
+  var stateC = { genre:null, char:null };
+
+  function renderNotes() {
+    var n = NOTES[current];
+    notesEl.innerHTML = "";
+    notesEl.appendChild(el("h2", "disp", n.h));
+    notesEl.appendChild(el("p", "tagline", n.tag));
+    var ul = el("ul");
+    n.pnq.forEach(function (t) {
+      var li = el("li");
+      li.appendChild(el("span", "tick", "▹"));
+      li.appendChild(el("span", null, t));
+      ul.appendChild(li);
+    });
+    notesEl.appendChild(ul);
+    var v = el("div", "verdict");
+    v.innerHTML = "<span class='tick'>◆</span><span><b>" + n.verdict[0] + "</b>" + n.verdict[1] + "</span>";
+    notesEl.appendChild(v);
+  }
+
+  // ---------- shared pieces ----------
+  function backChip(label, onClick) {
+    var row = el("div", "top-chip-row");
+    var b = el("button", "back-chip", "‹ " + label);
+    b.type = "button"; b.addEventListener("click", onClick);
+    row.appendChild(b);
+    return row;
+  }
+  function stepDots(active) {
+    var wrap = el("div", "step-dots");
+    var labels = ["🎭", "🦸", "⚙️"];
+    for (var i = 0; i < 3; i++) {
+      var sd = el("div", "sd");
+      var dot = el("div", "dot " + (i === active ? "cur" : i < active ? "done" : ""), i < active ? "✓" : labels[i]);
+      sd.appendChild(dot);
+      if (i < 2) { var bar = el("div", "bar " + (i < active ? "done" : "")); sd.appendChild(bar); }
+      wrap.appendChild(sd);
+    }
+    return wrap;
+  }
+  function setupHead(k, title, sub) {
+    var h = el("div", "setup-h");
+    h.appendChild(el("div", "k", k));
+    h.appendChild(el("h3", "disp", title));
+    h.appendChild(el("p", null, sub));
+    return h;
+  }
+  function customizeBody(onCreate) {
+    var scroll = el("div", "scroll");
+    var body = el("div", "cust-body");
+    var sel = { length:DEFAULTS.length, level:DEFAULTS.level, tone:DEFAULTS.tone, lesson:DEFAULTS.lesson };
+    [["Length","length"],["Reading level","level"],["Tone","tone"],["Lesson","lesson"]].forEach(function (pair) {
+      var g = el("div", "cust-group");
+      g.appendChild(el("div", "glabel", pair[0]));
+      var pills = el("div", "pills");
+      CUSTOMIZE[pair[1]].forEach(function (opt) {
+        var p = el("button", "pill", opt); p.type = "button";
+        p.setAttribute("aria-pressed", String(sel[pair[1]] === opt));
+        p.addEventListener("click", function () {
+          sel[pair[1]] = opt;
+          Array.prototype.forEach.call(pills.children, function (c) { c.setAttribute("aria-pressed", String(c === p)); });
+        });
+        pills.appendChild(p);
+      });
+      g.appendChild(pills); body.appendChild(g);
+    });
+    [["Interactive mode","Story unfolds beat by beat; you steer.",false],["Illustrations","Generate a painted cover (~$0.04).",true]].forEach(function (t) {
+      var row = el("div", "toggle-row");
+      var txt = el("div"); txt.appendChild(el("div", "tt", t[0])); txt.appendChild(el("div", "td", t[1]));
+      var sw = el("button", "sw"); sw.type = "button"; sw.setAttribute("aria-pressed", String(t[2])); sw.setAttribute("aria-label", t[0]);
+      sw.addEventListener("click", function () { sw.setAttribute("aria-pressed", String(sw.getAttribute("aria-pressed") !== "true")); });
+      row.appendChild(txt); row.appendChild(sw); body.appendChild(row);
+    });
+    scroll.appendChild(body);
+    var bar = el("div", "create-bar");
+    var btn = el("button", "create-btn disp", "✦ Create story");
+    btn.type = "button"; btn.addEventListener("click", onCreate);
+    bar.appendChild(btn);
+    var wrap = el("div"); wrap.style.display = "flex"; wrap.style.flexDirection = "column"; wrap.style.flex = "1 1 auto"; wrap.style.minHeight = "0";
+    wrap.appendChild(scroll); wrap.appendChild(bar);
+    return wrap;
+  }
+  function toast(msg) {
+    var t = el("div", null, msg);
+    t.style.cssText = "position:absolute;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:60;box-shadow:var(--shadow);max-width:80%;text-align:center;";
+    view.appendChild(t);
+    setTimeout(function () { t.remove(); }, 1700);
+  }
+
+  // ================= DIRECTION A =================
+  function renderA() {
+    view.innerHTML = "";
+    var s = stateA;
+    if (s.step === 0) {
+      view.appendChild(backChip("Home", function () { toast("← Back to Home"); }));
+      view.appendChild(stepDots(0));
+      view.appendChild(setupHead("Step 1 of 3", "Choose a world", "Tap a world to begin your story."));
+      var scroll = el("div", "scroll");
+      var grid = el("div", "genre-grid");
+      GENRES.forEach(function (g) {
+        var t = el("button", "themed tile"); t.type = "button"; t.setAttribute("style", accentStyle(g));
+        t.setAttribute("aria-pressed", "false");
+        t.innerHTML = "<span class='art' style='--a:var(--accent)'></span><span class='emoji'>" + g.icon + "</span><span class='scrim'></span><span class='lbl'><span class='nm'>" + g.label + "</span></span>";
+        t.addEventListener("click", function () { s.genre = g; s.step = 1; s.char = null; renderA(); });
+        grid.appendChild(t);
+      });
+      // custom expand-in-place
+      if (!s.custOpen) {
+        var cst = el("button", "tile wide custom"); cst.type = "button"; cst.setAttribute("style", "--a-light:var(--brand);--a-dark:var(--brand);");
+        cst.innerHTML = "<span class='art'></span><span class='row'><span class='cust-emoji'>✏️</span><span class='cust-txt'><span class='nm'>Choose your own adventure</span><span class='sub2'>Describe any world you like</span></span><span class='plus'>+</span></span>";
+        cst.addEventListener("click", function () { s.custOpen = true; renderA(); });
+        grid.appendChild(cst);
+      } else {
+        var exp = el("div", "cust-expand");
+        exp.innerHTML = "<div class='nm'>Choose your own adventure</div><p>Describe any world — “a city made of candy”, “under the sea”…</p>";
+        var field = el("div", "field");
+        var inp = el("input"); inp.type = "text"; inp.placeholder = "Type your world…"; inp.maxLength = 300;
+        var go = el("button", "go", "Start →"); go.type = "button"; go.disabled = true;
+        inp.addEventListener("input", function () { go.disabled = inp.value.trim().length === 0; });
+        go.addEventListener("click", function () {
+          s.genre = { label: inp.value.trim() || "Your world", icon:"✨", l:"#8a6d3b", d:"#d9b876", blurb:"A world of your own making.", chars:GENRES[0].chars, custom:true };
+          s.step = 1; s.char = null; renderA();
+        });
+        field.appendChild(inp); field.appendChild(go); exp.appendChild(field);
+        grid.appendChild(exp);
+        setTimeout(function () { inp.focus(); }, 30);
+      }
+      scroll.appendChild(grid);
+      view.appendChild(scroll);
+    } else if (s.step === 1) {
+      var vv = el("div", "themed view"); vv.setAttribute("style", accentStyle(s.genre));
+      vv.appendChild(backChip(s.genre.custom ? "World" : s.genre.label, function () { s.step = 0; renderA(); }));
+      vv.appendChild(stepDots(1));
+      vv.appendChild(setupHead("Step 2 of 3", "Pick your hero", "Who's this " + s.genre.label + " story about?"));
+      var band = el("div", "char-hero-band");
+      band.appendChild(el("span", "char-band-pill", (s.genre.icon || "✨") + " " + s.genre.label));
+      vv.appendChild(band);
+      var scroll2 = el("div", "scroll");
+      var list = el("div", "char-list");
+      s.genre.chars.forEach(function (c) {
+        var card = el("button", "char-card"); card.type = "button"; card.setAttribute("aria-pressed", "false");
+        card.innerHTML = "<span class='char-orb'>" + c.e + "</span><span class='char-meta'><span class='nm'>" + c.nm + "</span><span class='desc'>" + c.desc + "</span></span>";
+        card.addEventListener("click", function () { s.char = c; s.step = 2; renderA(); });
+        list.appendChild(card);
+      });
+      scroll2.appendChild(list); vv.appendChild(scroll2);
+      view.appendChild(vv);
+    } else {
+      view.appendChild(backChip(s.char ? s.char.nm.split(" ")[0] : "Hero", function () { s.step = 1; renderA(); }));
+      view.appendChild(stepDots(2));
+      view.appendChild(setupHead("Step 3 of 3", "Customize", "Fine-tune it, then create."));
+      view.appendChild(customizeBody(function () { toast("✦ Creating your " + s.genre.label + " story…"); }));
+    }
+  }
+
+  // ================= DIRECTION B =================
+  function renderB() {
+    view.innerHTML = "";
+    var s = stateB;
+    if (s.stage === 0) {
+      var stage = el("div", "themed bstage"); stage.setAttribute("style", s.genre ? accentStyle(s.genre) : accentStyle(GENRES[0]));
+      if (s.genre) stage.classList.add("themed");
+      view.appendChild(stage);
+      var col = el("div"); col.style.cssText = "position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;";
+      col.appendChild(backChip("Home", function () { toast("← Back to Home"); }));
+      col.appendChild(setupHead("Choose a world", "Swipe through the worlds", "Tap a card to start your story there."));
+      var deckWrap = el("div", "deck-wrap");
+      var scroller = el("div", "deck-scroller");
+      var dots = el("div", "deck-dots");
+      var allCards = GENRES.concat([{ custom:true, label:"Your own world", icon:"✏️", l:"#8a6d3b", d:"#d9b876", blurb:"Describe any world you can dream up — we'll build the story around it." }]);
+      allCards.forEach(function (g, i) {
+        var c = el("button", "themed bcard" + (g.custom ? " custom" : "")); c.type = "button"; c.setAttribute("style", accentStyle(g));
+        c.innerHTML = "<span class='art' style='--a:var(--accent)'></span><span class='emoji'>" + g.icon + "</span><span class='scrim'></span><span class='cap'><span class='nm'>" + g.label + "</span><span class='bl'>" + g.blurb + "</span></span>";
+        c.addEventListener("click", function () {
+          if (g.custom) { toast("✏️ Custom-world input opens here"); return; }
+          s.genre = g; s.char = null; s.stage = 1; renderB();
+        });
+        scroller.appendChild(c);
+        var dd = el("div", "dd" + (i === 0 ? " on" : "")); dots.appendChild(dd);
+      });
+      // live dot + background theming on scroll
+      scroller.addEventListener("scroll", function () {
+        var idx = Math.round(scroller.scrollLeft / (scroller.scrollWidth / allCards.length));
+        idx = Math.max(0, Math.min(allCards.length - 1, idx));
+        Array.prototype.forEach.call(dots.children, function (d, i) { d.classList.toggle("on", i === idx); });
+        var g = allCards[idx];
+        if (!g.custom) { stage.setAttribute("style", accentStyle(g)); stage.classList.add("themed"); }
+        else { stage.classList.remove("themed"); }
+      });
+      deckWrap.appendChild(scroller); deckWrap.appendChild(dots);
+      col.appendChild(deckWrap);
+      var cta = el("div", "deck-cta");
+      cta.appendChild(el("p", "hint", "Swipe ← → to explore • tap a card to choose"));
+      view.appendChild(stage); view.appendChild(col);
+      // ensure stage sits behind
+      view.insertBefore(stage, view.firstChild);
+    } else if (s.stage === 1) {
+      var stage2 = el("div", "themed bstage themed"); stage2.setAttribute("style", accentStyle(s.genre));
+      view.appendChild(stage2);
+      var col2 = el("div"); col2.style.cssText = "position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;";
+      col2.appendChild(backChip(s.genre.label, function () { s.stage = 0; renderB(); }));
+      col2.appendChild(setupHead(s.genre.icon + " " + s.genre.label, "Pick your hero", "Swipe your " + s.genre.label + " heroes."));
+      var deckWrap2 = el("div", "deck-wrap");
+      var scroller2 = el("div", "deck-scroller");
+      var dots2 = el("div", "deck-dots");
+      s.genre.chars.forEach(function (c, i) {
+        var card = el("button", "themed bcard bhero"); card.type = "button"; card.setAttribute("style", accentStyle(s.genre));
+        card.innerHTML = "<span class='art' style='--a:var(--accent)'></span><span class='emoji'>" + c.e + "</span><span class='scrim'></span><span class='cap'><span class='nm'>" + c.nm + "</span><span class='bl'>" + c.desc + "</span></span>";
+        card.addEventListener("click", function () { s.char = c; s.stage = 2; renderB(); });
+        scroller2.appendChild(card);
+        dots2.appendChild(el("div", "dd" + (i === 0 ? " on" : "")));
+      });
+      scroller2.addEventListener("scroll", function () {
+        var idx = Math.round(scroller2.scrollLeft / (scroller2.scrollWidth / s.genre.chars.length));
+        idx = Math.max(0, Math.min(s.genre.chars.length - 1, idx));
+        Array.prototype.forEach.call(dots2.children, function (d, i) { d.classList.toggle("on", i === idx); });
+      });
+      deckWrap2.appendChild(scroller2); deckWrap2.appendChild(dots2);
+      col2.appendChild(deckWrap2);
+      var cta2 = el("div", "deck-cta");
+      cta2.appendChild(el("p", "hint", "Tap a hero to continue"));
+      col2.appendChild(cta2);
+      view.appendChild(col2);
+    } else {
+      var stage3 = el("div", "themed bstage themed"); stage3.setAttribute("style", accentStyle(s.genre));
+      view.appendChild(stage3);
+      var col3 = el("div"); col3.style.cssText = "position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;";
+      col3.appendChild(backChip(s.char.nm.split(" ")[0], function () { s.stage = 1; renderB(); }));
+      col3.appendChild(setupHead(s.genre.label + " · " + s.char.nm.split(" ")[0], "Last touches", "Customize, then create."));
+      col3.appendChild(customizeBody(function () { toast("✦ Creating your " + s.genre.label + " story…"); }));
+      view.appendChild(col3);
+    }
+  }
+
+  // ================= DIRECTION C =================
+  function renderC() {
+    view.innerHTML = "";
+    var s = stateC;
+    var vv = el("div", "themed view"); vv.setAttribute("style", s.genre ? accentStyle(s.genre) : accentStyle(GENRES[0]));
+    var scroll = el("div", "canvas-scroll");
+
+    // sticky rail
+    var rail = el("div", "rail");
+    rail.appendChild(el("span", "rl", "Build"));
+    var seg1 = el("div", "seg" + (s.genre ? " on" : "")); seg1.innerHTML = "<i></i>";
+    var seg2 = el("div", "seg" + (s.char ? " on" : "")); seg2.innerHTML = "<i></i>";
+    var seg3 = el("div", "seg"); seg3.innerHTML = "<i></i>";
+    rail.appendChild(seg1); rail.appendChild(seg2); rail.appendChild(seg3);
+    scroll.appendChild(rail);
+
+    // section 1: genre
+    var sec1 = el("div", "csec");
+    sec1.innerHTML = "<div class='ch disp'><span class='num'>1</span>Choose a world</div><div class='cp'>Tap a world — the rest unfolds below.</div>";
+    var cgrid = el("div", "cgrid");
+    GENRES.forEach(function (g) {
+      var t = el("button", "themed ctile"); t.type = "button"; t.setAttribute("style", accentStyle(g)); t.setAttribute("aria-pressed", String(s.genre && s.genre.id === g.id));
+      t.innerHTML = "<span class='art' style='--a:var(--accent)'></span><span class='emoji'>" + g.icon + "</span><span class='scrim'></span><span class='nm'>" + g.label + "</span>";
+      t.addEventListener("click", function () { s.genre = g; s.char = null; renderC(); setTimeout(function () { var el2 = document.getElementById("c-sec2"); if (el2) el2.scrollIntoView({ behavior:"smooth", block:"start" }); }, 60); });
+      cgrid.appendChild(t);
+    });
+    var cst = el("button", "themed ctile cst"); cst.type = "button"; cst.setAttribute("style", "--a-light:var(--brand);--a-dark:var(--brand);");
+    cst.innerHTML = "<span class='art'></span><span class='emoji'>✏️</span><span class='scrim'></span><span class='nm'>Your own</span>";
+    cst.addEventListener("click", function () { toast("✏️ Custom-world input reveals inline"); });
+    cgrid.appendChild(cst);
+    sec1.appendChild(cgrid);
+    scroll.appendChild(sec1);
+
+    // section 2: character
+    var sec2 = el("div", "csec" + (s.genre ? "" : " locked")); sec2.id = "c-sec2";
+    sec2.innerHTML = "<div class='ch disp'><span class='num'>2</span>Choose your hero</div><div class='cp'>" + (s.genre ? "Your " + s.genre.label + " cast:" : "Pick a world first.") + "</div>";
+    var crow = el("div", "crow");
+    (s.genre ? s.genre.chars : GENRES[0].chars).forEach(function (c) {
+      var chc = el("button", "chc"); chc.type = "button"; chc.setAttribute("aria-pressed", String(s.char && s.char.nm === c.nm));
+      chc.innerHTML = "<span class='o'>" + c.e + "</span><span class='nm'>" + c.nm.split(" the ")[0] + "</span><span class='desc'>" + c.desc + "</span>";
+      chc.addEventListener("click", function () { s.char = c; renderC(); setTimeout(function () { var el3 = document.getElementById("c-sec3"); if (el3) el3.scrollIntoView({ behavior:"smooth", block:"start" }); }, 60); });
+      crow.appendChild(chc);
+    });
+    sec2.appendChild(crow);
+    scroll.appendChild(sec2);
+
+    // section 3: customize
+    var sec3 = el("div", "csec" + (s.char ? "" : " locked")); sec3.id = "c-sec3";
+    sec3.innerHTML = "<div class='ch disp'><span class='num'>3</span>Customize</div><div class='cp'>Length, tone, lesson & extras.</div>";
+    var body = el("div"); body.style.cssText = "display:flex;flex-direction:column;gap:14px;";
+    [["Length","length"],["Reading level","level"],["Tone","tone"],["Lesson","lesson"]].forEach(function (pair) {
+      var g = el("div", "cust-group"); g.appendChild(el("div", "glabel", pair[0]));
+      var pills = el("div", "pills");
+      CUSTOMIZE[pair[1]].forEach(function (opt) {
+        var p = el("button", "pill", opt); p.type = "button"; p.setAttribute("aria-pressed", String(DEFAULTS[pair[1]] === opt));
+        p.addEventListener("click", function () { Array.prototype.forEach.call(pills.children, function (c) { c.setAttribute("aria-pressed", String(c === p)); }); });
+        pills.appendChild(p);
+      });
+      g.appendChild(pills); body.appendChild(g);
+    });
+    sec3.appendChild(body);
+    scroll.appendChild(sec3);
+    // spacer so sticky create bar doesn't cover content
+    var sp = el("div"); sp.style.height = "84px"; scroll.appendChild(sp);
+
+    vv.appendChild(scroll);
+
+    // sticky create bar (appears when ready)
+    if (s.genre && s.char) {
+      var bar = el("div", "create-bar"); bar.style.cssText += "position:absolute;left:0;right:0;bottom:0;";
+      var btn = el("button", "create-btn disp", "✦ Create story");
+      btn.type = "button"; btn.addEventListener("click", function () { toast("✦ Creating your " + s.genre.label + " story…"); });
+      bar.appendChild(btn);
+      vv.appendChild(bar);
+    }
+    view.appendChild(vv);
+  }
+
+  // ---------- dispatch ----------
+  function render() {
+    renderNotes();
+    if (current === "A") renderA();
+    else if (current === "B") renderB();
+    else renderC();
+  }
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      current = t.getAttribute("data-dir");
+      tabs.forEach(function (x) { x.setAttribute("aria-selected", String(x === t)); });
+      // reset flows on switch so each is seen from the top
+      stateA = { step:0, genre:null, char:null, custOpen:false };
+      stateB = { stage:0, genre:null, char:null };
+      stateC = { genre:null, char:null };
+      render();
+    });
+  });
+
+  render();
+})();
+</script>
