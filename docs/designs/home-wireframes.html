@@ -110,26 +110,26 @@
 
   /* featured hero (dir 1) */
   .feat { margin: 8px 16px 22px; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; position: relative; box-shadow: var(--shadow); cursor: pointer; --a: #7B4C9E; }
-  .feat .art { height: 230px; background: radial-gradient(120% 84% at 24% 12%, color-mix(in srgb,var(--a) 82%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
+  .feat .art { display: block; height: 230px; background: radial-gradient(120% 84% at 24% 12%, color-mix(in srgb,var(--a) 82%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
   .feat .emoji { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); font-size: 84px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.32)); }
   .feat .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 8%, transparent 62%); }
   .feat .cap { position: absolute; left: 16px; right: 16px; bottom: 15px; color: #fff; }
-  .feat .cap .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
-  .feat .cap .tt { font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; }
+  .feat .cap .kx { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
+  .feat .cap .tt { display: block; font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; }
   .feat .cap .bd { display: flex; gap: 6px; margin: 9px 0; }
   .feat .cap .bd .b { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.9); color: #2a2116; }
   .feat .cap .play { display: inline-block; font-size: 13px; font-weight: 800; background: #fff; color: #2a2116; padding: 9px 16px; border-radius: 999px; }
 
   /* continue hero (dir 3) */
   .cont { margin: 8px 16px 22px; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; position: relative; box-shadow: var(--shadow-sm); cursor: pointer; --a: #B85C27; }
-  .cont .art { height: 150px; background: radial-gradient(120% 90% at 22% 14%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 14%)); }
+  .cont .art { display: block; height: 150px; background: radial-gradient(120% 90% at 22% 14%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 14%)); }
   .cont .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 62%); }
   .cont .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,0.3); }
   .cont .bar i { display: block; height: 100%; width: 62%; background: #fff; }
   .cont .cap { position: absolute; left: 15px; right: 15px; bottom: 14px; color: #fff; }
-  .cont .cap .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: .9; }
-  .cont .cap .tt { font-size: 19px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-  .cont .cap .sb { font-size: 12px; opacity: .92; margin-top: 2px; }
+  .cont .cap .kx { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: .9; }
+  .cont .cap .tt { display: block; font-size: 19px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+  .cont .cap .sb { display: block; font-size: 12px; opacity: .92; margin-top: 2px; }
 
   /* create-first panel (dir 2) */
   .createp { margin: 4px 16px 18px; }

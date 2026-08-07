@@ -213,8 +213,8 @@
       radial-gradient(90% 90% at 30% 22%, color-mix(in srgb, var(--accent) 40%, var(--card)), color-mix(in srgb, var(--accent) 16%, var(--card))); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); animation: breathe 4.5s ease-in-out infinite; }
   @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
   @media (prefers-reduced-motion: reduce) { .char-orb, .disp, * { animation: none !important; } }
-  .char-meta .nm { font-size: 15.5px; font-weight: 800; }
-  .char-meta .desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; margin-top: 2px; }
+  .char-meta .nm { display: block; font-size: 15.5px; font-weight: 800; }
+  .char-meta .desc { display: block; font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; margin-top: 2px; }
 
   /* ---------- customize ---------- */
   .cust-body { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
@@ -251,8 +251,8 @@
   .bcard .emoji { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); font-size: 96px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3)); }
   .bcard .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 8%, rgba(0,0,0,0.1) 48%, transparent 70%); }
   .bcard .cap { position: absolute; left: 20px; right: 20px; bottom: 20px; color: #fff; text-align: left; }
-  .bcard .cap .nm { font-size: 26px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-  .bcard .cap .bl { font-size: 13px; line-height: 1.5; margin-top: 6px; opacity: .95; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .bcard .cap .nm { display: block; font-size: 26px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+  .bcard .cap .bl { display: block; font-size: 13px; line-height: 1.5; margin-top: 6px; opacity: .95; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
   .bcard.custom .art { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 32px); }
   .bcard.custom .emoji { color: var(--brand); }
   .bcard.custom .cap .nm, .bcard.custom .cap .bl { color: var(--ink); text-shadow: none; }
@@ -300,8 +300,8 @@
   .crow .chc[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb,var(--accent) 55%, transparent); }
   .crow .chc:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .crow .chc .o { width: 56px; height: 56px; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; background: radial-gradient(90% 90% at 30% 22%, color-mix(in srgb,var(--accent) 40%, var(--card)), color-mix(in srgb,var(--accent) 16%, var(--card))); border: 1px solid color-mix(in srgb,var(--accent) 40%, var(--line)); }
-  .crow .chc .nm { font-size: 12.5px; font-weight: 800; }
-  .crow .chc .desc { font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin-top: 3px; }
+  .crow .chc .nm { display: block; font-size: 12.5px; font-weight: 800; }
+  .crow .chc .desc { display: block; font-size: 10.5px; color: var(--ink-soft); line-height: 1.35; margin-top: 3px; }
 
   .legend { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
   .legend h2 { font-size: 15px; margin: 0 0 10px; }

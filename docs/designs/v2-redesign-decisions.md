@@ -1,7 +1,7 @@
 # V2 UI Redesign — Design Research & Decisions
 
-**Status:** Exploration complete for Setup, Navigation, Home. Directions chosen; **build deferred to one coherent batch.**
-**Last updated:** 2026-08-06
+**Status:** Exploration complete for Setup, Navigation, Home. Directions chosen **and all three responsive mocks approved** (Setup-B responsive signed off 2026-08-07); **build is the next step — one coherent batch via `/create-plan`.**
+**Last updated:** 2026-08-07
 **Epic:** [#76 — V2 UI: mobile-native polish, navigation & orientation](https://github.com/aio-studios/children-story-app/issues/76)
 
 This is the durable record of the V2 redesign design-research exercise so the decisions aren't lost between sessions. Each screen was explored with **2–3 genuinely different interactive wireframe directions** (published Artifacts, real content, light/dark), debated, and one direction chosen. Nothing here is built yet — this is Planning-stage output that feeds `/create-plan`.
@@ -33,7 +33,7 @@ Storybook palette from `app/globals.css` (`--sk-*` tokens), per-genre accent col
 
 **Why B:** most app-native, best portfolio bar; establishes the anchor language. **Agreed adjustment before build:** add a **peek of the next card + subtle arrows** so horizontal swipe is discoverable (mitigates B's one real risk).
 
-**Setup-B still needs its landscape/iPad responsive adaptation** — the only chosen screen without one yet.
+**Setup-B responsive adaptation — DONE & APPROVED (2026-08-07).** Mock: `docs/designs/setup-B-responsive.html` · Artifact: https://claude.ai/code/artifact/936d0fb2-5413-4526-9128-a58e265557f0. One deck model, three shapes: **phone portrait & iPad = a wrapping coverflow** (big centre card + peeks of both neighbours, arrows/dots/drag, wraps past both ends); **phone landscape = split two-pane** (full-height art left, title/blurb/dots/Continue right, notch-safe inset). Consistent everywhere: pagination **dots** (not a thumbnail rail), identical per-step copy, single **"Continue →"** CTA, and one selection model (tap centre card or Continue → advance; tap a side card → centre it). Screenshot-verified light + dark via Playwright.
 
 Setup content (real, from `lib/genres.ts` + `lib/storyOptions.ts`): 5 genres × 3 characters each; Customize = Length (Quick ~2 min / Longer ~10 min), Reading level (Toddler / Early reader / Independent reader), Tone (Funny / Calming / Exciting / Heartwarming), Lesson (Kindness / Courage / Sharing / Honesty / Perseverance), plus Interactive-mode + Illustration toggles.
 
@@ -99,17 +99,19 @@ Setup content (real, from `lib/genres.ts` + `lib/storyOptions.ts`): 5 genres × 
 
 ## Open items / next steps
 
-1. **Setup-B landscape/iPad adaptation** (+ peek-next-card/arrows fix) — the only chosen screen missing a responsive spec.
-2. **`/create-plan`** to consolidate Setup-B + Nav-2 + Home-2 into the actual V2 implementation batch.
+1. ✅ **Setup-B landscape/iPad adaptation** (+ peek/arrows fix) — done & approved 2026-08-07 (see Screen 1 above).
+2. **`/create-plan`** to consolidate Setup-B + Nav-2 + Home-2 into the actual V2 implementation batch — **this is the immediate next step.**
 3. **Scope Favourites + Music pages** (#73 depends on them for the full 3-tab nav).
 4. **Reader / Story page** — optional next exploration (deprioritized; reader was just reworked in #80). Book mode #77 / landscape #75 relate.
 5. **Visual-craft pass #63** — the polish standards above should fold into the build.
+
+> **Mock QA note (2026-08-07):** all `docs/designs/*.html` mocks were Playwright-audited; fixed collapsed hero cards (inline `<span>` `height` no-op) in home-B & home-wireframes and run-together captions in setup-flow-wireframes/home-B/home-wireframes. Carry the `display:block` fix into the built components.
 
 ## Quick reference — artifacts, mocks, issues
 
 | Screen | Decision | Mock file(s) | Artifact URL(s) | Issue |
 |---|---|---|---|---|
-| Setup | B "Immersive deck" | `setup-flow-wireframes.html` | .../d642046e-386e-4de3-83c4-80f3fef30fca | #79 |
+| Setup | B "Immersive deck" | `setup-flow-wireframes.html`, `setup-B-responsive.html` (responsive, approved) | .../d642046e-386e-4de3-83c4-80f3fef30fca, .../936d0fb2-5413-4526-9128-a58e265557f0 | #79 |
 | Nav | 2 "Bottom bar + Create" | `navigation-wireframes.html`, `navigation-B-responsive.html` | .../b6dbf18e-19a4-4cc2-a042-3307297f96d3, .../c58ff398-76a6-4735-bf03-60052f5f2f0a | #73, #75 |
 | Home | 2 "Create-first" + giant Continue | `home-wireframes.html`, `home-B-responsive.html` | .../fcecb011-b7cc-4209-b28c-b39723942c06, .../874e0f9e-2c84-4a7f-849a-38966e70b50a | #61 |
 

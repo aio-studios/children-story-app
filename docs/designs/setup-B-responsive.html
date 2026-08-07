@@ -1,0 +1,642 @@
+<title>Setup-B "Immersive deck" — Responsive Adaptation</title>
+<style>
+  /* ---------- Tokens: Storykins storybook palette (from app/globals.css), theme-aware ---------- */
+  :root {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+      --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+      --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+      --bezel: #2a2418; --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%), var(--studio);
+    color: var(--studio-ink);
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
+  }
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  a { color: inherit; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 6px; }
+  header.page .lede { max-width: 680px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 38px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+  code { background: var(--studio-2); border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 5px; font-size: 0.88em; }
+
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* form-factor switcher */
+  .ff-switch { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 6px; }
+  .ffbtn { flex: 1 1 220px; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 16px; padding: 13px 15px; transition: transform .12s ease, box-shadow .12s ease, border-color .12s; color: inherit; }
+  .ffbtn:hover { transform: translateY(-1px); }
+  .ffbtn[aria-selected="true"] { background: var(--card); border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: var(--shadow); color: var(--ink); }
+  .ffbtn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .ffbtn .fh { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 15px; }
+  .ffbtn .fi { font-size: 17px; }
+  .ffbtn .fd { font-size: 12.5px; color: var(--studio-ink-soft); margin-top: 6px; line-height: 1.45; }
+
+  .stage { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 18px; }
+  @media (min-width: 980px) { .stage { grid-template-columns: 320px 1fr; align-items: start; } }
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 8px; }
+  .notes h2 { font-size: 16px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 12px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .device-area { min-width: 0; }
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 14px; }
+  .device-scroll { overflow-x: auto; padding-bottom: 8px; }
+  .device-wrap { display: flex; justify-content: center; min-width: min-content; }
+
+  /* ---------- device frames ---------- */
+  .device { border-radius: 44px; padding: 12px; background: linear-gradient(160deg, var(--bezel), var(--bezel-2)); box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05); }
+  .screen { position: relative; border-radius: 34px; overflow: hidden; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+  .device.portrait { width: 384px; }
+  .device.portrait .screen { height: 752px; }
+  .device.landscape { width: 780px; border-radius: 40px; }
+  .device.landscape .screen { height: 372px; border-radius: 30px; }
+  .device.ipad { width: 720px; border-radius: 34px; }
+  .device.ipad .screen { height: 760px; border-radius: 22px; }
+
+  .notch { position: absolute; z-index: 40; background: var(--bezel); }
+  .portrait .notch { top: 0; left: 50%; transform: translateX(-50%); width: 128px; height: 26px; border-radius: 0 0 16px 16px; }
+  .landscape .notch { left: 0; top: 50%; transform: translateY(-50%); width: 26px; height: 118px; border-radius: 0 16px 16px 0; }
+  .ipad .notch { display: none; }
+  .cam { position: absolute; z-index: 40; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--bezel-2) 60%, #000); }
+  .portrait .cam, .landscape .cam { display: none; }
+  .ipad .cam { top: 5px; left: 50%; transform: translateX(-50%); }
+
+  .statusbar { flex: none; display: flex; align-items: flex-end; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--ink); }
+  .portrait .statusbar { height: 30px; padding: 0 22px 2px; }
+  .landscape .statusbar { height: 22px; padding: 0 20px 1px 30px; font-size: 11px; }
+  .ipad .statusbar { height: 26px; padding: 4px 26px 2px; }
+
+  .view { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+  /* per-genre accent resolution */
+  .themed { --accent: var(--a-light); }
+  @media (prefers-color-scheme: dark) { .themed { --accent: var(--a-dark); } }
+  :root[data-theme="dark"] .themed { --accent: var(--a-dark); }
+  :root[data-theme="light"] .themed { --accent: var(--a-light); }
+
+  /* themed stage background */
+  .bstage { position: absolute; inset: 0; transition: background .4s ease; z-index: 0; }
+  .bstage.on { background: radial-gradient(130% 70% at 50% -6%, color-mix(in srgb, var(--accent) 42%, var(--bg)), var(--bg) 62%); }
+  .layer { position: relative; z-index: 1; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+  /* shared chrome */
+  .back-chip { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px 7px 10px; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .back-chip:hover { border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); }
+  .back-chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .top-chip-row { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 16px 2px; }
+  .setup-h { flex: none; padding: 4px 20px 8px; }
+  .setup-h .k { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand); }
+  .setup-h h3 { font-size: 22px; margin: 3px 0 2px; }
+  .setup-h p { font-size: 13px; color: var(--ink-soft); margin: 0; }
+
+  /* ---------- card art (shared) ---------- */
+  .cardart { position: absolute; inset: 0; background:
+      radial-gradient(110% 70% at 26% 14%, color-mix(in srgb, var(--a) 82%, white 18%), transparent 58%),
+      linear-gradient(155deg, var(--a), color-mix(in srgb, var(--a) 42%, #000 14%)); }
+  .cardart.custom { background: repeating-linear-gradient(135deg, var(--canvas), var(--canvas) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 16px, color-mix(in srgb,var(--brand) 12%, var(--canvas)) 32px); }
+  .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 8%, rgba(0,0,0,0.1) 48%, transparent 70%); }
+  .scrim.custom { background: linear-gradient(to top, color-mix(in srgb,var(--bg) 80%, transparent) 10%, transparent 55%); }
+
+  /* ---------- deck arrows (shared) ---------- */
+  .arrow { position: absolute; z-index: 6; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--ink); font-size: 18px; font-weight: 800; cursor: pointer; display: grid; place-items: center; box-shadow: var(--shadow-sm); backdrop-filter: blur(6px); }
+  .arrow:hover { background: var(--card); }
+  .arrow:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .arrow.prev { left: 8px; } .arrow.next { right: 8px; }
+  .arrow[disabled] { opacity: 0; pointer-events: none; }
+
+  .deck-dots { flex: none; display: flex; justify-content: center; align-items: center; gap: 7px; padding: 12px 0 4px; }
+  .deck-dots .dd { width: 8px; height: 8px; border: 0; padding: 0; border-radius: 50%; background: var(--line); cursor: pointer; transition: width .2s, background .2s; }
+  .deck-dots .dd.on { background: var(--accent); width: 22px; border-radius: 4px; }
+  .deck-dots .dd:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+
+  /* ---------- COVERFLOW deck (shared: portrait + iPad; both wrap) ---------- */
+  .cf-flow { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 14px; overflow: hidden; touch-action: pan-y; }
+  .cf-card { border-radius: 26px; overflow: hidden; position: relative; border: 0; padding: 0; cursor: pointer; box-shadow: var(--shadow); transition: opacity .3s ease, transform .3s ease, flex-basis .3s ease; }
+  .cf-card .emoji { position: absolute; top: 34%; left: 50%; transform: translate(-50%,-50%); filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3)); }
+  .cf-card.custom .emoji { color: var(--brand); }
+  .cf-card .cap { position: absolute; left: 18px; right: 18px; bottom: 18px; color: #fff; text-align: left; }
+  .cf-card .cap .nm { display: block; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+  .cf-card .cap .bl { display: block; line-height: 1.5; margin-top: 6px; opacity: .95; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
+  .cf-card.side .cap .bl { display: none; }
+  .cf-card.custom .cap .nm, .cf-card.custom .cap .bl { color: var(--ink); text-shadow: none; }
+  .cf-card:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; }
+  /* portrait sizing */
+  .portrait .cf-card.focus { flex: 0 0 74%; align-self: stretch; }
+  .portrait .cf-card.side { flex: 0 0 15%; align-self: center; height: 70%; opacity: .6; }
+  .portrait .cf-card.focus .emoji { font-size: 92px; }
+  .portrait .cf-card.side .emoji { font-size: 40px; }
+  .portrait .cf-card.focus .cap .nm { font-size: 24px; }
+  .portrait .cf-card.focus .cap .bl { font-size: 12.5px; }
+  .portrait .cf-card.side .cap .nm { display: none; }
+  /* ipad sizing */
+  .ipad .cf-card.focus { flex: 0 0 46%; align-self: stretch; }
+  .ipad .cf-card.side { flex: 0 0 24%; align-self: center; height: 74%; opacity: .72; }
+  .ipad .cf-card.focus .emoji { font-size: 96px; }
+  .ipad .cf-card.side .emoji { font-size: 62px; }
+  .ipad .cf-card.focus .cap .nm { font-size: 26px; }
+  .ipad .cf-card.focus .cap .bl { font-size: 13.5px; }
+  .ipad .cf-card.side .cap .nm { font-size: 18px; }
+
+  /* ---------- LANDSCAPE split ---------- */
+  .l-split { flex: 1 1 auto; min-height: 0; display: flex; gap: 0; }
+  .l-artpane { position: relative; flex: 0 0 43%; overflow: hidden; }
+  .l-artpane .emoji { position: absolute; top: 42%; left: 50%; transform: translate(-50%,-50%); font-size: 108px; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.32)); }
+  .l-artpane.custom .emoji { color: var(--brand); }
+  .l-artpane .cap { position: absolute; left: 18px; right: 18px; bottom: 16px; color: #fff; }
+  .l-artpane .cap .nm { font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+  .l-artpane.custom .cap .nm { color: var(--ink); text-shadow: none; }
+  .l-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 14px 18px 14px; overflow: hidden; }
+  .l-info .k { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand); }
+  .l-info h3 { font-size: 23px; margin: 3px 0 6px; }
+  .l-info .sub { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 8px; }
+  .l-info .bl { font-size: 13px; line-height: 1.5; color: var(--ink-soft); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .l-foot { margin-top: auto; }
+  .l-start { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+
+  /* ---------- IPAD coverflow ---------- */
+  .i-head { flex: none; text-align: center; padding: 18px 24px 4px; }
+  .i-head .k { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand); }
+  .i-head h3 { font-size: 30px; margin: 5px 0 3px; }
+  .i-head p { font-size: 14px; color: var(--ink-soft); margin: 0; }
+  .i-cta { flex: none; padding: 6px 40px 24px; display: flex; justify-content: center; }
+
+  /* Landscape: keep interactive content clear of the side notch (safe-area inset). Art still fills behind it. */
+  .landscape .layer { padding-left: 34px; }
+
+  /* shared start / create buttons */
+  .go-btn { font: inherit; font-weight: 800; font-size: 15px; padding: 13px 22px; border-radius: 15px; border: 0; background: var(--accent, var(--brand)); color: #fff; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .go-btn.block { width: 100%; font-size: 16px; padding: 15px; border-radius: 16px; }
+  .go-btn.wide { min-width: 220px; padding: 15px 28px; font-size: 16px; }
+  .go-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .deck-cta { flex: none; padding: 8px 20px 18px; }
+  .deck-cta .hint { text-align: center; font-size: 12px; color: var(--ink-soft); margin: 0 0 10px; }
+
+  /* ---------- customize (reused across ff, columns adapt) ---------- */
+  .cust-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .cust-scroll::-webkit-scrollbar { width: 0; }
+  .cust-body { padding: 6px 18px 16px; display: grid; gap: 16px; grid-template-columns: 1fr; }
+  .landscape .cust-body, .ipad .cust-body { grid-template-columns: 1fr 1fr; padding: 10px 24px 18px; }
+  .cust-group .glabel { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); margin-bottom: 8px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font: inherit; font-size: 13px; font-weight: 700; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+  .pill[aria-pressed="true"] { background: var(--accent, var(--brand)); color: #fff; border-color: transparent; }
+  .pill:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .toggle-row .tt { font-size: 13.5px; font-weight: 700; }
+  .toggle-row .td { font-size: 11.5px; color: var(--ink-soft); }
+  .sw { flex: none; width: 44px; height: 26px; border-radius: 999px; background: var(--canvas); border: 1px solid var(--line); position: relative; cursor: pointer; }
+  .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--card); box-shadow: var(--shadow-sm); transition: left .16s ease; }
+  .sw[aria-pressed="true"] { background: var(--accent, var(--brand)); border-color: transparent; }
+  .sw[aria-pressed="true"]::after { left: 20px; }
+  .sw:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .create-bar { flex: none; padding: 12px 18px 16px; border-top: 1px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(8px); }
+
+  @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  @media (prefers-reduced-motion: reduce) { *, .disp { animation: none !important; transition: none !important; } }
+
+  .legend { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .tb-wrap { overflow-x: auto; }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · Issue #79 · Setup-B responsive</div>
+      <h1 class="title disp">One deck, three shapes</h1>
+      <p class="sub">The chosen setup direction — <b>B "Immersive deck"</b> — adapted to phone portrait, phone landscape, and iPad. Same content and logic; the layout reshapes to the space. Switch form factor and theme; tap cards, arrows, dots, and the Back chip. This closes the last design gap before <code>/create-plan</code>.</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="ff-switch" role="tablist" aria-label="Form factor">
+    <button class="ffbtn" role="tab" aria-selected="true" data-ff="portrait">
+      <div class="fh"><span class="fi">📱</span>Phone — portrait</div>
+      <div class="fd">Baseline. Focused hero card with <b>peek of neighbours + arrows</b> so swipe is discoverable (the agreed fix).</div>
+    </button>
+    <button class="ffbtn" role="tab" aria-selected="false" data-ff="landscape">
+      <div class="fh"><span class="fi">📲</span>Phone — landscape</div>
+      <div class="fd">Wide &amp; short. <b>Split two-pane</b>: full-height art left, title + blurb + dots + Continue right. No wasted vertical (#75).</div>
+    </button>
+    <button class="ffbtn" role="tab" aria-selected="false" data-ff="ipad">
+      <div class="fh"><span class="fi">▭</span>iPad</div>
+      <div class="fd">Roomy. <b>Coverflow</b> — big centre card, peeks of both neighbours, dots + Continue below. Larger type scale.</div>
+    </button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div class="device-area">
+      <p class="phone-hint" id="hint">↑ Tap the centre card (or Continue) to go world → hero → customize. Swipe, use arrows or dots to browse; Back chip to step back.</p>
+      <div class="device-scroll">
+        <div class="device-wrap" id="deviceWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">How Setup-B reshapes per form factor</h2>
+    <div class="tb-wrap">
+    <table>
+      <thead><tr><th>Concern</th><th>📱 Portrait</th><th>📲 Landscape</th><th>▭ iPad</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Deck layout</td><td>1 focused card, peek both sides</td><td>Art pane + info pane split</td><td>Coverflow: centre + 2 side peeks</td></tr>
+        <tr><td class="dq">Browse worlds</td><td>Swipe, arrows &amp; dots</td><td>Swipe, arrows &amp; dots</td><td>Swipe, arrows &amp; dots</td></tr>
+        <tr><td class="dq">Selection model</td><td colspan="3" style="text-align:center">Identical — tap the centre card (or Continue) to advance; tap a side card to centre it</td></tr>
+        <tr><td class="dq">Blurb shown</td><td>On the card scrim</td><td>In the info pane (roomier)</td><td>On the focused card</td></tr>
+        <tr><td class="dq">Vertical use</td><td>Full height card</td><td>Art fills height; no bottom bar waste</td><td>Generous; larger type</td></tr>
+        <tr><td class="dq">Customize step</td><td>Single column + sticky Create</td><td>2-column grid</td><td>2-column grid, wider gutters</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(mode) {
+    if (mode === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", mode);
+    tbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set") === mode)); });
+  }
+  tbtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); }); });
+
+  // ---------- real Storykins content ----------
+  var GENRES = [
+    { id:"adventure", label:"Adventure", icon:"🗺️", l:"#B85C27", d:"#E8A06B",
+      blurb:"The map is unrolled and the boots are laced — somewhere past the hill, an adventure is waiting.",
+      chars:[
+        { nm:"Finn the Explorer", e:"🧭", desc:"A quick-footed boy with a compass that always points somewhere exciting." },
+        { nm:"Zara the Trailblazer", e:"🥾", desc:"A brave girl who's mapped every cave within a mile of home." },
+        { nm:"Pip the Mountain Goat", e:"🐐", desc:"A sure-footed goat who's climbed higher than anyone in the valley." } ] },
+    { id:"fantasy", label:"Fantasy", icon:"🐉", l:"#7B4C9E", d:"#C79EE8",
+      blurb:"Beyond the old oak door, a kingdom of magic waits for someone brave enough to knock.",
+      chars:[
+        { nm:"Prince Oren", e:"🤴", desc:"A prince who'd rather befriend a dragon than fight one." },
+        { nm:"Luna the Apprentice Witch", e:"🧙‍♀️", desc:"A curious young witch still learning her spells." },
+        { nm:"Ember the Baby Dragon", e:"🐲", desc:"A small dragon who blows tiny sparks but has a giant heart." } ] },
+    { id:"animals", label:"Animals", icon:"🦊", l:"#4C7A3F", d:"#93CC7E",
+      blurb:"Deep in the meadow, the animals are just waking up for a day full of surprises.",
+      chars:[
+        { nm:"Baxter the Bear Cub", e:"🐻", desc:"A gentle bear cub always hungry for honey and hugs." },
+        { nm:"Coco the Clever Fox", e:"🦊", desc:"A quick-witted fox who knows every shortcut through the forest." },
+        { nm:"Nimbus the Cloud Sheep", e:"🐑", desc:"A fluffy sheep convinced he's part cloud." } ] },
+    { id:"bedtime", label:"Bedtime", icon:"🌙", l:"#3E4E86", d:"#9AAEEF",
+      blurb:"The stars are blinking on one by one, and the world is getting ready for the softest part of the day.",
+      chars:[
+        { nm:"Sammy the Sleepy Otter", e:"🦦", desc:"An otter who fights his yawns but always loses (happily) to sleep." },
+        { nm:"Willow the Moon Fairy", e:"🧚", desc:"A gentle fairy who sprinkles dream-dust over rooftops." },
+        { nm:"Snug the Blanket Owl", e:"🦉", desc:"A soft owl who wraps its wings around anyone needing a hug." } ] },
+    { id:"scifi", label:"Sci-fi", icon:"🚀", l:"#1D7A8C", d:"#7BDCEA",
+      blurb:"The countdown has started and a brand-new galaxy is just one launch away.",
+      chars:[
+        { nm:"Cosmo the Space Cadet", e:"👨‍🚀", desc:"A cheerful astronaut-in-training, more excited about aliens than afraid." },
+        { nm:"Nova the Robot Engineer", e:"🤖", desc:"A girl who builds gadgets out of everything, including her robot best friend." },
+        { nm:"Blip the Star Critter", e:"✨", desc:"A tiny space creature made of starlight who speaks in cheerful beeps." } ] }
+  ];
+  var CUSTOM_CARD = { custom:true, label:"Your own world", icon:"✏️", l:"#8a6d3b", d:"#d9b876",
+    blurb:"Describe any world you can dream up — we'll build the story around it." };
+  var ALL = GENRES.concat([CUSTOM_CARD]);
+  var CUSTOMIZE = {
+    length: ["Quick (~2 min)", "Longer (~10 min)"],
+    level: ["Toddler", "Early reader", "Independent reader"],
+    tone: ["Funny", "Calming / bedtime", "Exciting", "Heartwarming"],
+    lesson: ["Kindness", "Courage", "Sharing", "Honesty", "Perseverance"]
+  };
+  var DEFAULTS = { length:"Quick (~2 min)", level:"Early reader", tone:"Heartwarming", lesson:"Kindness" };
+
+  var NOTES = {
+    portrait: { h:"📱 Phone — portrait", tag:"The baseline immersive deck, plus the one agreed pre-build fix.",
+      pts:["One themed hero card in focus; the whole screen tints to it.","<b>Peek of both neighbouring cards</b> + tap <b>arrows</b> — obvious you can swipe; the deck <b>wraps</b> around the ends.","Dots track position; Continue commits the focused world.","Back chip returns a stage; blurb rides on the card scrim."] },
+    landscape: { h:"📲 Phone — landscape", tag:"Short height is the enemy — a bottom bar would eat ~20% of it. So we split sideways.",
+      pts:["<b>Left pane</b>: the focused world's art fills the full height, arrows to flip.","<b>Right pane</b>: same eyebrow → title → blurb as the other shapes, plus <b>dots</b> and <b>Continue</b>.","Nothing scrolls off-screen; the wide space does the work (the #75 win).","Browse by swipe, arrows, or tapping a dot — same as everywhere else."] },
+    ipad: { h:"▭ iPad", tag:"Space in both directions, so the deck opens up into coverflow.",
+      pts:["Big centre card with <b>generous peeks of both neighbours</b> — clearly a browsable deck.","Larger type scale; blurb on the focused card.","<b>Dots</b> for position + a wide <b>Continue</b> button below.","Same model as phone — just more breathing room, not a different screen."] }
+  };
+
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function accentStyle(g) { return "--a-light:" + g.l + ";--a-dark:" + g.d + ";"; }
+  function firstName(nm) { return nm.split(" the ")[0].split(" ")[0]; }
+
+  // Identical copy per step across every form factor.
+  function stepHead(isHero) {
+    if (isHero) return { k: st.genre.icon + " " + st.genre.label, title: "Pick your hero", sub: "Who is this " + st.genre.label + " story about?" };
+    return { k: "Choose a world", title: "Which world today?", sub: "Swipe to explore — tap to choose." };
+  }
+  function ctaLabel() { return "Continue →"; }
+
+  // Standard pagination dots, tappable, used by every form factor.
+  function deckDots(items) {
+    var dots = el("div", "deck-dots");
+    items.forEach(function (g, i) {
+      var d = el("button", "dd" + (i === st.focus ? " on" : "")); d.type = "button"; d.setAttribute("aria-label", "Go to " + g.label);
+      d.addEventListener("click", function () { if (i !== st.focus) { st.focus = i; render(); } });
+      dots.appendChild(d);
+    });
+    return dots;
+  }
+
+  // ---------- state ----------
+  var ff = "portrait";
+  var st = { stage:0, genre:null, char:null, focus:0 }; // focus = index into ALL (genre) or chars (hero)
+  var deviceWrap = document.getElementById("deviceWrap");
+  var notesEl = document.getElementById("notes");
+
+  function resetFlow() { st = { stage:0, genre:null, char:null, focus:0 }; }
+
+  function renderNotes() {
+    var n = NOTES[ff];
+    notesEl.innerHTML = "";
+    notesEl.appendChild(el("h2", "disp", n.h));
+    notesEl.appendChild(el("p", "tagline", n.tag));
+    var ul = el("ul");
+    n.pts.forEach(function (t) { var li = el("li"); li.appendChild(el("span", "tick", "▹")); li.appendChild(el("span", null, t)); ul.appendChild(li); });
+    notesEl.appendChild(ul);
+  }
+
+  function toast(view, msg) {
+    var t = el("div", null, msg);
+    t.style.cssText = "position:absolute;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:700;z-index:60;box-shadow:var(--shadow);max-width:80%;text-align:center;";
+    view.appendChild(t);
+    setTimeout(function () { t.remove(); }, 1700);
+  }
+
+  // ---------- device frame ----------
+  function buildDevice() {
+    deviceWrap.innerHTML = "";
+    var d = el("div", "device " + ff);
+    var screen = el("div", "screen");
+    screen.appendChild(el("div", "notch"));
+    screen.appendChild(el("div", "cam"));
+    var sb = el("div", "statusbar");
+    sb.innerHTML = "<span>9:41</span><span>􀙇 􀛨 100%</span>";
+    screen.appendChild(sb);
+    var view = el("div", "view"); view.id = "view";
+    screen.appendChild(view);
+    d.appendChild(screen);
+    deviceWrap.appendChild(d);
+    return view;
+  }
+
+  function backChip(view, label, onClick) {
+    var row = el("div", "top-chip-row");
+    var b = el("button", "back-chip", "‹ " + label); b.type = "button";
+    b.addEventListener("click", onClick);
+    row.appendChild(b); view.appendChild(row);
+  }
+
+  function currentGenreItems() { return ALL; }
+  function currentAccentObj() {
+    if (st.stage === 0) { return ALL[st.focus].custom ? {l:CUSTOM_CARD.l, d:CUSTOM_CARD.d} : ALL[st.focus]; }
+    return st.genre; // hero + customize keep chosen genre accent
+  }
+
+  // ================= GENRE / HERO DECK =================
+  function render() {
+    renderNotes();
+    var view = buildDevice();
+
+    if (st.stage === 2) { renderCustomize(view); return; }
+
+    var items, isHero = st.stage === 1;
+    if (isHero) { items = st.genre.chars.map(function (c) { return { label:c.nm, icon:c.e, blurb:c.desc, _char:c, l:st.genre.l, d:st.genre.d }; }); }
+    else { items = ALL; }
+    if (st.focus > items.length - 1) st.focus = items.length - 1;
+
+    // themed stage
+    var acc = currentAccentObj();
+    var stage = el("div", "themed bstage on"); stage.setAttribute("style", accentStyle(acc));
+    view.appendChild(stage);
+
+    var layer = el("div", "themed layer"); layer.setAttribute("style", accentStyle(acc));
+    view.appendChild(layer);
+
+    // back chip
+    if (isHero) backChip(layer, st.genre.label, function () { st.stage = 0; st.focus = GENRES.indexOf(st.genre); if (st.focus < 0) st.focus = 0; render(); });
+    else backChip(layer, "Home", function () { toast(view, "← Back to Home"); });
+
+    if (ff === "landscape") renderLandscape(layer, view, items, isHero);
+    else renderCoverflow(layer, view, items, isHero); // portrait + iPad share the wrapping coverflow
+  }
+
+  function chooseItem(item, isHero) {
+    if (isHero) { st.char = item._char; st.stage = 2; render(); return; }
+    if (item.custom) { var v = document.getElementById("view"); toast(v, "✏️ Custom-world input opens here"); return; }
+    st.genre = item; st.char = null; st.stage = 1; st.focus = 0; render();
+  }
+
+  // Drag-to-swipe (works for touch + mouse); calls onSwipe(+1) for left-swipe, (-1) for right.
+  var justSwiped = 0;
+  function attachSwipe(elm, onSwipe) {
+    var x0 = null;
+    elm.addEventListener("pointerdown", function (e) { x0 = e.clientX; });
+    elm.addEventListener("pointerup", function (e) {
+      if (x0 == null) return;
+      var dx = e.clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) { justSwiped = Date.now(); onSwipe(dx < 0 ? 1 : -1); }
+    });
+    elm.addEventListener("pointercancel", function () { x0 = null; });
+  }
+
+  // ---------- coverflow (portrait + iPad; wraps in both) ----------
+  function renderCoverflow(layer, view, items, isHero) {
+    var hd = stepHead(isHero);
+    var head = el("div", ff === "ipad" ? "i-head" : "setup-h");
+    head.innerHTML = "<div class='k'>" + hd.k + "</div><h3 class='disp'>" + hd.title + "</h3><p>" + hd.sub + "</p>";
+    layer.appendChild(head);
+
+    var n = items.length;
+    var prevI = (st.focus - 1 + n) % n;
+    var nextI = (st.focus + 1) % n;
+    var flow = el("div", "cf-flow");
+
+    function card(idx, kind) {
+      var g = items[idx];
+      var c = el("button", "themed cf-card " + kind + (g.custom ? " custom" : "")); c.type = "button"; c.setAttribute("style", accentStyle(g));
+      c.innerHTML =
+        "<span class='cardart" + (g.custom ? " custom" : "") + "' style='--a:var(--accent)'></span>" +
+        "<span class='emoji'>" + g.icon + "</span>" +
+        "<span class='scrim" + (g.custom ? " custom" : "") + "'></span>" +
+        "<span class='cap'><span class='nm'>" + g.label + "</span><span class='bl'>" + g.blurb + "</span></span>";
+      c.addEventListener("click", function () {
+        if (Date.now() - justSwiped < 300) return;                 // ignore the click that trails a swipe
+        if (kind === "focus") chooseItem(g, isHero);               // tap centre → advance
+        else { st.focus = idx; render(); }                         // tap a side card → centre it
+      });
+      return c;
+    }
+
+    var hasSides = n > 1;
+    if (hasSides) flow.appendChild(card(prevI, "side prev"));
+    flow.appendChild(card(st.focus, "focus"));
+    if (hasSides) flow.appendChild(card(nextI, "side next"));
+
+    var prev = el("button", "arrow prev", "‹"); prev.type = "button"; prev.setAttribute("aria-label", "Previous");
+    var next = el("button", "arrow next", "›"); next.type = "button"; next.setAttribute("aria-label", "Next");
+    prev.addEventListener("click", function () { st.focus = prevI; render(); });
+    next.addEventListener("click", function () { st.focus = nextI; render(); });
+    flow.appendChild(prev); flow.appendChild(next);
+
+    attachSwipe(flow, function (dir) { st.focus = dir > 0 ? nextI : prevI; render(); }); // wraps
+    layer.appendChild(flow);
+
+    layer.appendChild(deckDots(items));
+
+    var cta = el("div", ff === "ipad" ? "i-cta" : "deck-cta");
+    var go = el("button", "go-btn " + (ff === "ipad" ? "wide" : "block") + " disp", ctaLabel()); go.type = "button";
+    go.addEventListener("click", function () { chooseItem(items[st.focus], isHero); });
+    cta.appendChild(go);
+    layer.appendChild(cta);
+  }
+
+  // ---------- landscape ----------
+  function renderLandscape(layer, view, items, isHero) {
+    var g = items[st.focus];
+    var split = el("div", "l-split");
+
+    var art = el("div", "themed l-artpane" + (g.custom ? " custom" : "")); art.setAttribute("style", accentStyle(g));
+    art.innerHTML =
+      "<span class='cardart" + (g.custom ? " custom" : "") + "' style='--a:var(--accent)'></span>" +
+      "<span class='emoji'>" + g.icon + "</span>" +
+      "<span class='scrim" + (g.custom ? " custom" : "") + "'></span>" +
+      "<span class='cap'><span class='nm'>" + g.label + "</span></span>";
+    var prev = el("button", "arrow prev", "‹"); prev.type = "button"; prev.setAttribute("aria-label", "Previous");
+    var next = el("button", "arrow next", "›"); next.type = "button"; next.setAttribute("aria-label", "Next");
+    var n = items.length;
+    prev.addEventListener("click", function () { st.focus = (st.focus - 1 + n) % n; render(); }); // wraps
+    next.addEventListener("click", function () { st.focus = (st.focus + 1) % n; render(); });      // wraps
+    art.appendChild(prev); art.appendChild(next);
+    attachSwipe(art, function (dir) { st.focus = (st.focus + (dir > 0 ? 1 : -1) + n) % n; render(); });
+    art.addEventListener("click", function (e) {
+      if (e.target === prev || e.target === next) return;
+      if (Date.now() - justSwiped < 300) return;
+      chooseItem(g, isHero);
+    });
+    split.appendChild(art);
+
+    var info = el("div", "l-info");
+    var hd = stepHead(isHero);
+    info.appendChild(el("div", "k", hd.k));
+    info.appendChild(el("h3", "disp", hd.title));
+    info.appendChild(el("p", "sub", hd.sub));
+    info.appendChild(el("p", "bl", g.blurb));
+
+    var foot = el("div", "l-foot");
+    foot.appendChild(deckDots(items));
+    var startRow = el("div", "l-start");
+    var go = el("button", "go-btn disp", ctaLabel()); go.type = "button";
+    go.addEventListener("click", function () { chooseItem(g, isHero); });
+    startRow.appendChild(go);
+    foot.appendChild(startRow);
+    info.appendChild(foot);
+
+    split.appendChild(info);
+    layer.appendChild(split);
+  }
+
+  // ================= CUSTOMIZE =================
+  function renderCustomize(view) {
+    var acc = st.genre;
+    var stage = el("div", "themed bstage on"); stage.setAttribute("style", accentStyle(acc)); view.appendChild(stage);
+    var layer = el("div", "themed layer"); layer.setAttribute("style", accentStyle(acc)); view.appendChild(layer);
+
+    backChip(layer, firstName(st.char.nm), function () { st.stage = 1; st.focus = st.genre.chars.indexOf(st.char); if (st.focus < 0) st.focus = 0; render(); });
+
+    var head = el("div", ff === "ipad" ? "i-head" : "setup-h");
+    head.innerHTML = "<div class='k'>" + st.genre.label + " · " + firstName(st.char.nm) + "</div><h3 class='disp'>Last touches</h3><p>Customize, then create.</p>";
+    layer.appendChild(head);
+
+    var scroll = el("div", "cust-scroll");
+    var body = el("div", "cust-body");
+    var sel = { length:DEFAULTS.length, level:DEFAULTS.level, tone:DEFAULTS.tone, lesson:DEFAULTS.lesson };
+    [["Length","length"],["Reading level","level"],["Tone","tone"],["Lesson","lesson"]].forEach(function (pair) {
+      var g = el("div", "cust-group");
+      g.appendChild(el("div", "glabel", pair[0]));
+      var pills = el("div", "pills");
+      CUSTOMIZE[pair[1]].forEach(function (opt) {
+        var p = el("button", "pill", opt); p.type = "button"; p.setAttribute("aria-pressed", String(sel[pair[1]] === opt));
+        p.addEventListener("click", function () { sel[pair[1]] = opt; Array.prototype.forEach.call(pills.children, function (c) { c.setAttribute("aria-pressed", String(c === p)); }); });
+        pills.appendChild(p);
+      });
+      g.appendChild(pills); body.appendChild(g);
+    });
+    [["Interactive mode","Story unfolds beat by beat; you steer.",false],["Illustrations","Generate a painted cover (~$0.04).",true]].forEach(function (t) {
+      var row = el("div", "toggle-row");
+      var txt = el("div"); txt.appendChild(el("div", "tt", t[0])); txt.appendChild(el("div", "td", t[1]));
+      var sw = el("button", "sw"); sw.type = "button"; sw.setAttribute("aria-pressed", String(t[2])); sw.setAttribute("aria-label", t[0]);
+      sw.addEventListener("click", function () { sw.setAttribute("aria-pressed", String(sw.getAttribute("aria-pressed") !== "true")); });
+      row.appendChild(txt); row.appendChild(sw); body.appendChild(row);
+    });
+    scroll.appendChild(body);
+    layer.appendChild(scroll);
+
+    var bar = el("div", "create-bar");
+    var btn = el("button", "go-btn block disp", "✦ Create story"); btn.type = "button";
+    btn.addEventListener("click", function () { toast(view, "✦ Creating your " + st.genre.label + " story…"); });
+    bar.appendChild(btn);
+    layer.appendChild(bar);
+  }
+
+  // ---------- form factor switch ----------
+  var ffbtns = Array.prototype.slice.call(document.querySelectorAll(".ffbtn"));
+  ffbtns.forEach(function (b) {
+    b.addEventListener("click", function () {
+      ff = b.getAttribute("data-ff");
+      ffbtns.forEach(function (x) { x.setAttribute("aria-selected", String(x === b)); });
+      resetFlow();
+      render();
+    });
+  });
+
+  render();
+})();
+</script>

@@ -97,13 +97,13 @@
 
   /* GIANT continue hero with % progress */
   .chero { position: relative; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; cursor: pointer; --a: #B85C27; box-shadow: var(--shadow-sm); text-align: left; width: 100%; display: block; }
-  .chero .art { height: 168px; background: radial-gradient(120% 92% at 20% 12%, color-mix(in srgb,var(--a) 80%, white 18%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
+  .chero .art { display: block; height: 168px; background: radial-gradient(120% 92% at 20% 12%, color-mix(in srgb,var(--a) 80%, white 18%), transparent 58%), linear-gradient(150deg, var(--a), color-mix(in srgb,var(--a) 40%, #000 16%)); }
   .chero.tall .art { height: 232px; }
   .chero .emoji { position: absolute; top: 26px; right: 20px; font-size: 60px; filter: drop-shadow(0 5px 8px rgba(0,0,0,0.3)); opacity: .96; }
   .chero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.82) 4%, rgba(0,0,0,0.12) 52%, transparent 74%); }
   .chero .cap { position: absolute; left: 18px; right: 18px; bottom: 20px; color: #fff; }
-  .chero .kx { font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
-  .chero .tt { font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; line-height: 1.1; }
+  .chero .kx { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: .92; }
+  .chero .tt { display: block; font-size: 22px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-top: 3px; line-height: 1.1; }
   .chero.tall .tt { font-size: 26px; }
   .chero .meta { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
   .chero .pct { font-size: 26px; font-weight: 800; line-height: 1; }
