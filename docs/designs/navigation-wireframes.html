@@ -1,0 +1,478 @@
+<title>Navigation — Wireframe Directions</title>
+<style>
+  :root {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.72); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+      --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+      --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+      --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+      --glass: rgba(43,36,23,0.7); --bezel: #2a2418; --bezel-2: #3a3222;
+    }
+  }
+  :root[data-theme="light"] {
+    --studio: #e9e3d6; --studio-2: #ded6c4; --studio-ink: #4a4030; --studio-ink-soft: #7c7059;
+    --bg: #fbf7ee; --canvas: #e7ddca; --card: #fffdf8; --ink: #2a2116; --ink-soft: #6e6250;
+    --line: rgba(42,33,22,0.16); --line-soft: rgba(42,33,22,0.08); --brand: #8a6d3b; --brand-wash: rgba(138,109,59,0.14);
+    --shadow: 0 18px 44px -20px rgba(42,33,22,0.5); --shadow-sm: 0 8px 20px -12px rgba(42,33,22,0.4);
+    --glass: rgba(255,253,248,0.72); --bezel: #cdc4b1; --bezel-2: #b7ad98;
+  }
+  :root[data-theme="dark"] {
+    --studio: #17140f; --studio-2: #100e09; --studio-ink: #d8cfbb; --studio-ink-soft: #9c9079;
+    --bg: #221c13; --canvas: #14110b; --card: #2b2417; --ink: #f2ebdb; --ink-soft: #b5a890;
+    --line: rgba(242,235,219,0.16); --line-soft: rgba(242,235,219,0.07); --brand: #c9a866; --brand-wash: rgba(217,184,118,0.16);
+    --shadow: 0 18px 44px -18px rgba(0,0,0,0.7); --shadow-sm: 0 8px 20px -12px rgba(0,0,0,0.6);
+    --glass: rgba(43,36,23,0.7); --bezel: #2a2418; --bezel-2: #3a3222;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(1100px 620px at 50% -8%, var(--studio-2), transparent 70%), var(--studio); color: var(--studio-ink); font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .disp { font-family: "Baloo 2", "Trebuchet MS", "Segoe UI Rounded", system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  code { background: var(--studio-2); padding: 1px 6px; border-radius: 6px; font-size: 0.88em; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.page { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; justify-content: space-between; margin-bottom: 8px; }
+  header.page .lede { max-width: 660px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 800; color: var(--studio-ink-soft); }
+  h1.title { font-size: clamp(26px, 4vw, 38px); line-height: 1.05; margin: 8px 0 6px; color: var(--studio-ink); text-wrap: balance; }
+  .sub { font-size: 15px; line-height: 1.5; color: var(--studio-ink-soft); margin: 0; }
+
+  .theme-toggle { display: inline-flex; background: var(--studio-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 2px; }
+  .theme-toggle button { font: inherit; font-size: 12px; font-weight: 700; border: 0; background: transparent; color: var(--studio-ink-soft); padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 10px; }
+  .tab { flex: 1 1 240px; text-align: left; cursor: pointer; border: 1px solid var(--line); background: var(--studio-2); border-radius: 16px; padding: 14px 16px; transition: transform .12s, box-shadow .12s, border-color .12s; }
+  .tab:hover { transform: translateY(-1px); }
+  .tab[aria-selected="true"] { background: var(--card); border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); box-shadow: var(--shadow); color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .tab .k { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: var(--brand); color: var(--card); font-size: 12px; font-weight: 800; margin-right: 8px; }
+  .tab .tname { font-weight: 800; font-size: 15px; }
+  .tab .tdesc { font-size: 12.5px; color: var(--studio-ink-soft); margin-top: 6px; line-height: 1.45; }
+
+  .stage { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 20px; }
+  @media (min-width: 900px) { .stage { grid-template-columns: 340px 1fr; align-items: start; } }
+  .notes { background: var(--studio-2); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 6px; }
+  .notes h2 { font-size: 16px; margin: 2px 0 4px; }
+  .notes .tagline { font-size: 13px; color: var(--studio-ink-soft); margin: 0 0 14px; line-height: 1.5; }
+  .notes ul { list-style: none; margin: 0; padding: 0; }
+  .notes li { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; line-height: 1.45; }
+  .notes li:first-child { border-top: 0; }
+  .notes li .tick { color: var(--brand); font-weight: 800; flex: none; }
+  .notes .verdict { display: flex; gap: 10px; padding: 12px 0 16px; font-size: 12.5px; color: var(--studio-ink-soft); }
+  .notes .verdict b { color: var(--ink); }
+  .phone-hint { text-align: center; font-size: 12px; color: var(--studio-ink-soft); margin: 0 0 12px; }
+
+  .device-wrap { display: flex; justify-content: center; }
+  .device { width: 390px; max-width: 100%; border-radius: 44px; padding: 12px; background: linear-gradient(160deg, var(--bezel), var(--bezel-2)); box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.05); }
+  .screen { position: relative; height: 760px; border-radius: 34px; overflow: hidden; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 128px; height: 26px; background: var(--bezel); border-radius: 0 0 16px 16px; z-index: 60; }
+  .statusbar { position: absolute; top: 0; left: 0; right: 0; height: 30px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 22px 2px; font-size: 12px; font-weight: 700; color: var(--ink); z-index: 55; pointer-events: none; }
+
+  .view { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ---- top header variants ---- */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 40; display: flex; align-items: center; gap: 8px; height: 74px; padding: 30px 12px 0; background: linear-gradient(to bottom, var(--bg) 62%, transparent); }
+  .icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; font-size: 17px; box-shadow: var(--shadow-sm); }
+  .icon-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .brandmark { flex: 1; text-align: center; font-size: 19px; font-weight: 800; color: var(--brand); }
+  .brandmark.left { text-align: left; padding-left: 4px; }
+  .spacer { width: 40px; }
+
+  /* ---- scroll page ---- */
+  .page-scroll { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .page-scroll::-webkit-scrollbar { width: 0; }
+  .page-pad-top { height: 78px; }
+  .page-pad-bottom { height: 24px; }
+
+  /* ---- home content ---- */
+  .hero { margin: 4px 16px 18px; border-radius: 22px; overflow: hidden; position: relative; box-shadow: var(--shadow-sm); }
+  .hero .art { height: 168px; background: radial-gradient(120% 90% at 22% 14%, #E8A06B, transparent 58%), linear-gradient(150deg, #B85C27, #6d3f1e); }
+  .hero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.66), transparent 60%); }
+  .hero .cap { position: absolute; left: 16px; right: 16px; bottom: 14px; color: #fff; }
+  .hero .cap .kx { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; opacity: .9; }
+  .hero .cap .tt { font-size: 21px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+  .hero .cap .btn { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 800; background: #fff; color: #2a2116; padding: 8px 14px; border-radius: 999px; }
+
+  .shelf { margin: 0 0 20px; }
+  .shelf h3 { font-size: 15px; font-weight: 800; margin: 0 0 10px; padding: 0 16px; }
+  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 4px; }
+  .strip::-webkit-scrollbar { height: 0; }
+  .g-chip { --a: var(--brand); flex: 0 0 96px; height: 118px; border-radius: 16px; position: relative; overflow: hidden; border: 0; padding: 0; cursor: pointer; box-shadow: var(--shadow-sm); }
+  .g-chip .art { position: absolute; inset: 0; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 78%, white 20%), transparent 60%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 45%, #000 12%)); }
+  .g-chip .emoji { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); }
+  .g-chip .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%); }
+  .g-chip .nm { position: absolute; left: 8px; right: 8px; bottom: 8px; color: #fff; font-size: 12px; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+
+  .rcard { flex: 0 0 150px; text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .rcard .cv { --a: var(--brand); height: 92px; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 70%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 12%)); position: relative; }
+  .rcard .cv .e { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 30px; }
+  .rcard .mt { padding: 9px 11px 12px; }
+  .rcard .mt .tt { font-size: 12.5px; font-weight: 800; line-height: 1.25; }
+  .rcard .mt .gg { font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+
+  /* favourites grid + music list (proposed destinations) */
+  .propose { margin: 0 16px 14px; font-size: 11px; color: var(--ink-soft); background: var(--brand-wash); border: 1px dashed color-mix(in srgb,var(--brand) 40%, var(--line)); border-radius: 10px; padding: 8px 11px; }
+  .fav-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+  .fav { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .fav .cv { --a: var(--brand); height: 104px; position: relative; background: radial-gradient(120% 80% at 25% 15%, color-mix(in srgb,var(--a) 70%, white 18%), transparent 58%), linear-gradient(155deg, var(--a), color-mix(in srgb,var(--a) 42%, #000 12%)); }
+  .fav .cv .e { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 34px; }
+  .fav .cv .star { position: absolute; top: 8px; right: 8px; font-size: 15px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+  .fav .mt { padding: 9px 11px 12px; }
+  .fav .mt .tt { font-size: 12.5px; font-weight: 800; line-height: 1.25; }
+  .fav .mt .gg { font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+  .music-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .mrow { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 11px 13px; }
+  .mrow .ic { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; font-size: 20px; background: var(--brand-wash); }
+  .mrow .mt { flex: 1; }
+  .mrow .mt .tt { font-size: 13.5px; font-weight: 800; }
+  .mrow .mt .du { font-size: 11px; color: var(--ink-soft); }
+  .mrow .pl { font-size: 18px; color: var(--brand); }
+
+  .pagehead { padding: 2px 16px 12px; }
+  .pagehead h2 { font-size: 22px; margin: 0; }
+
+  /* ---------- Direction 1: floating pill bar ---------- */
+  .float-bar { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 45; display: flex; gap: 4px; padding: 6px; border-radius: 999px; background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform .3s ease, opacity .3s ease; }
+  .float-bar.hidden { transform: translateX(-50%) translateY(96px); opacity: 0; }
+  .fb-item { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 0; background: transparent; cursor: pointer; color: var(--ink-soft); font: inherit; font-size: 10px; font-weight: 700; padding: 7px 16px; border-radius: 999px; }
+  .fb-item .ic { font-size: 19px; line-height: 1; }
+  .fb-item[aria-selected="true"] { background: var(--brand); color: var(--card); }
+  .fb-item:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- Direction 2: full-width bar with center create ---------- */
+  .tab-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 45; height: 78px; display: flex; align-items: stretch; justify-content: space-around; padding: 6px 8px calc(6px + 12px); background: var(--glass); backdrop-filter: blur(16px) saturate(1.4); border-top: 1px solid var(--line); transition: transform .3s ease; }
+  .tab-bar.hidden { transform: translateY(100%); }
+  .tb-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: transparent; cursor: pointer; color: var(--ink-soft); font: inherit; font-size: 10.5px; font-weight: 700; }
+  .tb-item .ic { font-size: 21px; line-height: 1; }
+  .tb-item[aria-selected="true"] { color: var(--brand); }
+  .tb-item:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 10px; }
+  .tb-create { flex: 0 0 auto; align-self: center; margin-top: -26px; }
+  .tb-create button { width: 60px; height: 60px; border-radius: 50%; border: 4px solid var(--bg); background: var(--brand); color: var(--card); font-size: 28px; cursor: pointer; box-shadow: var(--shadow); display: grid; place-items: center; }
+  .tb-create button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .tb-create .cl { display: block; text-align: center; font-size: 9.5px; font-weight: 800; color: var(--brand); margin-top: 2px; }
+
+  /* ---------- Direction 3: top segmented ---------- */
+  .seg-header { position: absolute; top: 0; left: 0; right: 0; z-index: 40; padding: 30px 12px 8px; background: linear-gradient(to bottom, var(--bg) 78%, transparent); }
+  .seg-header .row1 { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .seg { display: flex; gap: 4px; background: var(--canvas); border: 1px solid var(--line); border-radius: 14px; padding: 4px; }
+  .seg-item { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: transparent; cursor: pointer; color: var(--ink-soft); font: inherit; font-size: 13px; font-weight: 800; padding: 9px 6px; border-radius: 10px; }
+  .seg-item .ic { font-size: 15px; }
+  .seg-item[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow-sm); }
+  .seg-item:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- side nav / sheet ---------- */
+  .overlay { position: absolute; inset: 0; z-index: 70; display: none; }
+  .overlay.open { display: block; }
+  .overlay .bd { position: absolute; inset: 0; background: rgba(0,0,0,0.42); }
+  .side { position: absolute; top: 0; left: 0; bottom: 0; width: 80%; max-width: 300px; background: var(--bg); box-shadow: var(--shadow); padding: 34px 16px 16px; display: flex; flex-direction: column; }
+  .side .hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .side .hd .b { font-size: 19px; font-weight: 800; color: var(--brand); }
+  .side .grp-l { font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin: 14px 6px 6px; }
+  .side .lnk { display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-radius: 12px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; text-align: left; width: 100%; }
+  .side .lnk .ic { font-size: 18px; width: 22px; text-align: center; }
+  .side .lnk[aria-selected="true"] { background: var(--brand-wash); color: var(--brand); }
+  .side .lnk:hover { background: var(--canvas); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; box-shadow: var(--shadow); padding: 10px 14px calc(18px + 8px); }
+  .sheet .grip { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 4px auto 12px; }
+  .sheet .lnk { display: flex; align-items: center; gap: 12px; padding: 13px 10px; border-radius: 12px; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; text-align: left; width: 100%; }
+  .sheet .lnk .ic { font-size: 18px; width: 22px; text-align: center; }
+  .sheet .lnk:hover { background: var(--canvas); }
+
+  .scrollsim { position: absolute; right: 12px; bottom: 96px; z-index: 50; font-size: 11px; font-weight: 800; background: var(--ink); color: var(--bg); border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer; opacity: .85; box-shadow: var(--shadow-sm); }
+  .scrollsim:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  .legend { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
+  .legend h2 { font-size: 15px; margin: 0 0 10px; }
+  .legend table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .legend th, .legend td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .legend th { color: var(--studio-ink-soft); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend td.dq { color: var(--studio-ink-soft); }
+  .legend .yes { color: var(--brand); font-weight: 800; }
+  .tb-wrap { overflow-x: auto; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <div class="lede">
+      <div class="eyebrow">Storykins · Issue #73 · Navigation & IA</div>
+      <h1 class="title disp">Where should navigation live?</h1>
+      <p class="sub">Three ways to move between Home, Favourites & Music — anchored to the setup-B visual language. Same home content underneath all three; tap tabs, open the menu, hit “simulate scroll” to see auto-hide. Favourites & Music are proposed destinations (not built yet).</p>
+    </div>
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Directions">
+    <button class="tab" role="tab" aria-selected="true" data-dir="1">
+      <div><span class="k">1</span><span class="tname">Floating pill + side nav</span></div>
+      <div class="tdesc">#73 literal: translucent auto-hiding pill bar at the bottom, hamburger side panel mirrors it plus secondary links.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="2">
+      <div><span class="k">2</span><span class="tname">Bottom bar + Create</span></div>
+      <div class="tdesc">Tab bar is the whole nav — no hamburger. Center “Create” button owns the primary action; a More sheet holds the rest.</div>
+    </button>
+    <button class="tab" role="tab" aria-selected="false" data-dir="3">
+      <div><span class="k">3</span><span class="tname">Top segmented</span></div>
+      <div class="tdesc">No bottom bar. A persistent themed tab strip under a slim header; overflow “⋯” for secondary. Nothing covers content.</div>
+    </button>
+  </div>
+
+  <div class="stage">
+    <aside class="notes" id="notes"></aside>
+    <div>
+      <p class="phone-hint">↑ Interactive — switch tabs, open the menu, tap “sim. scroll ↓” to test auto-hide. 390px frame.</p>
+      <div class="device-wrap">
+        <div class="device">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="statusbar"><span>9:41</span><span>􀙇 􀛨 100%</span></div>
+            <div class="view" id="view"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h2 class="disp">How each answers #73's open questions</h2>
+    <div class="tb-wrap">
+    <table>
+      <thead><tr><th>Open question (#73)</th><th>1 · Floating pill</th><th>2 · Bottom + Create</th><th>3 · Top segmented</th></tr></thead>
+      <tbody>
+        <tr><td class="dq">Bottom vs side redundancy</td><td>Both exist (bar = shortcut, side = full)</td><td class="yes">Resolved — one nav, no side menu</td><td class="yes">Resolved — one top strip + overflow</td></tr>
+        <tr><td class="dq">Thumb reachability</td><td class="yes">Bottom (easy)</td><td class="yes">Bottom (easy)</td><td>Top (needs a reach on tall phones)</td></tr>
+        <tr><td class="dq">Covers content?</td><td>Floats over (auto-hides)</td><td>Yes — reserves ~78px</td><td class="yes">No — scrolls with header</td></tr>
+        <tr><td class="dq">Primary “Create” action</td><td>In hero / side nav</td><td class="yes">Center button, always there</td><td>In header / hero</td></tr>
+        <tr><td class="dq">iOS safe-area/home-indicator</td><td>Floats above it (clean)</td><td>Must pad for it</td><td class="yes">N/A (top)</td></tr>
+        <tr><td class="dq">Auto-hide on home worth it?</td><td>Yes (bar floats over content)</td><td>Optional</td><td>Comes free (scrolls away)</td></tr>
+        <tr><td class="dq">Scales to more destinations?</td><td>~3–4 max</td><td>4 + Create + More</td><td class="yes">Overflow handles many</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var tbtns = Array.prototype.slice.call(document.querySelectorAll("[data-theme-set]"));
+  function setTheme(mode) {
+    if (mode === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", mode);
+    tbtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-set") === mode)); });
+  }
+  tbtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); }); });
+
+  var GENRES = [
+    { label:"Adventure", e:"🗺️", a:"#B85C27" }, { label:"Fantasy", e:"🐉", a:"#7B4C9E" },
+    { label:"Animals", e:"🦊", a:"#4C7A3F" }, { label:"Bedtime", e:"🌙", a:"#3E4E86" }, { label:"Sci-fi", e:"🚀", a:"#1D7A8C" }
+  ];
+  var RECENT = [
+    { t:"Finn and the Whispering Cave", g:"Adventure", e:"🧭", a:"#B85C27" },
+    { t:"Luna's First Spell", g:"Fantasy", e:"🧙‍♀️", a:"#7B4C9E" },
+    { t:"Baxter's Honey Hunt", g:"Animals", e:"🐻", a:"#4C7A3F" }
+  ];
+  var FAVS = [
+    { t:"The Sleepy Otter's Moon", g:"Bedtime", e:"🦦", a:"#3E4E86" },
+    { t:"Cosmo Meets a Comet", g:"Sci-fi", e:"👨‍🚀", a:"#1D7A8C" },
+    { t:"Coco's Clever Shortcut", g:"Animals", e:"🦊", a:"#4C7A3F" },
+    { t:"Ember's Tiny Spark", g:"Fantasy", e:"🐲", a:"#7B4C9E" }
+  ];
+  var MUSIC = [
+    { t:"Twinkle Lullaby", d:"2:14", e:"🌟" }, { t:"Moonlit Meadow", d:"3:02", e:"🌙" },
+    { t:"Starship Dreams", d:"2:48", e:"🚀" }, { t:"The Sleepy Forest", d:"4:10", e:"🌲" }
+  ];
+
+  var NOTES = {
+    "1": { h:"1 · Floating pill + side nav", tag:"#73 exactly as written. A translucent pill floats above the home content and auto-hides on scroll; the hamburger opens a full side menu that mirrors the same items plus secondary ones.",
+      pts:["Bottom pill = fast thumb access to Home / Favourites / Music.","Auto-hides on scroll-down, returns on scroll-up (reader-header pattern).","Side menu is the source of truth — mirrors the 3 + New story, Settings, About.","Floats above the iOS home indicator, so it never fights the safe area."],
+      v:["Best for:"," honouring #73 with minimal disruption. Risk: two navs showing the same items can feel redundant."] },
+    "2": { h:"2 · Bottom bar + Create", tag:"Commit to one nav. The tab bar is the whole system — no hamburger on mobile. A center Create button owns the app's primary action; rare items live behind a More sheet.",
+      pts:["Kills the bottom-vs-side redundancy — there's only one nav.","Center “✎ Create” is always a thumb-tap away (it's what the app is for).","Reserves space (doesn't float), so nothing is ever hidden behind it.","“More” sheet holds Settings / About / anything that doesn't earn a tab."],
+      v:["Best for:"," a decisive, app-native feel. Risk: must pad for the iOS home indicator; 4 tabs is the practical ceiling."] },
+    "3": { h:"3 · Top segmented", tag:"No bottom bar at all. A themed segmented strip sits under a slim header and scrolls away with content; an overflow “⋯” holds the rest. Debates reach vs. occlusion.",
+      pts:["Nothing ever covers the story content or the home indicator.","Scrolls away naturally — auto-hide comes for free, no JS gymnastics.","Overflow menu scales to many destinations without crowding.","Reads as a “library/reader” app rather than a social one."],
+      v:["Best for:"," content-first calm + scalability. Risk: top targets are a stretch for one thumb on tall phones."] }
+  };
+
+  var TABS = [ { id:"home", label:"Home", ic:"🏠" }, { id:"fav", label:"Favourites", ic:"⭐" }, { id:"music", label:"Music", ic:"🎵" } ];
+
+  function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h != null) e.innerHTML = h; return e; }
+  var view = document.getElementById("view");
+  var notesEl = document.getElementById("notes");
+  var dir = "1", tab = "home", barHidden = false, menuOpen = false;
+
+  function renderNotes() {
+    var n = NOTES[dir]; notesEl.innerHTML = "";
+    notesEl.appendChild(el("h2", "disp", n.h));
+    notesEl.appendChild(el("p", "tagline", n.tag));
+    var ul = el("ul");
+    n.pts.forEach(function (t) { var li = el("li"); li.appendChild(el("span","tick","▹")); li.appendChild(el("span",null,t)); ul.appendChild(li); });
+    notesEl.appendChild(ul);
+    var v = el("div","verdict"); v.innerHTML = "<span class='tick'>◆</span><span><b>"+n.v[0]+"</b>"+n.v[1]+"</span>"; notesEl.appendChild(v);
+  }
+
+  function homeContent() {
+    var f = document.createDocumentFragment();
+    var hero = el("div","hero");
+    hero.innerHTML = "<div class='art'></div><div class='scrim'></div><div class='cap'><div class='kx'>Continue</div><div class='tt disp'>Finn and the Whispering Cave</div><span class='btn'>▶ Keep reading</span></div>";
+    f.appendChild(hero);
+    var gs = el("div","shelf"); gs.appendChild(el("h3", null, "Start a new story"));
+    var strip = el("div","strip");
+    GENRES.forEach(function (g) { var c = el("button","g-chip"); c.type="button"; c.setAttribute("style","--a:"+g.a); c.innerHTML="<span class='art'></span><span class='emoji'>"+g.e+"</span><span class='scrim'></span><span class='nm'>"+g.label+"</span>"; strip.appendChild(c); });
+    gs.appendChild(strip); f.appendChild(gs);
+    var rs = el("div","shelf"); rs.appendChild(el("h3", null, "Recently created"));
+    var rstrip = el("div","strip");
+    RECENT.forEach(function (r) { var c = el("div","rcard"); c.innerHTML="<div class='cv' style='--a:"+r.a+"'><span class='e'>"+r.e+"</span></div><div class='mt'><div class='tt'>"+r.t+"</div><div class='gg'>"+r.g+"</div></div>"; rstrip.appendChild(c); });
+    rs.appendChild(rstrip); f.appendChild(rs);
+    return f;
+  }
+  function favContent() {
+    var f = document.createDocumentFragment();
+    f.appendChild(el("div","pagehead","<h2 class='disp'>Favourites</h2>"));
+    f.appendChild(el("div","propose","Proposed destination — Favourites page isn't built yet (scope separately per #73)."));
+    var grid = el("div","fav-grid");
+    FAVS.forEach(function (r) { var c = el("div","fav"); c.innerHTML="<div class='cv' style='--a:"+r.a+"'><span class='e'>"+r.e+"</span><span class='star'>⭐</span></div><div class='mt'><div class='tt'>"+r.t+"</div><div class='gg'>"+r.g+"</div></div>"; grid.appendChild(c); });
+    f.appendChild(grid);
+    return f;
+  }
+  function musicContent() {
+    var f = document.createDocumentFragment();
+    f.appendChild(el("div","pagehead","<h2 class='disp'>Music & lullabies</h2>"));
+    f.appendChild(el("div","propose","Proposed destination — Music page isn't built yet (scope separately per #73)."));
+    var list = el("div","music-list");
+    MUSIC.forEach(function (m) { var r = el("div","mrow"); r.innerHTML="<div class='ic'>"+m.e+"</div><div class='mt'><div class='tt'>"+m.t+"</div><div class='du'>"+m.d+"</div></div><div class='pl'>▶</div>"; list.appendChild(r); });
+    f.appendChild(list);
+    return f;
+  }
+  function pageBody() { return tab === "home" ? homeContent() : tab === "fav" ? favContent() : musicContent(); }
+
+  function buildScroll(padTop) {
+    var s = el("div","page-scroll");
+    var pt = el("div","page-pad-top"); if (padTop) pt.style.height = padTop; s.appendChild(pt);
+    s.appendChild(pageBody());
+    var pb = el("div"); pb.style.height = (dir === "2" ? "104px" : dir === "1" ? "96px" : "24px"); s.appendChild(pb);
+    // simulate-scroll toggle for auto-hide directions
+    return s;
+  }
+
+  function scrollSimBtn() {
+    var b = el("button","scrollsim", barHidden ? "sim. scroll ↑" : "sim. scroll ↓");
+    b.type = "button";
+    b.addEventListener("click", function () { barHidden = !barHidden; render(); });
+    return b;
+  }
+
+  // side menu (dir 1) / more sheet (dir 2)
+  function sideMenu() {
+    var ov = el("div","overlay" + (menuOpen ? " open" : ""));
+    var bd = el("div","bd"); bd.addEventListener("click", function () { menuOpen = false; render(); });
+    var side = el("div","side");
+    side.innerHTML = "<div class='hd'><span class='b'>Storykins</span><button class='icon-btn' aria-label='Close menu'>✕</button></div>";
+    side.querySelector(".icon-btn").addEventListener("click", function () { menuOpen = false; render(); });
+    side.appendChild(el("div","grp-l","Browse"));
+    TABS.forEach(function (t) {
+      var b = el("button","lnk"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab));
+      b.innerHTML = "<span class='ic'>"+t.ic+"</span>"+t.label;
+      b.addEventListener("click", function () { tab = t.id; menuOpen = false; render(); });
+      side.appendChild(b);
+    });
+    side.appendChild(el("div","grp-l","More"));
+    [["✎","New story"],["⚙️","Settings"],["ℹ️","About"]].forEach(function (x) {
+      var b = el("button","lnk"); b.type="button"; b.innerHTML="<span class='ic'>"+x[0]+"</span>"+x[1];
+      b.addEventListener("click", function () { menuOpen = false; render(); });
+      side.appendChild(b);
+    });
+    ov.appendChild(bd); ov.appendChild(side);
+    return ov;
+  }
+  function moreSheet() {
+    var ov = el("div","overlay" + (menuOpen ? " open" : ""));
+    var bd = el("div","bd"); bd.addEventListener("click", function () { menuOpen = false; render(); });
+    var sheet = el("div","sheet");
+    sheet.appendChild(el("div","grip"));
+    [["⚙️","Settings"],["ℹ️","About"],["🎨","Theme"]].forEach(function (x) {
+      var b = el("button","lnk"); b.type="button"; b.innerHTML="<span class='ic'>"+x[0]+"</span>"+x[1];
+      b.addEventListener("click", function () { menuOpen = false; render(); });
+      sheet.appendChild(b);
+    });
+    ov.appendChild(bd); ov.appendChild(sheet);
+    return ov;
+  }
+
+  function render() {
+    renderNotes();
+    view.innerHTML = "";
+
+    if (dir === "1") {
+      var header = el("div","topbar");
+      var burger = el("button","icon-btn","☰"); burger.setAttribute("aria-label","Open menu"); burger.addEventListener("click", function () { menuOpen = true; render(); });
+      header.appendChild(burger);
+      header.appendChild(el("span","brandmark", tab === "home" ? "Storykins" : (tab === "fav" ? "Favourites" : "Music")));
+      header.appendChild(el("span","spacer"));
+      view.appendChild(buildScroll("78px"));
+      view.appendChild(header);
+      var bar = el("div","float-bar" + (barHidden ? " hidden" : ""));
+      TABS.forEach(function (t) { var b = el("button","fb-item"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label; b.addEventListener("click", function () { tab=t.id; render(); }); bar.appendChild(b); });
+      view.appendChild(bar);
+      view.appendChild(scrollSimBtn());
+      view.appendChild(sideMenu());
+    } else if (dir === "2") {
+      var header2 = el("div","topbar");
+      header2.appendChild(el("span","brandmark left", tab === "home" ? "Storykins" : (tab === "fav" ? "Favourites" : "Music")));
+      var prof = el("button","icon-btn","🙂"); prof.setAttribute("aria-label","Profile"); header2.appendChild(prof);
+      view.appendChild(buildScroll("74px"));
+      view.appendChild(header2);
+      var tabbar = el("div","tab-bar" + (barHidden ? " hidden" : ""));
+      var slots = [ TABS[0], TABS[1], "create", TABS[2], { id:"more", label:"More", ic:"⋯" } ];
+      slots.forEach(function (t) {
+        if (t === "create") {
+          var cr = el("div","tb-create");
+          var cb = el("button", null, "✎"); cb.type="button"; cb.setAttribute("aria-label","Create story");
+          cr.appendChild(cb); cr.appendChild(el("span","cl","Create")); tabbar.appendChild(cr); return;
+        }
+        var b = el("button","tb-item"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label;
+        b.addEventListener("click", function () { if (t.id === "more") { menuOpen = true; } else { tab = t.id; } render(); });
+        tabbar.appendChild(b);
+      });
+      view.appendChild(tabbar);
+      view.appendChild(scrollSimBtn());
+      view.appendChild(moreSheet());
+    } else {
+      var sh = el("div","seg-header");
+      var row1 = el("div","row1");
+      row1.appendChild(el("span","brandmark left","Storykins"));
+      var over = el("button","icon-btn","⋯"); over.setAttribute("aria-label","More"); over.addEventListener("click", function () { menuOpen = true; render(); });
+      row1.appendChild(over);
+      sh.appendChild(row1);
+      var seg = el("div","seg");
+      TABS.forEach(function (t) { var b = el("button","seg-item"); b.type="button"; b.setAttribute("aria-selected", String(t.id===tab)); b.innerHTML="<span class='ic'>"+t.ic+"</span>"+t.label; b.addEventListener("click", function () { tab=t.id; render(); }); seg.appendChild(b); });
+      sh.appendChild(seg);
+      view.appendChild(buildScroll("128px"));
+      view.appendChild(sh);
+      view.appendChild(moreSheet());
+    }
+  }
+
+  var tabsBtns = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  tabsBtns.forEach(function (t) {
+    t.addEventListener("click", function () {
+      dir = t.getAttribute("data-dir");
+      tabsBtns.forEach(function (x) { x.setAttribute("aria-selected", String(x === t)); });
+      tab = "home"; barHidden = false; menuOpen = false; render();
+    });
+  });
+  render();
+})();
+</script>
