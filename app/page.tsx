@@ -595,6 +595,7 @@ export default function Home() {
       onNavigateHome={handleNavigateHome}
       onNavigateNewStory={handleNavigateNewStory}
       pageTitle={pageTitle}
+      activeTab={view === "home" ? "home" : view === "setup" ? "create" : undefined}
       autoHide={view === "success"}
     >
       {view === "home" && (

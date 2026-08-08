@@ -1419,3 +1419,294 @@ select:focus-visible,
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ============================================================================
+   V2 responsive navigation shell (Nav-2, #73/#75)
+   One nav model, three shapes: bottom bar (portrait), 64px icon rail (landscape),
+   collapsible left sidebar (tablet). Shows on Home/Setup/loading/error; hidden in
+   the immersive reader (D1). Reuses the --sk-* tokens so it themes automatically.
+   ============================================================================ */
+
+/* Portrait: bottom bar floats over the centered phone column; pad content so its
+   last rows clear the fixed bar. */
+.sk-shell-nav.sk-shell-portrait .sk-content {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+/* The old sticky top bar (with its border) used to block the first child's top margin from
+   collapsing out to the tan shell. With the header gone on Home/Setup, Home's greeting margin
+   collapsed through and revealed a tan strip at the very top (UAT: "brown bar on top"). A small top
+   padding on the content contains the margin again and restores a little breathing room. */
+.sk-shell-nav .sk-content {
+  padding-top: 0.5rem;
+}
+/* Landscape (rail) + tablet (sidebar): nav docks left, content flows beside it and
+   stays the centered column for now (Home-2/Setup-B widen it in later PRs). */
+.sk-shell-landscape,
+.sk-shell-tablet {
+  display: flex;
+  align-items: stretch;
+}
+.sk-shell-landscape .sk-content,
+.sk-shell-tablet .sk-content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* iOS Safari: register taps immediately as clicks instead of waiting to see if it's a double-tap
+   zoom - without this, fast repeated taps on a control zoom the page instead of activating it
+   (phone UAT: "buttons don't work, it just zooms in"). */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+.sk-appnav {
+  background: color-mix(in srgb, var(--sk-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  z-index: 30;
+}
+.sk-appnav-items {
+  display: flex;
+}
+
+/* ---- bottom bar (portrait) ---- */
+.sk-appnav-portrait {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(428px, 100%);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--sk-line);
+}
+.sk-appnav-portrait .sk-appnav-items {
+  flex: 1;
+  justify-content: space-around;
+  align-items: stretch;
+  height: 56px;
+}
+
+/* ---- icon rail (landscape) ---- */
+.sk-appnav-landscape {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  flex: none;
+  width: 64px;
+  height: 100vh;
+  padding: 14px 0 calc(14px + env(safe-area-inset-bottom));
+  border-right: 1px solid var(--sk-line);
+}
+.sk-appnav-landscape .sk-appnav-items {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- sidebar (tablet) ---- */
+.sk-appnav-tablet {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  flex: none;
+  width: 240px;
+  height: 100vh;
+  padding: 16px 12px calc(16px + env(safe-area-inset-bottom));
+  border-right: 1px solid var(--sk-line);
+  transition: width 0.22s ease;
+}
+.sk-appnav-tablet.sk-appnav-collapsed {
+  width: 64px;
+}
+.sk-appnav-tablet .sk-appnav-items {
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.sk-appnav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 4px 0 10px;
+}
+.sk-appnav-collapsed .sk-appnav-head {
+  justify-content: center;
+  padding: 0;
+}
+.sk-appnav-brand {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--sk-brand);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sk-appnav-toggle {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--sk-ink-soft);
+  border-radius: 9px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.sk-appnav-toggle:hover {
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+}
+.sk-appnav-toggle:focus-visible {
+  outline: 2px solid var(--sk-brand);
+  outline-offset: 2px;
+}
+
+/* ---- items (shared) ---- */
+.sk-appnav-item {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--sk-ink-soft);
+  cursor: pointer;
+  font-family: var(--font-nunito), var(--font-sans);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.sk-appnav-item:focus-visible {
+  outline: 2px solid var(--sk-brand);
+  outline-offset: 2px;
+}
+.sk-appnav-item-active {
+  color: var(--sk-brand);
+}
+.sk-appnav-ico {
+  display: grid;
+  place-items: center;
+  flex: none;
+  position: relative;
+}
+
+/* compact shapes (bottom bar + rail): stacked icon over tiny label */
+.sk-appnav-portrait .sk-appnav-item,
+.sk-appnav-landscape .sk-appnav-item {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 12px;
+}
+.sk-appnav-landscape .sk-appnav-item {
+  flex: none;
+  width: 100%;
+  padding: 6px 0;
+}
+.sk-appnav-label-compact {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* sidebar shape: icon + inline label row */
+.sk-appnav-tablet .sk-appnav-item {
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.sk-appnav-tablet .sk-appnav-item:hover {
+  background: var(--sk-brand-wash);
+}
+.sk-appnav-collapsed .sk-appnav-item {
+  justify-content: center;
+  padding: 11px 0;
+}
+.sk-appnav-label {
+  white-space: nowrap;
+}
+
+/* Create owns the primary action - a raised brand disc in compact shapes, a filled
+   pill in the sidebar. */
+.sk-appnav-portrait .sk-appnav-create .sk-appnav-create-ico,
+.sk-appnav-landscape .sk-appnav-create .sk-appnav-create-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--cta-from), var(--cta-to));
+  color: var(--cta-text);
+  box-shadow: 0 8px 18px -6px var(--cta-glow);
+}
+/* Portrait: a larger disc that pokes UP out of the (shorter) bar as a raised FAB, notched from the
+   bar by a bg-colored ring - matches the approved nav mock. */
+.sk-appnav-portrait .sk-appnav-create .sk-appnav-create-ico {
+  width: 56px;
+  height: 56px;
+  margin-top: -24px;
+  border: 4px solid var(--sk-bg);
+}
+.sk-appnav-portrait .sk-appnav-create,
+.sk-appnav-landscape .sk-appnav-create {
+  color: var(--sk-brand);
+}
+.sk-appnav-tablet .sk-appnav-create {
+  margin-top: 4px;
+  background: linear-gradient(160deg, var(--cta-from), var(--cta-to));
+  color: var(--cta-text);
+  box-shadow: 0 8px 18px -8px var(--cta-glow);
+}
+.sk-appnav-tablet .sk-appnav-create:hover {
+  background: linear-gradient(160deg, var(--cta-from), var(--cta-to));
+  filter: brightness(1.04);
+}
+
+/* "Coming soon" tabs (Favorites / Music / Settings): visible but greyed and non-interactive, with a
+   small "Soon" badge so the roadmap reads at a glance. */
+.sk-appnav-item-soon {
+  color: var(--sk-ink-soft);
+  opacity: 0.45;
+  cursor: default;
+}
+.sk-appnav-item-soon:hover {
+  background: transparent;
+}
+.sk-appnav-soon {
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+}
+/* Compact shapes: the badge overlays the (dimmed) icon, centered ON it - anchored to the icon
+   wrapper so it stays centered regardless of the item's height. */
+.sk-appnav-portrait .sk-appnav-soon,
+.sk-appnav-landscape .sk-appnav-soon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7px;
+  padding: 1px 3px;
+  background: color-mix(in srgb, var(--sk-bg) 78%, transparent);
+}
+/* Sidebar: badge sits inline at the row's end; hidden entirely when the sidebar is collapsed
+   (icon-only rail - the greyed opacity already signals "not yet"). */
+.sk-appnav-tablet .sk-appnav-soon {
+  margin-left: auto;
+}
+.sk-appnav-collapsed .sk-appnav-soon {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-appnav-tablet {
+    transition: none;
+  }
+}

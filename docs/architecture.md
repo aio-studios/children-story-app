@@ -298,8 +298,9 @@ This is a snapshot as of #38 (v1: one hero image) + #46/#47. Re-diagram when #37
 ```mermaid
 graph TD
   Page["Home · app/page.tsx<br/>state: view, setupStep<br/>+ existing selection state"]
-  Shell["AppShell<br/>components/AppShell.tsx"]
-  Nav["NavMenu<br/>components/NavMenu.tsx<br/>panel portaled to document.body"]
+  Shell["AppShell<br/>components/AppShell.tsx<br/>+ useLayoutMode()"]
+  AppNav["AppNav<br/>components/AppNav.tsx<br/>bottom bar / rail / sidebar<br/>(shown except in reader)"]
+  Nav["NavMenu<br/>components/NavMenu.tsx<br/>panel portaled to document.body<br/>(reader top bar only)"]
   HS["HomeScreen<br/>components/HomeScreen.tsx"]
   Stepper["SetupStepper<br/>components/SetupStepper.tsx<br/>(dot-stepper chrome, no selection logic of its own)"]
   GS["GenreSelector"]
@@ -308,7 +309,8 @@ graph TD
   SR["StoryReader"]
 
   Page --> Shell
-  Shell --> Nav
+  Shell -->|view ≠ success| AppNav
+  Shell -->|view = success reader| Nav
   Shell -->|view = home| HS
   Shell -->|view = setup| Stepper
   Shell -->|view = success| SR
@@ -316,12 +318,13 @@ graph TD
   Stepper --> CS
   Stepper --> Cust
   HS -->|onSelectGenre, onContinue| Page
+  AppNav -->|onNavigateHome, onNavigateNewStory| Page
   Nav -->|onNavigateHome, onNavigateNewStory| Page
 
   classDef stateful fill:#FBEBD6,stroke:#B5670E;
   classDef plain fill:#EAF1FB,stroke:#4A72A8;
   class Page stateful;
-  class Shell,Nav,HS,Stepper,GS,CS,Cust,SR plain;
+  class Shell,AppNav,Nav,HS,Stepper,GS,CS,Cust,SR plain;
 ```
 
 **Character/genre art (#59):** `PresetCharacter` and `Genre` each carry an optional `image?` path (`lib/types.ts`) pointing at a static asset under `public/characters/*` / `public/genres/*` (AI-generated once via `scripts/generate-art.mjs`, optimized by `scripts/optimize-art.mjs`; full-res sources kept in `docs/designs/source-art/`). `CharacterCard`, `GenreCard`, and Home's `sk-genre-chip` render a circular `<img>` when the field is set and fall back to the original emoji when it isn't - so custom/user-typed genres, the "Create your own" tile, and any future entry without art degrade gracefully. Plain `<img>` (matching StoryReader's cover), not `next/image`, since the assets are pre-sized static files.
@@ -340,6 +343,17 @@ Tapping a genre chip on Home lands on setup Step 1 (Genre, that genre pre-highli
 - `autoHide?: boolean` - `true` only when `view === "success"` (story reader); Safari-reader behavior (#44, 2026-08-03): shown on landing, auto-hides after ~2.5s idle, **hides immediately on scroll down**, reveals on scroll up or a tap within the top ~64px strip. Implemented in `AppShell` via a direction-tracking `window` scroll listener (with a small delta threshold to ignore iOS bounce jitter), a top-strip `pointerdown`/`pointermove` reveal, and a `setTimeout` idle timer. An earlier version reappeared on *any* scroll, which wrongly revealed the header when scrolling down to read.
 
 `NavMenu`'s panel slides from the **left** (matches the hamburger's position), locks `document.body` scroll while open, and returns focus to the hamburger button on close.
+
+##### V2 responsive navigation (2026-08-07, #73/#75 — PR 1 of the V2 UI batch)
+
+The global nav is no longer a single top hamburger. `AppShell` now renders **`AppNav`** (`components/AppNav.tsx`) on every non-reader view, and reshapes it by device via the shared **`useLayoutMode()`** hook (`lib/useLayoutMode.ts`):
+
+- `useLayoutMode()` returns `"portrait" | "landscape" | "tablet"` from `matchMedia` (orientation matters independently of width, so it's not width-only Tailwind breakpoints): `tablet` = `(min-width:768px) and (min-height:600px)`; `landscape` = `(orientation:landscape) and (max-height:600px)`; else `portrait`. Read via `useSyncExternalStore` (subscribes to both media queries; SSR/first-paint default = `portrait`, reconciled on mount — same store pattern as `storyHistory`).
+- **Three shapes, one model:** portrait → **bottom bar** with a raised center **Create** disc (fixed, centered to the 428px column); landscape → **64px left icon rail** (a bottom bar would waste ~20% of the short height); tablet → **collapsible left sidebar** (240px ↔ 64px), collapse control inside the sidebar header (no floating tab over content), state persisted in `localStorage["storykins:nav-collapsed"]` via a small `useSyncExternalStore` store. Shell layout is a flex row for rail/sidebar (`.sk-shell-landscape/-tablet`) and the normal centered column + bottom padding for portrait.
+- **Reader is untouched (decision D1):** `AppShell` shows `AppNav` only when `!autoHide`; in the reader (`view === "success"`) it hides the global nav for immersion and keeps the existing `sk-topbar-autohide` bar (with `NavMenu`) instead. So `NavMenu` is retained — it lives in the reader top bar, not on Home/Setup.
+- **Ships Home + Create only (D2)**; built to grow to 3–4 tabs as Favourites/Music are scoped. `AppShell` gained an `activeTab?: "home" | "create"` prop (derived from `view` in `app/page.tsx`) for the active highlight; nav buttons carry an `aria-label` so the collapsed icon-only sidebar stays screen-reader labelled.
+
+Home and Setup still render their **current** designs inside this new shell — their redesigns (Home-2 "Create-first", Setup-B "Immersive deck") are the next two slices of the batch (`plans/v2-ui-build-batch.md`), which will also widen the content column beyond 428px for rail/sidebar layouts.
 
 ##### Continue-story persistence (`lib/storyHistory.ts`)
 

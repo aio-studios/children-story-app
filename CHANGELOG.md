@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-07
+
+### Fixed
+
+- 19:55 - **Taps zooming instead of activating on iOS** (phone UAT: "buttons don't work, it just zooms in"). Added `touch-action: manipulation` to all buttons/links so iOS Safari registers a tap as a click immediately instead of waiting for a possible double-tap-zoom (which made fast repeated taps zoom the page).
+
+- 16:02 - **Brown strip at the top of Home** (phone UAT). Removing the old top bar let Home's greeting-card top margin **collapse through** and reveal the tan app-canvas behind the content as a ~16px bar at the very top. Contained it with a small top padding on the nav content — also gives Home/Setup a bit of breathing room the header used to provide. (Only affected the block-flow portrait layout; landscape/tablet flex layouts never collapsed.)
+
+### Changed
+
+- 19:55 - **Bottom-nav polish** (phone UAT). Proper **gear** icon for Settings (was a sun/brightness glyph) and a **clean heart** for Favorites (the old path rendered a stray dot beneath it); the **"Soon" badge now sits centered on the icon** instead of floating above it; the **bar is shorter and the Create FAB pokes up out of it** with a bg-colored notch ring, matching the approved nav mock.
+
+- 16:02 - **Bottom nav now previews the full roadmap** (phone UAT request). Added **Favorites, Music, and Settings** as **greyed, non-interactive tabs with a small "Soon" badge**, so the nav shows where the app is going. **Create is now dead-center** in the bottom bar (Home · Favorites · [Create] · Music · Settings) as the raised FAB — which also fixes the earlier "Create isn't centered" note. Same greyed "Soon" treatment in the landscape rail and tablet sidebar (inline badge, hidden when the sidebar is collapsed). Only Home + Create are wired; the rest are disabled placeholders.
+
+- 15:14 - **New responsive navigation (V2, #73/#75)** — replaced the top hamburger menu on Home/Setup with an adaptive nav that reshapes to the device: a **bottom bar with a raised center Create button** on phone portrait, a **64px left icon rail** on phone landscape (so short-height screens don't waste ~20% of their height on a bottom bar), and a **collapsible left sidebar** on tablet/desktop whose open/collapsed state is **remembered between visits**. Ships **Home + Create** only for now, built to grow to more tabs as Favourites/Music are scoped. The **story reader is unchanged** — it keeps its own immersive auto-hiding top bar (with the hamburger) and the global nav is hidden while you read. New `AppNav` component + a shared `useLayoutMode()` matchMedia hook (`portrait`/`landscape`/`tablet`); `AppShell` now hosts the nav and renders the reader top bar only in reader mode. First slice of the V2 UI batch (`plans/v2-ui-build-batch.md`) — Home + Setup still render their current designs inside the new shell (their redesigns, Home-2 and Setup-B, are the next slices). Verified across portrait/landscape/tablet × light/dark; nav buttons are screen-reader labelled including in the collapsed sidebar.
+
 ## 2026-08-05
 
 ### Changed

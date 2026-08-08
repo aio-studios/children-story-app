@@ -2,16 +2,20 @@
 
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { fredoka, nunito } from "@/lib/fonts";
+import { useLayoutMode } from "@/lib/useLayoutMode";
+import { AppNav } from "./AppNav";
 import { NavMenu } from "./NavMenu";
 
 type AppShellProps = {
   onNavigateHome: () => void;
   onNavigateNewStory: () => void;
-  /** Page-aware center title (e.g. the setup wizard's "New Story" or the reader's story title).
-   *  Omit to show the "Storykins" wordmark in brand color. */
+  /** Page-aware center title for the reader's top bar (the story title). */
   pageTitle?: string;
-  /** Story-reader header behavior (Safari-reader style): shown on landing, auto-hides after ~2.5s
-   *  idle, hides immediately on scroll down, reveals on scroll up or a tap near the top edge. */
+  /** Which global-nav destination the current view maps to, for the active highlight. */
+  activeTab?: "home" | "create";
+  /** Story-reader mode: hides the global nav (immersive, D1) and swaps in the slim auto-hide top
+   *  title bar (Safari-reader style: shown on landing, auto-hides after ~2.5s idle, hides on scroll
+   *  down, reveals on scroll up or a tap near the top edge). */
   autoHide?: boolean;
   children: ReactNode;
 };
@@ -24,9 +28,20 @@ const HEADER_REVEAL_ZONE_PX = 64;
 // Ignore sub-threshold scroll deltas (iOS momentum/bounce jitter) so the header doesn't flicker.
 const SCROLL_DELTA_THRESHOLD_PX = 6;
 
-export function AppShell({ onNavigateHome, onNavigateNewStory, pageTitle, autoHide = false, children }: AppShellProps) {
+export function AppShell({
+  onNavigateHome,
+  onNavigateNewStory,
+  pageTitle,
+  activeTab,
+  autoHide = false,
+  children,
+}: AppShellProps) {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mode = useLayoutMode();
+  // The global bottom/rail/sidebar nav shows everywhere except the immersive reader (D1); the reader
+  // keeps its own auto-hide top bar (with NavMenu) instead.
+  const showNav = !autoHide;
 
   useEffect(() => {
     // When autoHide is off, the hidden class is ignored below (gated on `autoHide`), so there's
@@ -83,13 +98,25 @@ export function AppShell({ onNavigateHome, onNavigateNewStory, pageTitle, autoHi
   }, [autoHide]);
 
   return (
-    <div className={`sk-shell ${fredoka.variable} ${nunito.variable}`}>
+    <div
+      className={`sk-shell ${fredoka.variable} ${nunito.variable} ${showNav ? `sk-shell-nav sk-shell-${mode}` : ""}`}
+    >
+      {showNav && (
+        <AppNav
+          mode={mode}
+          activeTab={activeTab}
+          onNavigateHome={onNavigateHome}
+          onNavigateNewStory={onNavigateNewStory}
+        />
+      )}
       <div className="sk-content">
-        <header className={`sk-topbar ${autoHide ? "sk-topbar-autohide" : ""} ${autoHide && isHeaderHidden ? "sk-topbar-hidden" : ""}`}>
-          <NavMenu onNavigateHome={onNavigateHome} onNavigateNewStory={onNavigateNewStory} />
-          <span className={`sk-brand-mark ${pageTitle ? "sk-brand-mark-page" : ""}`}>{pageTitle || "Storykins"}</span>
-          <span className="sk-icon-btn sk-icon-btn-spacer" aria-hidden="true" />
-        </header>
+        {autoHide && (
+          <header className={`sk-topbar sk-topbar-autohide ${isHeaderHidden ? "sk-topbar-hidden" : ""}`}>
+            <NavMenu onNavigateHome={onNavigateHome} onNavigateNewStory={onNavigateNewStory} />
+            <span className={`sk-brand-mark ${pageTitle ? "sk-brand-mark-page" : ""}`}>{pageTitle || "Storykins"}</span>
+            <span className="sk-icon-btn sk-icon-btn-spacer" aria-hidden="true" />
+          </header>
+        )}
         {children}
       </div>
     </div>
