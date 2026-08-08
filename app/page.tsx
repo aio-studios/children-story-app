@@ -11,7 +11,7 @@ import {
   STORY_LENGTHS,
   TONES,
 } from "@/lib/storyOptions";
-import { clearContinueStory, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
+import { clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
 import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction, StepResult } from "@/lib/interactive";
 import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, StoryMode, Tone } from "@/lib/types";
 import { GenreSelector } from "@/components/GenreSelector";
@@ -269,7 +269,11 @@ export default function Home() {
   }
 
   function persistInteractive(story: InteractiveStory, imageUrl: string | null) {
-    saveContinueStory({ mode: "interactive", interactive: story, imageUrl: imageUrl ?? undefined });
+    // Arc progress (beats so far / target length) is a truer "% read" for a branching story than
+    // scroll position - it's what the reader's own progress bar already shows (D3 deviation, noted
+    // in the plan). Classic stories instead write scroll fraction from the reader itself.
+    const progress = story.ended ? 1 : Math.min(1, story.beats.length / story.arc.max);
+    saveContinueStory({ mode: "interactive", interactive: story, imageUrl: imageUrl ?? undefined, progress });
   }
 
   async function requestStep(story: InteractiveStory, action: StepAction): Promise<StepResult> {
@@ -653,6 +657,11 @@ export default function Home() {
           story={generatedStory.story}
           coverStatus={coverStatus}
           coverUrl={coverUrl}
+          // Resume scrolls back to where this story was left off; a freshly generated story has no
+          // slot progress yet (0 = open at top). Classic slots leave `mode` absent, so match on
+          // "not interactive" rather than "=== classic". Banked reading time carries over the same way.
+          initialProgress={continueStory && continueStory.mode !== "interactive" ? getContinueProgress(continueStory) : 0}
+          initialTimeSpent={continueStory && continueStory.mode !== "interactive" ? getContinueTimeSpent(continueStory) : 0}
           onRegenerate={generateStory}
           onBackToSetup={handleBackToSetupFromReader}
         />

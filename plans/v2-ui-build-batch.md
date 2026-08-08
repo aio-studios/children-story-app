@@ -1,6 +1,6 @@
 # V2 UI Build Batch — Setup-B + Nav-2 + Home-2
 
-**Overall Progress:** `30%` — PR 1 (Nav shell) built, verifying.
+**Overall Progress:** `66%` — ✅ PR 1 (Nav shell) shipped `07dd185`. ✅ **PR 2 (Home-2) built + verified + reviewed, awaiting Sarthak UAT** (folded in reader progress plumbing #Step 4 + greeting #82). **Next: UAT → commit PR 2, then PR 3 (Setup-B).**
 **Epic:** [#76](https://github.com/aio-studios/children-story-app/issues/76) · **Screens:** Setup [#79], Nav [#73]/[#75], Home [#61]
 **Design record:** [docs/designs/v2-redesign-decisions.md](../docs/designs/v2-redesign-decisions.md) · mocks in [docs/designs/](../docs/designs/)
 
@@ -22,10 +22,10 @@ Confirm these before build — the first three change what gets built.
 
 - [ ] 🟨 **Step 0: Shared foundation**
   - [x] 🟩 Add `useLayoutMode()` hook (matchMedia → `"portrait" | "landscape" | "tablet"`, SSR-safe default) per D5
-  - [ ] 🟥 Add `progress?: number` to both continue-slot variants + `saveProgress(fraction)` setter + validation in [lib/storyHistory.ts](../lib/storyHistory.ts) (per D3); back-compat: absent = 0 *(deferred to PR 2 — Home consumes it)*
+  - [x] 🟩 Add `progress?: number` to both continue-slot variants + `saveProgress(fraction)` setter + validation in [lib/storyHistory.ts](../lib/storyHistory.ts) (per D3); back-compat: absent = 0. *(Done in PR 2. Setter is last-position + no-notify; reader restores scroll on resume — UAT decision. Also `isContinueComplete` to hide finished stories.)*
   - [x] 🟩 Add the V2 nav CSS block to [app/globals.css](../app/globals.css) (reuse `--sk-*` + `lib/genres.ts` accents). *(display:block caption fix belongs to the deck/home cards — carried in PR 2/3.)*
 
-- [ ] 🟨 **Step 1: Nav-2 — responsive navigation (PR 1)**
+- [x] 🟩 **Step 1: Nav-2 — responsive navigation (PR 1) — SHIPPED, UAT-approved, committed `07dd185`**
   - [x] 🟩 New `AppNav.tsx`: bottom bar (portrait) / 64px left icon rail (landscape) / collapsible left sidebar (tablet), center **Create** action, Home + Create tabs (D2)
   - [x] 🟩 iPad sidebar: collapse/reopen handle inside the sidebar header (icon-only collapse, no floating tab — the deferred mock fix), persist open/closed in localStorage (useSyncExternalStore, matching storyHistory)
   - [x] 🟩 Rework [AppShell.tsx](../components/AppShell.tsx) to host `AppNav`; keep the reader's slim auto-hide top title bar (with NavMenu); hide global nav only in the reader (`view === "success"`, D1)
@@ -34,12 +34,17 @@ Confirm these before build — the first three change what gets built.
   - [x] 🟩 Verified Create reachable + correct in all three shapes (Playwright, iPhone 12 Pro portrait/landscape + iPad, light+dark); code-review (3 findings fixed: a11y label, label refactor, comment), security-review (clean), `/document` (CHANGELOG + architecture.md).
   - [x] 🟩 **UAT round 1 (2026-08-07):** fixed brown-bar-on-top (greeting margin-collapse → top padding on nav content); added greyed **Favorites/Music/Settings** "Soon" tabs + **Create dead-center** in the bottom bar (WebKit-verified all 3 shapes light+dark). Item "dynamic mascot greeting" filed as [#82](https://github.com/aio-studios/children-story-app/issues/82) → folds into PR2. **Pending: Sarthak re-UAT → commit.**
 
-- [ ] 🟥 **Step 2: Home-2 — Create-first (PR 2)**
-  - [ ] 🟥 Rewrite [HomeScreen.tsx](../components/HomeScreen.tsx): "What story today?" create block pinned at TOP on every form factor
-  - [ ] 🟥 Genre tiles (3-up portrait → 6-up landscape/iPad) + "Create your own" tile, reusing `genre.image` art (D6)
-  - [ ] 🟥 Big full-width **Continue** card directly below create block: % read bar + label from `progress` (D3); extra-tall on iPad; hidden when no continue slot
-  - [ ] 🟥 Discovery rows below, degrading gracefully (placeholder/recent, colored cards, no covers — D7); lazy-friendly markup
-  - [ ] 🟥 Cover/genre/level/length badges on cards where real metadata exists (captured at create-time)
+- [x] 🟩 **Step 2: Home-2 — Create-first (PR 2) — BUILT + VERIFIED, awaiting UAT**
+  - [x] 🟩 Rewrite [HomeScreen.tsx](../components/HomeScreen.tsx): "What story today?" create block pinned at TOP on every form factor
+  - [x] 🟩 Genre tiles (3-up portrait → 6-up landscape/iPad) + striped "Your own" tile, full-bleed `genre.image` art + scrim (D6), emoji fallback
+  - [x] 🟩 Big full-width **Continue** card directly below create block: % read bar + label from `progress` (D3); taller on iPad; hidden when no slot; real cover if present, graceful gradient fallback on missing/failed cover
+  - [x] 🟩 Discovery rows below, degrading gracefully (placeholder sample cards, no live covers — D7); non-interactive `<div>` cards (no story to open yet); `loading="lazy"` art
+  - [x] 🟩 Genre/level/length badges on the placeholder cover cards (real metadata capture waits on a stories DB)
+  - [x] 🟩 Folded in **#82 greeting**: sticky `has-created` flag (returning vs first-time) + time-of-day eyebrow
+  - [x] 🟩 Content column widened for landscape (760px) / tablet (900px)
+  - [x] 🟩 **UAT round 1 (2026-08-07):** (1) redesigned bland "Your own" tile; (2) emoji → SVG across real UI; (3) Continue % → **last position + restore-scroll-on-resume** (fixed `mode`-discriminant bug that zeroed restore); (4) hide Continue card once complete. Reader emoji sweep filed as [#84](https://github.com/aio-studios/children-story-app/issues/84).
+  - [x] 🟩 **UAT round 2 (2026-08-08):** (1) **"Your own" tile** rebuilt as a fan of the real genre arts radiating from a create hub; (2) **illustrated time-of-day mascot** generated via the #59 pipeline (`mascot-book` day / `mascot-night` evening, `useDaypart` picks both mascot + greeting) with a low-cost CSS "wave" (8KB img each, reduced-motion safe) over the SVG fallback; (3) **completion is now time-gated** — classic hides only at scroll ≥ 98% **and** `timeSpent ≥` 2 min (quick) / 10 min (longer), fixing short stories vanishing instantly; reader accumulates active reading time into `timeSpent`. Mascot options shown via preview Artifact (owl A/B/C → picked book+nightcap). WebKit-verified light+dark + time-gate logic via Playwright.
+  - [x] 🟩 **UAT round 3 (2026-08-08):** (1) replaced the fan "Your own" tile with a **generated storybook illustration** (`public/your-own.jpg`, open book + worlds floating out) rendered as a normal genre-style tile — picked from a 3-option preview Artifact (worlds/book/pencil → worlds); (2) **Continue card legibility** — stronger bottom scrim + per-element text-shadows so overlaid text reads over light covers. Verified in the real grid + a light-cover stress test. **Pending: Sarthak final thumbs-up → commit.**
 
 - [ ] 🟥 **Step 3: Setup-B — Immersive deck (PR 3)**
   - [ ] 🟥 New `SetupDeck.tsx` state machine: stage 0 world deck → stage 1 hero deck → stage 2 customize; whole screen themes to focused genre accent
@@ -49,8 +54,8 @@ Confirm these before build — the first three change what gets built.
   - [ ] 🟥 Customize step reuses [PillSelector](../components/PillSelector.tsx)/[LessonSelector](../components/LessonSelector.tsx)/[StoryModeToggle](../components/StoryModeToggle.tsx)/[IllustrationToggle](../components/IllustrationToggle.tsx); single column (portrait) / 2-col (landscape/iPad); sticky Create bar
   - [ ] 🟥 Swap `SetupStepper` → `SetupDeck` in [app/page.tsx](../app/page.tsx), preserving all existing selection state + draft-survival behavior; retire [SetupStepper.tsx](../components/SetupStepper.tsx)
 
-- [ ] 🟥 **Step 4: Reader progress plumbing**
-  - [ ] 🟥 [StoryReader](../components/StoryReader.tsx) + [InteractiveStoryReader](../components/InteractiveStoryReader.tsx) write throttled scroll fraction via `saveProgress` (D3)
+- [x] 🟩 **Step 4: Reader progress plumbing (folded into PR 2)**
+  - [x] 🟩 [StoryReader](../components/StoryReader.tsx) writes throttled `window` scroll fraction via `saveProgress` (**last position**, final on unmount) **and restores scroll on resume** via an `initialProgress` prop (UAT: pick up exactly where you left off). [InteractiveStoryReader](../components/InteractiveStoryReader.tsx) uses arc progress (`beats/arc.max`) computed in `persistInteractive` instead — a truer "% read" for a branching story (D3 deviation, better metric than scroll).
 
 - [ ] 🟥 **Step 5: Verify + review + document**
   - [ ] 🟥 `/verify` end-to-end (all three form factors, light+dark, exact device viewports e.g. iPhone 12 Pro + iPad) via Playwright
