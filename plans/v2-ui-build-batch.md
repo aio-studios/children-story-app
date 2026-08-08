@@ -1,6 +1,6 @@
 # V2 UI Build Batch — Setup-B + Nav-2 + Home-2
 
-**Overall Progress:** `66%` — ✅ PR 1 (Nav shell) shipped `07dd185`. ✅ **PR 2 (Home-2) built + verified + reviewed, awaiting Sarthak UAT** (folded in reader progress plumbing #Step 4 + greeting #82). **Next: UAT → commit PR 2, then PR 3 (Setup-B).**
+**Overall Progress:** `70%` — ✅ **PR 1 (Nav shell) + PR 2 (Home-2) SHIPPED & MERGED TO MAIN** (`6dd7ad0`, deployed). PR 2 folded in reader progress (Step 4) + greeting #82; UAT-approved 2026-08-08. Closed #61/#82/#73/#75/#62. **Next & final: PR 3 (Setup-B "Immersive deck", #79).**
 **Epic:** [#76](https://github.com/aio-studios/children-story-app/issues/76) · **Screens:** Setup [#79], Nav [#73]/[#75], Home [#61]
 **Design record:** [docs/designs/v2-redesign-decisions.md](../docs/designs/v2-redesign-decisions.md) · mocks in [docs/designs/](../docs/designs/)
 
