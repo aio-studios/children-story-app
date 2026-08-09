@@ -1,6 +1,6 @@
 # V2 UI Build Batch — Setup-B + Nav-2 + Home-2
 
-**Overall Progress:** `92%` — ✅ **PR 1 (Nav shell) + PR 2 (Home-2) SHIPPED & MERGED TO MAIN** (`6dd7ad0`, deployed). PR 2 folded in reader progress (Step 4) + greeting #82; UAT-approved 2026-08-08. Closed #61/#82/#73/#75/#62. **PR 3 (Setup-B "Immersive deck", #79) BUILT + VERIFIED + REVIEWED + DOCUMENTED — awaiting Sarthak UAT, then commit.**
+**Overall Progress:** `100%` — ✅ **ALL THREE PRs SHIPPED & MERGED TO MAIN.** PR 1 (Nav shell) + PR 2 (Home-2) `6dd7ad0`; **PR 3 (Setup-B "Immersive deck", #79) merged `f3f7064` via PR [#85](https://github.com/aio-studios/children-story-app/pull/85), UAT-approved 2026-08-08.** Closed #61/#82/#73/#75/#62/#79. Batch complete; epic #76 stays open for its out-of-batch items (#74 Liquid Glass, #77 book mode).
 **Epic:** [#76](https://github.com/aio-studios/children-story-app/issues/76) · **Screens:** Setup [#79], Nav [#73]/[#75], Home [#61]
 **Design record:** [docs/designs/v2-redesign-decisions.md](../docs/designs/v2-redesign-decisions.md) · mocks in [docs/designs/](../docs/designs/)
 
@@ -63,7 +63,7 @@ Confirm these before build — the first three change what gets built.
   - [x] 🟩 `/verify` end-to-end via Playwright: portrait (390×844) / landscape (844×390) / iPad (820×1180) × light+dark, golden path (world→hero→customize→back) + both custom paths; asserted no horizontal overflow / collapsed cards / missing CTAs. All passed.
   - [x] 🟩 `/code-review` (2 findings fixed: invalid nested-interactive controls in the landscape split → sibling buttons + overlay; removed a dead `chooseFocused` branch) + `/security-review` (clean — presentational, no new backend data flow).
   - [x] 🟩 `/document`: CHANGELOG.md (2026-08-08 section) + [docs/architecture.md](../docs/architecture.md) (both setup diagrams → SetupDeck, deck stage/readiness prose, AppShell `flush`).
-  - [ ] 🟥 UAT walkthrough for Sarthak; on sign-off, commit, then move #79 (+ batch #73/#75/#61) cards to Done + close.
+  - [x] 🟩 UAT walkthrough — Sarthak approved 2026-08-08 (custom-card art distinction, flip+expand, storybook labels, shorter edge-clipped peeks). Merged via PR #85 (`f3f7064`); #79 auto-closed.
 
 ## Out of scope (explicit)
 - Real curated/popular/per-genre discovery feeds (needs a stories DB — overlaps #52/#54/#55, deferred).
