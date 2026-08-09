@@ -14,8 +14,6 @@ import {
 import { clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
 import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction, StepResult } from "@/lib/interactive";
 import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, StoryMode, Tone } from "@/lib/types";
-import { GenreSelector } from "@/components/GenreSelector";
-import { CharacterSelector } from "@/components/CharacterSelector";
 import { PillSelector } from "@/components/PillSelector";
 import { LessonSelector } from "@/components/LessonSelector";
 import { IllustrationToggle } from "@/components/IllustrationToggle";
@@ -23,20 +21,10 @@ import { StoryModeToggle } from "@/components/StoryModeToggle";
 import { CoverStatus, StoryReader } from "@/components/StoryReader";
 import { InteractiveStoryReader } from "@/components/InteractiveStoryReader";
 import { HomeScreen } from "@/components/HomeScreen";
-import { SetupStepper } from "@/components/SetupStepper";
+import { SetupDeck } from "@/components/SetupDeck";
 import { AppShell } from "@/components/AppShell";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
-
-function isCharacterReady(character: SelectedCharacter): boolean {
-  if (character.type === "preset") return true;
-  return character.name.trim() !== "" && character.traits.trim() !== "" && character.description.trim() !== "";
-}
-
-function isGenreReady(genre: GenreSelection): boolean {
-  if (genre.type === "preset") return true;
-  return genre.text.trim() !== "";
-}
 
 function isLessonReady(lesson: LessonSelection): boolean {
   if (lesson.type === "preset") return true;
@@ -531,59 +519,24 @@ export default function Home() {
     setView("setup");
   }
 
-  const setupSteps = [
-    {
-      label: "Genre",
-      icon: "🧭",
-      isReady: isGenreReady(genreSelection),
-      content: (
-        <GenreSelector
-          selection={genreSelection}
-          onSelectPreset={selectPresetGenre}
-          onSelectCustom={selectCustomGenre}
-          onCustomTextChange={updateCustomGenreText}
-        />
-      ),
-    },
-    {
-      label: "Character",
-      icon: "🥷",
-      isReady: isCharacterReady(characterSelection),
-      content: (
-        <CharacterSelector
-          genreSelection={genreSelection}
-          characterSelection={characterSelection}
-          customDraft={customCharacterDraft}
-          onChange={handleCharacterChange}
-        />
-      ),
-    },
-    {
-      label: "Customize",
-      icon: "🎨",
-      isReady: isLessonReady(lessonSelection),
-      content: (
-        <div className="flex flex-col gap-4">
-          <PillSelector label="Length" options={STORY_LENGTHS} selected={storyLength} onSelect={setStoryLength} />
-          <PillSelector
-            label="Reading level"
-            options={READING_LEVELS}
-            selected={readingLevel}
-            onSelect={setReadingLevel}
-          />
-          <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
-          <LessonSelector
-            selection={lessonSelection}
-            onSelectPreset={selectPresetLesson}
-            onSelectCustom={selectCustomLesson}
-            onCustomTextChange={updateCustomLessonText}
-          />
-          <StoryModeToggle mode={mode} onChange={setMode} />
-          <IllustrationToggle enabled={illustrate} onChange={setIllustrate} />
-        </div>
-      ),
-    },
-  ];
+  // The Customize stage's controls (SetupDeck wraps them in its themed scroll + sticky Create bar).
+  // Passed as a fragment of siblings so the deck can lay them out one-per-column (portrait) or
+  // two-up (landscape/tablet) via its own grid.
+  const customizeContent = (
+    <>
+      <PillSelector label="Length" options={STORY_LENGTHS} selected={storyLength} onSelect={setStoryLength} />
+      <PillSelector label="Reading level" options={READING_LEVELS} selected={readingLevel} onSelect={setReadingLevel} />
+      <PillSelector label="Tone" options={TONES} selected={tone} onSelect={setTone} />
+      <LessonSelector
+        selection={lessonSelection}
+        onSelectPreset={selectPresetLesson}
+        onSelectCustom={selectCustomLesson}
+        onCustomTextChange={updateCustomLessonText}
+      />
+      <StoryModeToggle mode={mode} onChange={setMode} />
+      <IllustrationToggle enabled={illustrate} onChange={setIllustrate} />
+    </>
+  );
 
   const pageTitle =
     view === "setup"
@@ -601,6 +554,7 @@ export default function Home() {
       pageTitle={pageTitle}
       activeTab={view === "home" ? "home" : view === "setup" ? "create" : undefined}
       autoHide={view === "success"}
+      flush={view === "setup"}
     >
       {view === "home" && (
         <HomeScreen
@@ -612,12 +566,21 @@ export default function Home() {
       )}
 
       {view === "setup" && (
-        <SetupStepper
-          steps={setupSteps}
-          currentStep={setupStep}
-          onStepChange={setSetupStep}
-          onBackFromFirstStep={handleNavigateHome}
-          onFinish={generateStory}
+        <SetupDeck
+          stage={setupStep}
+          onStageChange={setSetupStep}
+          onBackFromWorld={handleNavigateHome}
+          genreSelection={genreSelection}
+          customGenreDraft={customGenreDraft}
+          onSelectPresetGenre={selectPresetGenre}
+          onSelectCustomGenre={selectCustomGenre}
+          onCustomGenreTextChange={updateCustomGenreText}
+          characterSelection={characterSelection}
+          customCharacterDraft={customCharacterDraft}
+          onCharacterChange={handleCharacterChange}
+          customizeContent={customizeContent}
+          canCreate={isLessonReady(lessonSelection)}
+          onCreate={generateStory}
         />
       )}
 

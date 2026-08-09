@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-08
+
+### Fixed
+
+- 23:01 - **Setup-B UAT round 2** — three more refinements: (1) the **"Your own world"** and **"Create your own" hero** cards no longer share the same art — the hero card now has its own generated storybook illustration (a dress-up treasure chest of hero props: crown, cape, mask, wand; `public/create-hero.jpg`, picked from three candidates), distinct from the world card's open-book-of-worlds. (2) The custom form's field labels are now **storybook-toned** ("What's their name?" / "What are they like?" / "What do they look like?" / "What kind of world?") in the app's rounded display font, with friendly example placeholders, instead of the utilitarian "Name / Traits / Appearance". (3) tapping a **"make your own"** card now does a true **card flip**: the card's art is the front, the form is the back, and it rotates + scales up to reveal the fields (pure GPU rotateY + scale, no reflow; resting state is the form so reduced-motion — which disables the flip — still lands on the usable form). (4) The coverflow's **side peeks** now read as full-height cards **clipped flat by the screen edge** (they bleed past the deck and the overflow trims their outer edge) instead of short, all-corners-rounded slivers that looked like "cylinders/pills" on iPhone.
+
+- 13:54 - **Setup-B UAT round 1** — four fixes from Sarthak's first pass: (1) **crisper genre/character art** — the deck shows the art full-bleed and large, but it had been optimized down to 240px (fine for the old tiny selection orbs) and looked soft on a high-DPI phone; re-optimized from the 1024px sources (`scripts/optimize-art.mjs` now targets 1024, mascots stay small at 256; also fixed the script mis-routing `your-own`/`mascot-*` into `public/characters/` instead of `public/` root). (2) The **"Your own world"** and **"Create your own" hero** entry screens now use the **same full form-panel + Continue bar** (they looked different before), so the one-field world and three-field hero read as the same kind of screen. (3) Removed the cramped inline **"Start →"** whose arrow wrapped to a second line (folded into #2's shared panel). (4) Removed the **bookmark "ribbon"** watermark from the Continue card when a story has no cover — it just shows the clean gradient now.
+
+### Changed
+
+- 10:48 - **New immersive "deck" setup flow (V2 "Setup-B", #79)** — replaced the three-step Back/Next stepper with a cinematic, one-world-at-a-time deck. You **browse full-bleed themed cards** (the real illustrated genre/character art) and the **whole screen tints to the focused world's colour**; tap the centre card (or **Continue**) to advance, tap a side card / arrow / dot / swipe to browse (wraps past both ends). Three stages — **world → hero → customize** — with a small **Back** chip instead of bottom nav buttons. Responsive, one model three shapes: **phone portrait & iPad = a coverflow** (big centre card + a peek of each neighbour), **phone landscape = a split two-pane** (full-height art left, title/blurb/dots/Continue right, so the short height isn't wasted). The **Customize** stage keeps the existing Length / Reading level / Tone / Lesson pills + Interactive & Illustration toggles (one column on phone, two on landscape/iPad) under a sticky **✦ Create story** bar. Final slice of the V2 UI batch (`plans/v2-ui-build-batch.md`); design approved in `docs/designs/setup-B-responsive.html`.
+
+- 10:48 - **"Make your own" paths wired into the deck (#79)** — the **"Your own world"** card reveals an inline text box (with a **Start →** that stays disabled until you describe a world); the **"Create your own"** hero card opens the full custom-character form (name / traits / description) right in the deck, its Continue disabled until it's filled in. A typed-in custom world/hero still survives leaving and coming back, same as before. Entering setup from Home carries through exactly as before — a genre chip opens the deck on that world; **"Your own"** opens it with the custom-world input already showing.
+
+- 10:48 - Verified across **phone portrait / phone landscape / iPad × light + dark** (plus both custom paths) via Playwright — deck, split, customize, back-navigation, and no horizontal overflow. `/code-review` (2 findings fixed: invalid nested-button controls in the landscape split → sibling buttons; a dead branch removed) and `/security-review` (clean — presentational change, no new backend data flow).
+
+### Removed
+
+- 10:48 - Retired the old `SetupStepper` and its now-unused selector components (`GenreSelector` / `GenreCard` / `CustomGenreCard` / `CharacterSelector` / `CharacterCard`) — the deck renders its own cards. The multi-field `CustomCharacterForm` is reused as-is.
+
 ## 2026-08-07
 
 ### Changed

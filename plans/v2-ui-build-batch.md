@@ -1,6 +1,6 @@
 # V2 UI Build Batch — Setup-B + Nav-2 + Home-2
 
-**Overall Progress:** `70%` — ✅ **PR 1 (Nav shell) + PR 2 (Home-2) SHIPPED & MERGED TO MAIN** (`6dd7ad0`, deployed). PR 2 folded in reader progress (Step 4) + greeting #82; UAT-approved 2026-08-08. Closed #61/#82/#73/#75/#62. **Next & final: PR 3 (Setup-B "Immersive deck", #79).**
+**Overall Progress:** `92%` — ✅ **PR 1 (Nav shell) + PR 2 (Home-2) SHIPPED & MERGED TO MAIN** (`6dd7ad0`, deployed). PR 2 folded in reader progress (Step 4) + greeting #82; UAT-approved 2026-08-08. Closed #61/#82/#73/#75/#62. **PR 3 (Setup-B "Immersive deck", #79) BUILT + VERIFIED + REVIEWED + DOCUMENTED — awaiting Sarthak UAT, then commit.**
 **Epic:** [#76](https://github.com/aio-studios/children-story-app/issues/76) · **Screens:** Setup [#79], Nav [#73]/[#75], Home [#61]
 **Design record:** [docs/designs/v2-redesign-decisions.md](../docs/designs/v2-redesign-decisions.md) · mocks in [docs/designs/](../docs/designs/)
 
@@ -46,22 +46,24 @@ Confirm these before build — the first three change what gets built.
   - [x] 🟩 **UAT round 2 (2026-08-08):** (1) **"Your own" tile** rebuilt as a fan of the real genre arts radiating from a create hub; (2) **illustrated time-of-day mascot** generated via the #59 pipeline (`mascot-book` day / `mascot-night` evening, `useDaypart` picks both mascot + greeting) with a low-cost CSS "wave" (8KB img each, reduced-motion safe) over the SVG fallback; (3) **completion is now time-gated** — classic hides only at scroll ≥ 98% **and** `timeSpent ≥` 2 min (quick) / 10 min (longer), fixing short stories vanishing instantly; reader accumulates active reading time into `timeSpent`. Mascot options shown via preview Artifact (owl A/B/C → picked book+nightcap). WebKit-verified light+dark + time-gate logic via Playwright.
   - [x] 🟩 **UAT round 3 (2026-08-08):** (1) replaced the fan "Your own" tile with a **generated storybook illustration** (`public/your-own.jpg`, open book + worlds floating out) rendered as a normal genre-style tile — picked from a 3-option preview Artifact (worlds/book/pencil → worlds); (2) **Continue card legibility** — stronger bottom scrim + per-element text-shadows so overlaid text reads over light covers. Verified in the real grid + a light-cover stress test. **Pending: Sarthak final thumbs-up → commit.**
 
-- [ ] 🟥 **Step 3: Setup-B — Immersive deck (PR 3)**
-  - [ ] 🟥 New `SetupDeck.tsx` state machine: stage 0 world deck → stage 1 hero deck → stage 2 customize; whole screen themes to focused genre accent
-  - [ ] 🟥 Portrait + iPad **coverflow** (centre card + peek both neighbours, wraps; arrows + tappable dots + drag-swipe); ignore the click that trails a swipe
-  - [ ] 🟥 Landscape **split two-pane** (full-height art left, eyebrow→title→blurb + dots + Continue right, notch-safe inset)
-  - [ ] 🟥 Wire real custom paths the mock only stubbed: "Your own world" card → [CustomGenreCard](../components/CustomGenreCard.tsx) input; custom character → [CustomCharacterForm](../components/CustomCharacterForm.tsx)
-  - [ ] 🟥 Customize step reuses [PillSelector](../components/PillSelector.tsx)/[LessonSelector](../components/LessonSelector.tsx)/[StoryModeToggle](../components/StoryModeToggle.tsx)/[IllustrationToggle](../components/IllustrationToggle.tsx); single column (portrait) / 2-col (landscape/iPad); sticky Create bar
-  - [ ] 🟥 Swap `SetupStepper` → `SetupDeck` in [app/page.tsx](../app/page.tsx), preserving all existing selection state + draft-survival behavior; retire [SetupStepper.tsx](../components/SetupStepper.tsx)
+- [x] 🟩 **Step 3: Setup-B — Immersive deck (PR 3) — BUILT + VERIFIED, awaiting UAT**
+  - [x] 🟩 New [SetupDeck.tsx](../components/SetupDeck.tsx) state machine: stage 0 world deck → stage 1 hero deck → stage 2 customize; whole screen themes to focused genre accent. Reuses page's `setupStep` as stage; page keeps ALL selection state, deck holds only `focus`/`customOpen` (re-seeded per stage via the render-phase adjust-state pattern, not an effect).
+  - [x] 🟩 Portrait + iPad **coverflow** (centre card + peek both neighbours, wraps; arrows + tappable dots + drag-swipe); ignores the click that trails a swipe (guard scoped to card taps only, not the Continue button). Portrait hides side-card captions (they'd clip); iPad keeps them.
+  - [x] 🟩 Landscape **split two-pane** (full-height art left, eyebrow→title→blurb + dots + Continue right, notch-safe inset). Art pane is a `<div>` + transparent overlay "choose" button + sibling arrow buttons (no invalid nested-interactive — code-review fix).
+  - [x] 🟩 Wired custom paths the mock only stubbed: "Your own world" → inline text box in the CTA slot with a **Start →** disabled until non-empty; custom character → [CustomCharacterForm](../components/CustomCharacterForm.tsx) reused, replacing the deck, Continue disabled until filled. Draft-survival preserved.
+  - [x] 🟩 Customize step reuses [PillSelector](../components/PillSelector.tsx)/[LessonSelector](../components/LessonSelector.tsx)/[StoryModeToggle](../components/StoryModeToggle.tsx)/[IllustrationToggle](../components/IllustrationToggle.tsx) (passed from page as a fragment); single column (portrait) / 2-col grid (landscape/iPad); sticky ✦ Create bar.
+  - [x] 🟩 Swapped `SetupStepper` → `SetupDeck` in [app/page.tsx](../app/page.tsx) (added `AppShell` `flush` mode for full-viewport setup), preserving all selection state + draft-survival; **retired** SetupStepper + orphaned GenreSelector/GenreCard/CustomGenreCard/CharacterSelector/CharacterCard.
+  - [x] 🟩 **UAT round 1 (2026-08-08):** (1) re-optimized deck art to **1024px** (was 240px → soft when enlarged; also fixed `optimize-art.mjs` mis-routing root assets); (2) **unified both custom paths** into the same form-panel + Continue bar (world 1 field / hero 3 fields), which also (3) removed the cramped inline "Start →"; (4) removed the Continue card's bookmark "ribbon" when a story has no cover. WebKit-re-verified all shapes + both custom paths.
+  - [x] 🟩 **UAT round 2 (2026-08-08):** (1) generated a **distinct hero-card illustration** (dress-up chest, `public/create-hero.jpg`, picked from 3 candidates) so world vs hero cards no longer share `/your-own.jpg`; (2) **storybook-toned form labels** (questions in the display font + placeholders) replacing "Name/Traits/Appearance"; (3) true **card-flip + expand** on the make-your-own cards (front = art, back = form; GPU rotateY+scale, back defines height so no reflow, reduced-motion lands on the form). Re-verified (flip settles on a usable, correctly-oriented form; typing works) + build clean.
 
 - [x] 🟩 **Step 4: Reader progress plumbing (folded into PR 2)**
   - [x] 🟩 [StoryReader](../components/StoryReader.tsx) writes throttled `window` scroll fraction via `saveProgress` (**last position**, final on unmount) **and restores scroll on resume** via an `initialProgress` prop (UAT: pick up exactly where you left off). [InteractiveStoryReader](../components/InteractiveStoryReader.tsx) uses arc progress (`beats/arc.max`) computed in `persistInteractive` instead — a truer "% read" for a branching story (D3 deviation, better metric than scroll).
 
-- [ ] 🟥 **Step 5: Verify + review + document**
-  - [ ] 🟥 `/verify` end-to-end (all three form factors, light+dark, exact device viewports e.g. iPhone 12 Pro + iPad) via Playwright
-  - [ ] 🟥 `/code-review` + `/security-review` on the diff; fix or knowingly accept findings
-  - [ ] 🟥 `/document` (CHANGELOG.md) + update [docs/architecture.md](../docs/architecture.md) (new nav/deck/home components, `progress` field)
-  - [ ] 🟥 UAT walkthrough for Sarthak; on sign-off, move #79/#73/#75/#61 cards to Done + close
+- [ ] 🟨 **Step 5: Verify + review + document**
+  - [x] 🟩 `/verify` end-to-end via Playwright: portrait (390×844) / landscape (844×390) / iPad (820×1180) × light+dark, golden path (world→hero→customize→back) + both custom paths; asserted no horizontal overflow / collapsed cards / missing CTAs. All passed.
+  - [x] 🟩 `/code-review` (2 findings fixed: invalid nested-interactive controls in the landscape split → sibling buttons + overlay; removed a dead `chooseFocused` branch) + `/security-review` (clean — presentational, no new backend data flow).
+  - [x] 🟩 `/document`: CHANGELOG.md (2026-08-08 section) + [docs/architecture.md](../docs/architecture.md) (both setup diagrams → SetupDeck, deck stage/readiness prose, AppShell `flush`).
+  - [ ] 🟥 UAT walkthrough for Sarthak; on sign-off, commit, then move #79 (+ batch #73/#75/#61) cards to Done + close.
 
 ## Out of scope (explicit)
 - Real curated/popular/per-genre discovery feeds (needs a stories DB — overlaps #52/#54/#55, deferred).

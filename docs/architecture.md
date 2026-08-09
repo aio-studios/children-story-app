@@ -81,36 +81,29 @@ graph TD
 
 This is a snapshot of the code as of issues #13, #16, and #39 (shared rate limiter) — re-diagram when #35 (richer block messaging/logging) changes this flow. The reading UI this route's response feeds into is now built - see the Story Reading Experience code map below.
 
-#### Code map: setup screen — Genre & Character Selection (#4) + Story Customization Selectors (#8, #31)
+#### Code map: setup screen — Immersive deck (Setup-B, #79; was Genre/Character/Customize selectors #4/#8/#31)
 
 Component tree — who renders whom. Amber = holds its own state (`useState`); blue = stateless/display-only.
+`SetupDeck` (`components/SetupDeck.tsx`) replaced the old `SetupStepper` + `GenreSelector`/`CharacterSelector`/`GenreCard`/`CharacterCard`/`CustomGenreCard` (all retired). It renders its own full-bleed coverflow/split cards from `GENRES` and reshapes by `useLayoutMode()`; `app/page.tsx` still owns **all** selection state (unchanged) and passes it + setters down as props, so draft-survival / resume / back-to-setup behave exactly as before. `SetupDeck` holds only presentation state: `focus` (centered card) + `customOpen`, re-seeded from the current selection on each stage change via the render-phase "adjust state when a prop changes" pattern.
 
 ```mermaid
 graph TD
   Page["Home · app/page.tsx<br/>state: genreSelection<br/>state: customGenreDraft<br/>state: characterSelection<br/>state: storyLength, readingLevel, tone<br/>state: lessonSelection, customLessonDraft"]
-  GS["GenreSelector"]
-  CS["CharacterSelector"]
-  GC["GenreCard × 5<br/>state: isActive"]
-  CGC["CustomGenreCard"]
-  CC["CharacterCard × 3<br/>(current genre's presets)"]
-  CCF["CustomCharacterForm<br/>(only when type = custom)"]
-  PS["PillSelector × 3<br/>(length, reading level, tone)"]
-  LS["LessonSelector<br/>(composes PillSelector + custom trigger/input)"]
+  Deck["SetupDeck<br/>state: focus, customOpen, syncedStage<br/>stage 0 world · 1 hero · 2 customize"]
+  Cards["World / hero cards<br/>(coverflow portrait+tablet, split landscape)<br/>full-bleed genre.image / character.image"]
+  CCF["CustomCharacterForm<br/>(reused — custom-hero path)"]
+  Cust["customizeContent (fragment from page)<br/>PillSelector × 3 + LessonSelector + toggles"]
 
-  Page -->|selection, callbacks| GS
-  Page -->|selection, callbacks| CS
-  Page -->|options, selected, onSelect| PS
-  Page -->|selection, callbacks| LS
-  GS --> GC
-  GS --> CGC
-  CS --> CC
-  CS --> CCF
-  LS --> PS
+  Page -->|stage, selection, callbacks| Deck
+  Page -->|customizeContent, canCreate, onCreate| Deck
+  Deck --> Cards
+  Deck --> CCF
+  Deck --> Cust
 
   classDef stateful fill:#FBEBD6,stroke:#B5670E;
   classDef plain fill:#EAF1FB,stroke:#4A72A8;
-  class Page,GC stateful;
-  class GS,CS,CGC,CC,CCF,PS,LS plain;
+  class Page,Deck stateful;
+  class Cards,CCF,Cust plain;
 ```
 
 Data model (`lib/types.ts`) — TypeScript `type`s, not classes, but this is the closest thing to a class diagram this codebase has:
@@ -302,34 +295,29 @@ graph TD
   AppNav["AppNav<br/>components/AppNav.tsx<br/>bottom bar / rail / sidebar<br/>(shown except in reader)"]
   Nav["NavMenu<br/>components/NavMenu.tsx<br/>panel portaled to document.body<br/>(reader top bar only)"]
   HS["HomeScreen<br/>components/HomeScreen.tsx"]
-  Stepper["SetupStepper<br/>components/SetupStepper.tsx<br/>(dot-stepper chrome, no selection logic of its own)"]
-  GS["GenreSelector"]
-  CS["CharacterSelector"]
-  Cust["Customize step<br/>(PillSelector × 3 + LessonSelector)"]
+  Deck["SetupDeck<br/>components/SetupDeck.tsx<br/>(immersive world→hero→customize deck)"]
   SR["StoryReader"]
 
   Page --> Shell
   Shell -->|view ≠ success| AppNav
   Shell -->|view = success reader| Nav
   Shell -->|view = home| HS
-  Shell -->|view = setup| Stepper
+  Shell -->|view = setup, flush| Deck
   Shell -->|view = success| SR
-  Stepper --> GS
-  Stepper --> CS
-  Stepper --> Cust
   HS -->|onSelectGenre, onContinue| Page
+  Deck -->|onStageChange, onCreate, selection callbacks| Page
   AppNav -->|onNavigateHome, onNavigateNewStory| Page
   Nav -->|onNavigateHome, onNavigateNewStory| Page
 
   classDef stateful fill:#FBEBD6,stroke:#B5670E;
   classDef plain fill:#EAF1FB,stroke:#4A72A8;
   class Page stateful;
-  class Shell,AppNav,Nav,HS,Stepper,GS,CS,Cust,SR plain;
+  class Shell,AppNav,Nav,HS,Deck,SR plain;
 ```
 
-**Character/genre art (#59):** `PresetCharacter` and `Genre` each carry an optional `image?` path (`lib/types.ts`) pointing at a static asset under `public/characters/*` / `public/genres/*` (AI-generated once via `scripts/generate-art.mjs`, optimized by `scripts/optimize-art.mjs`; full-res sources kept in `docs/designs/source-art/`). `CharacterCard`, `GenreCard`, and Home's genre tiles (`.sk-gtile`, full-bleed art) render an `<img>` when the field is set and fall back to the original emoji when it isn't - so custom/user-typed genres, the "Your own" tile, and any future entry without art degrade gracefully. Plain `<img>` (matching StoryReader's cover), not `next/image`, since the assets are pre-sized static files.
+**Character/genre art (#59):** `PresetCharacter` and `Genre` each carry an optional `image?` path (`lib/types.ts`) pointing at a static asset under `public/characters/*` / `public/genres/*` (AI-generated once via `scripts/generate-art.mjs`, optimized by `scripts/optimize-art.mjs`; full-res sources kept in `docs/designs/source-art/`). `CharacterCard`, `GenreCard`, and Home's genre tiles + `SetupDeck`'s cards (full-bleed art) render an `<img>` when the field is set and fall back to a gradient/emoji when it isn't - so custom/user-typed genres, the "Your own" tile, and any future entry without art degrade gracefully. Plain `<img>` (matching StoryReader's cover), not `next/image`, since the assets are pre-sized static files.
 
-Tapping a genre chip on Home lands on setup Step 1 (Genre, that genre pre-highlighted) rather than skipping to Step 2 - an early version skipped straight to Character, but UAT found the jump to a differently-themed screen confusing without seeing the pick confirmed first (2026-07-25). Custom-genre creation is reached via the **"Your own" tile** in Home's genre grid (see Home-2 below), which routes to the same Step 1 with custom-genre mode active. `SetupStepper` takes `steps: {label, content, isReady}[]` - `app/page.tsx` still owns all selection state and the per-step readiness checks (`isGenreReady`/`isCharacterReady`/`isLessonReady`), unchanged from before this redesign.
+**Setup deck stages & readiness (Setup-B, #79):** `setupStep` (0/1/2) is reused as the deck's world→hero→customize stage. Advance is gated per stage inside `SetupDeck`: a custom world needs text before its **Start →**, a custom hero needs the `CustomCharacterForm` filled before Continue, and the sticky **Create** button is disabled unless `canCreate` (= `isLessonReady`, the one readiness check still living in `app/page.tsx`; `isGenreReady`/`isCharacterReady` were retired with the stepper since the deck enforces those inline). Entry from Home is unchanged: a genre chip opens the deck on that world (`handleSelectGenreFromHome`, `setupStep 0`); the **"Your own"** tile opens it with custom-genre mode active and the custom-world input already showing (`handleSelectCustomGenreFromHome`). `handleBackToSetupFromReader`/the error view still land on `setupStep 2` (customize). The setup view runs in `AppShell`'s **`flush`** mode (`.sk-content-flush`: full-viewport height, no page scroll) so the deck fills the screen and manages its own internal scrolling.
 
 **Home layout (#65 → superseded by Home-2 "Create-first", #61, 2026-08-07):** Home was rebuilt around creation. A **"What story today?" create block leads on every layout** — a grid of genre **tiles** (`.sk-gtile`, full-bleed genre art + scrim, 3-up portrait → 6-up landscape/tablet) plus a striped **"Your own"** tile (→ same `onSelectCustomGenre` handler). Directly below sits the **giant Continue card** (`.sk-chero`) showing **% read** + a progress bar, then placeholder **discovery rows** (`.sk-drow`/`.sk-cover-card`) with genre/level/length badges (sample data — no stories DB yet, D7). This retired the earlier scrolling shelves + standalone `.sk-create-cta` band and the `sk-genre-chip`/`sk-hero`/`sk-shelf` classes (the create action now lives in the tiles **and** permanently in the nav's Create button). **Type scale (#60):** app-wide sizing flows from shared Tailwind v4 `@theme` `--text-*` tokens (`micro`…`display`, in `app/globals.css`) usable as both utility classes and `var(--text-*)`.
 
@@ -353,7 +341,9 @@ The global nav is no longer a single top hamburger. `AppShell` now renders **`Ap
 - **Reader is untouched (decision D1):** `AppShell` shows `AppNav` only when `!autoHide`; in the reader (`view === "success"`) it hides the global nav for immersion and keeps the existing `sk-topbar-autohide` bar (with `NavMenu`) instead. So `NavMenu` is retained — it lives in the reader top bar, not on Home/Setup.
 - **Ships Home + Create only (D2)**; built to grow to 3–4 tabs as Favourites/Music are scoped. `AppShell` gained an `activeTab?: "home" | "create"` prop (derived from `view` in `app/page.tsx`) for the active highlight; nav buttons carry an `aria-label` so the collapsed icon-only sidebar stays screen-reader labelled.
 
-**Home-2 shipped (PR 2, 2026-08-07):** Home now renders its Create-first redesign inside this shell (see the Home layout note above), and the content column **widens beyond 428px** on rail/sidebar layouts (`.sk-shell-landscape .sk-content` → 760px, `.sk-shell-tablet` → 900px; the reader keeps 428px since nav — and thus these classes — is hidden there). **Setup** still renders its current stepper; Setup-B "Immersive deck" is the last slice of the batch (`plans/v2-ui-build-batch.md`).
+**Home-2 shipped (PR 2, 2026-08-07):** Home now renders its Create-first redesign inside this shell (see the Home layout note above), and the content column **widens beyond 428px** on rail/sidebar layouts (`.sk-shell-landscape .sk-content` → 760px, `.sk-shell-tablet` → 900px; the reader keeps 428px since nav — and thus these classes — is hidden there).
+
+**Setup-B shipped (PR 3, 2026-08-08):** Setup now renders the immersive `SetupDeck` (see the setup code map above) inside this shell, via `AppShell`'s new **`flush?: boolean`** prop (`true` only when `view === "setup"`). `flush` adds `.sk-content-flush` (full-viewport `100dvh`, `overflow: hidden`, and it zeroes the shell's default content padding on later cascade order) so the deck fills the screen and owns its own scrolling instead of flowing in the padded document. Completes the V2 UI batch (`plans/v2-ui-build-batch.md`).
 
 ##### Continue-story persistence (`lib/storyHistory.ts`)
 
