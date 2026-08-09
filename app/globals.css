@@ -879,14 +879,6 @@ select:focus-visible,
 }
 .sk-chero-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .sk-shell-tablet .sk-chero-art { height: 236px; }
-.sk-chero-mark {
-  position: absolute;
-  top: 22px;
-  right: 20px;
-  color: #fff;
-  opacity: 0.9;
-  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.3));
-}
 /* Stronger, taller bottom scrim - covers vary (some AI covers are bright), so the overlaid text needs
    a reliably dark bed at the bottom regardless of the image (UAT: text sometimes unreadable). */
 .sk-chero-scrim {
@@ -1786,3 +1778,302 @@ a,
     transition: none;
   }
 }
+
+/* ============================================================================
+   Setup-B "Immersive deck" (#79) — SetupDeck.tsx. One themed world/hero card at
+   a time (coverflow on portrait/tablet, split two-pane on short landscape), the
+   whole screen tinting to the focused genre; then a customize stage with a
+   sticky Create bar. Reuses the --sk-* palette + per-genre --accent convention.
+   Design: docs/designs/v2-redesign-decisions.md · setup-B-responsive.html.
+   ============================================================================ */
+
+/* Immersive views opt the content column out of the normal scroll/padding model so the deck can fill
+   the viewport (no page scroll). Placed after the .sk-shell-nav padding rules above so it wins on
+   equal specificity / source order. */
+.sk-content-flush { height: 100dvh; overflow: hidden; }
+.sk-shell-nav .sk-content-flush { padding-top: 0; }
+.sk-shell-nav.sk-shell-portrait .sk-content-flush { padding-bottom: 0; }
+
+.sk-deck {
+  --accent: var(--accent-light);
+  position: relative;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--sk-ink);
+}
+@media (prefers-color-scheme: dark) {
+  .sk-deck { --accent: var(--accent-dark); }
+}
+/* Portrait: lift the deck's own bottom controls above the fixed bottom nav bar (56px + safe area). */
+.sk-deck-portrait { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+.sk-deck-landscape { padding-left: env(safe-area-inset-left, 0px); }
+
+/* Whole-screen tint to the focused genre's accent. */
+.sk-deck-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: background 0.4s ease;
+  background: radial-gradient(130% 70% at 50% -6%, color-mix(in srgb, var(--accent) 40%, var(--sk-bg)), var(--sk-bg) 62%);
+}
+.sk-deck > *:not(.sk-deck-bg) { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-deck-bg, .sk-deck-card, .sk-deck-dot { transition: none; }
+}
+
+/* ---- shared chrome: back chip + step heading ---- */
+.sk-deck-top { flex: none; display: flex; align-items: center; padding: 0.6rem 1.1rem 0.15rem; }
+.sk-deck-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-ink);
+  background: var(--sk-card-bg);
+  border: 1px solid var(--sk-line);
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem 0.4rem 0.65rem;
+  cursor: pointer;
+  box-shadow: var(--sk-shadow);
+}
+.sk-deck-back:hover { border-color: color-mix(in srgb, var(--sk-brand) 50%, var(--sk-line)); }
+.sk-deck-back:focus-visible { outline: 2px solid var(--sk-brand); outline-offset: 2px; }
+
+.sk-deck-head { flex: none; padding: 0.35rem 1.2rem 0.5rem; }
+.sk-deck-tablet .sk-deck-head { text-align: center; padding-top: 0.8rem; }
+.sk-deck-eyebrow {
+  display: block;
+  font-size: var(--text-caption);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sk-brand);
+}
+.sk-deck-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-display);
+  margin: 0.1rem 0 0.1rem;
+}
+.sk-deck-tablet .sk-deck-title { font-size: 1.85rem; }
+.sk-deck-sub { font-size: var(--text-note); color: var(--sk-ink-soft); margin: 0; }
+
+/* ---- coverflow (portrait + tablet) ---- */
+.sk-deck-flow {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0.4rem 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.sk-deck-card {
+  position: relative;
+  border: 0;
+  padding: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--sk-shadow);
+  transition: opacity 0.3s ease, flex-basis 0.3s ease, height 0.3s ease;
+}
+.sk-deck-card:focus-visible { outline: 3px solid var(--sk-brand); outline-offset: -3px; }
+/* Side peeks are full-height cards whose widths (with the focus) sum past 100%, so the flow's
+   overflow:hidden clips their OUTER edge flat against the deck edge — they read as cards continuing
+   off-screen, not short rounded pills (UAT: "peeks looked like cylinders"). */
+/* Peeks stay full-width so they bleed past the deck and clip flat on the outer edge (not rounded
+   pills), but sit SHORTER than the focus card (centered vertically) so they read as receding. */
+.sk-deck-portrait .sk-deck-card-focus { flex: 0 0 74%; align-self: stretch; }
+.sk-deck-portrait .sk-deck-card-prev,
+.sk-deck-portrait .sk-deck-card-next { flex: 0 0 27%; align-self: center; height: 84%; opacity: 0.55; }
+.sk-deck-tablet .sk-deck-card-focus { flex: 0 0 46%; align-self: stretch; }
+.sk-deck-tablet .sk-deck-card-prev,
+.sk-deck-tablet .sk-deck-card-next { flex: 0 0 33%; align-self: center; height: 86%; opacity: 0.7; }
+
+.sk-deck-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sk-deck-art-fallback {
+  background: radial-gradient(120% 82% at 26% 14%, color-mix(in srgb, var(--accent) 82%, white 18%), transparent 58%),
+    linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 42%, black 14%));
+}
+.sk-deck-card-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 8%, rgba(0, 0, 0, 0.12) 48%, transparent 70%);
+}
+.sk-deck-cap { position: absolute; left: 16px; right: 16px; bottom: 16px; text-align: left; color: #fff; }
+.sk-deck-nm {
+  display: block;
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: 1.3rem;
+  line-height: 1.15;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+.sk-deck-tablet .sk-deck-card-focus .sk-deck-nm { font-size: 1.5rem; }
+.sk-deck-bl {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  opacity: 0.95;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+/* The focus card owns the caption; the edge-clipped peeks hide theirs (their label would sit in the
+   clipped-off region anyway). */
+.sk-deck-card-prev .sk-deck-cap,
+.sk-deck-card-next .sk-deck-cap { display: none; }
+
+.sk-deck-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 6;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--sk-line);
+  background: color-mix(in srgb, var(--sk-card-bg) 88%, transparent);
+  color: var(--sk-ink);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--sk-shadow);
+  backdrop-filter: blur(6px);
+}
+.sk-deck-arrow:hover { background: var(--sk-card-bg); }
+.sk-deck-arrow:focus-visible { outline: 2px solid var(--sk-brand); outline-offset: 2px; }
+.sk-deck-arrow-prev { left: 6px; }
+.sk-deck-arrow-next { right: 6px; }
+
+.sk-deck-dots { flex: none; display: flex; justify-content: center; align-items: center; gap: 7px; padding: 0.6rem 0 0.2rem; }
+.sk-deck-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sk-line);
+  cursor: pointer;
+  transition: width 0.2s, background 0.2s;
+}
+.sk-deck-dot-on { width: 22px; border-radius: 4px; background: var(--accent); }
+.sk-deck-dot:focus-visible { outline: 2px solid var(--sk-brand); outline-offset: 3px; }
+
+/* ---- deck primary action (Continue / custom-world input) ---- */
+.sk-deck-cta { flex: none; padding: 0.5rem 1.2rem 0.9rem; }
+.sk-deck-go {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-body);
+  padding: 0.8rem 1.4rem;
+  border-radius: 0.9rem;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--sk-shadow);
+}
+.sk-deck-go-block { width: 100%; }
+.sk-deck-go:disabled { opacity: 0.4; cursor: default; }
+.sk-deck-go:focus-visible { outline: 2px solid var(--sk-ink); outline-offset: 2px; }
+
+/* ---- split two-pane (short landscape) ---- */
+.sk-deck-split { flex: 1 1 auto; min-height: 0; display: flex; }
+.sk-deck-artpane { position: relative; flex: 0 0 43%; overflow: hidden; }
+/* Full-bleed transparent "choose" overlay; below the arrows (z 6), above the art/caption. */
+.sk-deck-artpane-choose {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sk-deck-artpane-choose:focus-visible { outline: 3px solid var(--sk-brand); outline-offset: -3px; }
+.sk-deck-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding: 0.7rem 1rem; overflow: hidden; }
+.sk-deck-bl-info {
+  font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+  margin: 0.3rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sk-deck-info-foot { margin-top: auto; }
+.sk-deck-info-foot .sk-deck-dots { justify-content: flex-start; }
+.sk-deck-info-foot .sk-deck-cta { padding: 0.4rem 0 0; }
+
+/* ---- custom "make your own" form panel (replaces the deck) ---- */
+.sk-deck-formscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.3rem 1.2rem 0.6rem; }
+/* Storybook-tone field labels (UAT: the old "Name / Traits / Appearance" read too utilitarian). */
+.sk-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-body);
+  color: var(--sk-ink);
+}
+/* The tapped "make your own" card flips + scales up to reveal its form on the back (UAT). Front = the
+   card art, back = the form; the inner's resting transform shows the back, so prefers-reduced-motion
+   (which disables the flip) still lands on the usable form. Pure GPU transform (rotateY + scale) — the
+   back defines the card height, so no layout jump / reflow, negligible cost. */
+.sk-flipcard { perspective: 1400px; }
+.sk-flipcard-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(180deg); /* resting: form (back) faces the viewer */
+  animation: sk-flipcard-open 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.sk-flipcard-front,
+.sk-flipcard-back {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.sk-flipcard-back { position: relative; transform: rotateY(180deg); }
+.sk-flipcard-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  box-shadow: var(--sk-shadow);
+}
+.sk-flipcard-art { width: 100%; height: 100%; object-fit: cover; display: block; }
+@keyframes sk-flipcard-open {
+  from { transform: rotateY(0deg) scale(0.86); }
+  to { transform: rotateY(180deg) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-flipcard-inner { animation: none; }
+}
+
+/* ---- customize stage ---- */
+.sk-deck-custscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.sk-deck-custbody { display: grid; grid-template-columns: 1fr; gap: 1rem; padding: 0.4rem 1.2rem 1rem; }
+.sk-deck-landscape .sk-deck-custbody,
+.sk-deck-tablet .sk-deck-custbody { grid-template-columns: 1fr 1fr; }
+.sk-deck-createbar {
+  flex: none;
+  padding: 0.75rem 1.2rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sk-line-soft);
+  background: color-mix(in srgb, var(--sk-bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+}
+.sk-deck-portrait .sk-deck-createbar { padding-bottom: 0.9rem; }
+.sk-deck-create { background: var(--sk-brand); }

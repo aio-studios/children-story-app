@@ -17,6 +17,9 @@ type AppShellProps = {
    *  title bar (Safari-reader style: shown on landing, auto-hides after ~2.5s idle, hides on scroll
    *  down, reveals on scroll up or a tap near the top edge). */
   autoHide?: boolean;
+  /** Immersive full-viewport view (Setup-B deck): content column fills the screen and manages its own
+   *  scrolling instead of flowing in the normal padded document. */
+  flush?: boolean;
   children: ReactNode;
 };
 
@@ -34,6 +37,7 @@ export function AppShell({
   pageTitle,
   activeTab,
   autoHide = false,
+  flush = false,
   children,
 }: AppShellProps) {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
@@ -109,7 +113,7 @@ export function AppShell({
           onNavigateNewStory={onNavigateNewStory}
         />
       )}
-      <div className="sk-content">
+      <div className={`sk-content ${flush ? "sk-content-flush" : ""}`}>
         {autoHide && (
           <header className={`sk-topbar sk-topbar-autohide ${isHeaderHidden ? "sk-topbar-hidden" : ""}`}>
             <NavMenu onNavigateHome={onNavigateHome} onNavigateNewStory={onNavigateNewStory} />

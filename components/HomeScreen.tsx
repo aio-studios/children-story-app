@@ -46,15 +46,6 @@ function PlayIcon() {
   );
 }
 
-// Faint bookmark watermark on a Continue card that has no cover (fills the corner the emoji used to).
-function BookmarkIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="46" height="46" fill="currentColor" aria-hidden="true">
-      <path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1Z" />
-    </svg>
-  );
-}
-
 // Neutral open-book fallback for a genre tile whose art is missing (art is present today, so rare).
 function BookIcon() {
   return (
@@ -234,7 +225,7 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
           {/* Gradient art is always the base; a real cover overlays it and, if the Blob URL fails,
               hides itself to fall back to the gradient (graceful cover degradation, as StoryCover/#46). */}
           <span className="sk-chero-art" aria-hidden="true" />
-          {continueStory.imageUrl ? (
+          {continueStory.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- Blob-hosted cover, no next/image optimizer.
             <img
               src={continueStory.imageUrl}
@@ -244,8 +235,6 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
                 e.currentTarget.style.display = "none";
               }}
             />
-          ) : (
-            <span className="sk-chero-mark" aria-hidden="true"><BookmarkIcon /></span>
           )}
           <span className="sk-chero-scrim" aria-hidden="true" />
           <span className="sk-chero-cap">
