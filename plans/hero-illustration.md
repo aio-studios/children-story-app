@@ -16,11 +16,11 @@ Add one optional AI-generated **cover image per story** to the reader. Opt-in vi
 
 ## Tasks:
 
-- [ ] 🟥 **Step 1: Dependencies & credentials** *(manual provisioning, like the Upstash step)*
+- [x] 🟩 **Step 1: Dependencies & credentials** *(manual provisioning, like the Upstash step)* — DONE; #38 shipped & live in prod (see reference_production_deployment memory).
   - [x] 🟩 Add `ai`, `@ai-sdk/google`, `@vercel/blob` to `package.json`
-  - [ ] 🟥 Create a Google AI Studio API key → `GOOGLE_GENERATIVE_AI_API_KEY`; provision a Vercel Blob store → `BLOB_READ_WRITE_TOKEN`
+  - [x] 🟩 Create a Google AI Studio API key → `GOOGLE_GENERATIVE_AI_API_KEY`; provision a Vercel Blob store → `BLOB_READ_WRITE_TOKEN`
   - [x] 🟩 `.env.example` placeholders added
-  - [ ] 🟥 Add real values to `.env.local` + Vercel project env (your provisioning step)
+  - [x] 🟩 Add real values to `.env.local` + Vercel project env — done; prod cover gen verified 2026-08-03 & re-verified 2026-08-08.
 
 - [x] 🟩 **Step 2: Extract shared selection validation** *(DRY — two routes now validate)*
   - [x] 🟩 Move `validateSelections` + sub-validators + `collectCustomText` from `app/api/generate-story/route.ts` into `lib/validateSelections.ts`

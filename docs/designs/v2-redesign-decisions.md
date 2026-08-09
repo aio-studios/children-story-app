@@ -95,7 +95,7 @@ Setup content (real, from `lib/genres.ts` + `lib/storyOptions.ts`): 5 genres × 
 
 - **Ship order friendly:** nav can launch Home + Create only; Home Create-first works today; discovery rows and Favourites/Music grow in later. Setup-B is a UI change over existing selections (no new backend).
 - **Persist UI states** (iPad sidebar open/closed, Continue % read) in localStorage now; move to account when Supabase auth lands.
-- **Interactive story mode already shipped** (PR #80 merged to `main`, closed #37/#48/#49/#50). ⚠️ Covers won't render in prod until `GOOGLE_GENERATIVE_AI_API_KEY` is added to Vercel env (carryover from #38).
+- **Interactive story mode already shipped** (PR #80 merged to `main`, closed #37/#48/#49/#50). ✅ Prod covers work — the Gemini key is set in Vercel; cover generation live-tested against prod (200 + public Blob PNG), most recently 2026-08-08.
 
 ## Open items / next steps
 

@@ -69,4 +69,4 @@ Confirm these before build — the first three change what gets built.
 - Real curated/popular/per-genre discovery feeds (needs a stories DB — overlaps #52/#54/#55, deferred).
 - Favourites + Music pages/tabs (#73 grows into them once scoped).
 - Book mode #77, reader/story-page re-exploration (deprioritized; reader just reworked in #80).
-- ⚠️ Carryover, not this batch: covers won't render in prod until `GOOGLE_GENERATIVE_AI_API_KEY` is added to Vercel env (#38).
+- ✅ Prod covers work — the Gemini key (`GOOGLE_GENERATIVE_AI_API_KEY`) is set in Vercel; #38 fully live in prod, re-verified 2026-08-08 (200 + public Blob PNG). (This was previously mis-noted as a pending gap.)
