@@ -479,6 +479,77 @@ select:focus-visible,
   outline-offset: 2px;
 }
 
+/* Wide-reader tune (#86). On a phone-portrait the reader is a 428px column; on any wider/short-wide
+   shape that column is marooned and (short landscape phone) reads as a container floating mid-screen
+   with a side shadow (UAT). Apply to the same two shapes useLayoutMode treats as non-portrait: TABLET
+   (min-width:768 AND min-height:600) and LANDSCAPE phone (orientation:landscape AND max-height:600) -
+   iPads always land in tablet since their landscape height > 600. Portrait phone is untouched. The
+   reader hides the global nav, so it never gets the sk-shell-<mode> classes that fill .sk-content for
+   Home/Setup - its own .sk-content-reader modifier fills the width here instead, which also pushes
+   the auto-hide top bar (and its hamburger) out to the screen edge instead of leaving it a centered
+   pill. The card widens to a comfortable reading measure (not full-bleed: that means a giant hero or
+   over-long lines); the hero is capped as a banner - and that cap is viewport-relative so it stays
+   small on a short landscape phone instead of swallowing the screen. Text stays readable (the 34em
+   paragraph cap below); a two-page book spread is tracked separately as #77.
+   Design: docs/designs/ipad-reader-tune.html. */
+@media (min-width: 768px) and (min-height: 600px),
+       (orientation: landscape) and (max-height: 600px) {
+  /* .sk-content.sk-content-reader (0,2,0) so it beats the base .sk-content max-width (0,1,0)
+     regardless of source order - the base rule is defined later in this file. Fills the width like
+     Home/Setup so the top bar spans edge to edge; the card below stays centered in the canvas. */
+  .sk-content.sk-content-reader {
+    max-width: none;
+  }
+  /* The classic reader card (.story-reader-frame) and the interactive reader's sticky bottom control
+     bar (.ir-dock) must widen in lockstep or the dock ends up narrower than the card it sits under.
+     .story-reader-frame's base rule is earlier in the file so this wins on source order; .ir-dock's
+     base is later, so the dock override needs the extra specificity of .ir-canvas .ir-dock (0,2,0). */
+  .story-reader-frame {
+    max-width: 720px;
+  }
+  .ir-canvas .ir-dock {
+    max-width: 720px;
+  }
+  /* The auto-hide reader top bar is a fixed, centered pill capped at 428px - that left it stranded in
+     the dead centre with the hamburger far to its left (UAT). Span the full content width so the
+     hamburger sits at the screen edge, matching how the rest of the app fills the width. Needs the
+     descendant selector (0,2,0) to beat the base .sk-topbar-autohide rule, defined later in the file. */
+  .sk-content-reader .sk-topbar-autohide {
+    width: 100%;
+  }
+  .story-reader-page {
+    padding: clamp(26px, 3.6vw, 40px);
+    gap: 22px;
+  }
+  /* Keep the cover a banner, not a huge square that scales with the card width. Viewport-relative so
+     it's ~420px on a tall iPad but only ~a fifth of a short landscape phone (where a fixed 420px hero
+     would fill the whole screen before any text showed). */
+  .story-reader-hero {
+    max-height: min(420px, 55vh);
+  }
+  .story-reader-title {
+    font-size: clamp(28px, 4.2vw, 36px);
+  }
+  .story-reader-story {
+    gap: 15px;
+  }
+  .story-reader-story p {
+    font-size: 19px;
+  }
+  /* On the wide card, let the actions sit at their natural width on the left instead of each
+     button stretching to fill half the row. */
+  .story-reader-actions {
+    justify-content: flex-start;
+  }
+  .story-reader-btn {
+    flex: 0 0 auto;
+    padding: 13px 24px;
+  }
+  .story-reader-btn-secondary {
+    padding: 11px 24px;
+  }
+}
+
 /* Day 2 redesign (#29/#30) - Home screen, setup stepper, nav menu.
    Design approved in docs/designs/day2-decided-direction.html.
    Same storybook palette as .story-reader-canvas above, shared here so Home/Setup/Nav match the reading view.
@@ -659,6 +730,15 @@ select:focus-visible,
   z-index: 40;
   display: flex;
   justify-content: flex-start;
+}
+/* NavMenu (reader only) portals to <body>, so it can't inherit the reader's width context. Wherever
+   the reader top bar spans full width (tablet + landscape phone), the drawer must slide from that same
+   left edge - a 428px box centered on screen made the menu appear to open in the dead centre while the
+   hamburger sat far left (UAT). Same two shapes as the wide-reader tune above; placed right after the
+   base rule so it wins on source order (the portal has no parent selector to hang extra specificity on). */
+@media (min-width: 768px) and (min-height: 600px),
+       (orientation: landscape) and (max-height: 600px) {
+  .sk-nav-panel { width: 100%; }
 }
 .sk-nav-panel-backdrop {
   position: absolute;
@@ -1515,10 +1595,14 @@ select:focus-visible,
   min-width: 0;
 }
 /* Home-2/Setup-B are designed wider than the phone column on bigger shapes (6-up genre tiles,
-   roomier Continue card). The reader keeps the 428px column (nav is hidden there, so these classes
-   never apply); margin:0 auto still centers the column in the space beside the nav. */
-.sk-shell-landscape .sk-content { max-width: 760px; }
-.sk-shell-tablet .sk-content { max-width: 900px; }
+   roomier Continue card). The reader hides the nav, so these mode classes never apply to it; it
+   widens on tablets through its own .sk-content-reader rule instead (#86). margin:0 auto still
+   centers the column in the space beside the nav. */
+/* Fill the space beside the rail/sidebar instead of capping the column and centering it - a capped
+   column left tan "brown bars" down both sides on a wide iPad (UAT). The content's own section
+   padding (e.g. .sk-gtiles) provides the side gutter, so filling doesn't glue anything to the edge. */
+.sk-shell-landscape .sk-content,
+.sk-shell-tablet .sk-content { max-width: none; }
 
 /* iOS Safari: register taps immediately as clicks instead of waiting to see if it's a double-tap
    zoom - without this, fast repeated taps on a control zoom the page instead of activating it
@@ -1895,9 +1979,27 @@ a,
 .sk-deck-portrait .sk-deck-card-focus { flex: 0 0 74%; align-self: stretch; }
 .sk-deck-portrait .sk-deck-card-prev,
 .sk-deck-portrait .sk-deck-card-next { flex: 0 0 27%; align-self: center; height: 84%; opacity: 0.55; }
-.sk-deck-tablet .sk-deck-card-focus { flex: 0 0 46%; align-self: stretch; }
+/* On a tall iPad, align-self: stretch made the focus card fill the whole flow height - a ~765px
+   sliver (UAT: "cards very tall in ipad mode"). Lock a normal 3/4 portrait aspect and center it
+   vertically instead; max-height keeps it inside the flow on a short (landscape) iPad. The peeks
+   keep their wider flex-basis so they still bleed + clip flat on the outer edge, but share the
+   locked ratio so they read as shorter, receding neighbours. Phone (.sk-deck-portrait) is untouched. */
+.sk-deck-tablet .sk-deck-card-focus {
+  flex: 0 0 46%;
+  align-self: center;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  max-height: 100%;
+}
 .sk-deck-tablet .sk-deck-card-prev,
-.sk-deck-tablet .sk-deck-card-next { flex: 0 0 33%; align-self: center; height: 86%; opacity: 0.7; }
+.sk-deck-tablet .sk-deck-card-next {
+  flex: 0 0 33%;
+  align-self: center;
+  aspect-ratio: 3 / 4;
+  height: auto;
+  max-height: 100%;
+  opacity: 0.7;
+}
 
 .sk-deck-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .sk-deck-art-fallback {
@@ -2008,6 +2110,10 @@ a,
   font-size: var(--text-caption);
   line-height: 1.5;
   color: var(--sk-ink-soft);
+  /* The blurb reuses .sk-deck-bl, whose white-on-art text-shadow is meant for the card. In the split's
+     right pane the blurb sits on the plain background, where that shadow just reads as blur (UAT) -
+     drop it here. */
+  text-shadow: none;
   margin: 0.3rem 0 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
