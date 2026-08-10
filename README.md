@@ -7,6 +7,7 @@
 
 | Version | Date | Notes |
 |---|---|---|
+| [v2.0.0](https://github.com/aio-studios/children-story-app/releases/tag/v2.0.0) | 2026-08-10 | Interactive, illustrated, mobile-native — branching stories, AI illustrations, full V2 UI (Create-first home, immersive setup deck, responsive nav), iPad/landscape reader |
 | [v1.0.0](https://github.com/aio-studios/children-story-app/releases/tag/v1.0.0) | 2026-07-23 | Day 1 MVP — one-shot AI story generation, content safety, storybook reading view |
 
 Full list: [GitHub Releases](https://github.com/aio-studios/children-story-app/releases) — each entry documents exactly what shipped. Note: the live URL above always reflects the latest `main`, not a specific version; a per-commit snapshot link for old releases is a possible future addition (currently blocked by Vercel's Deployment Protection, which SSO-walls non-production deployment URLs).
