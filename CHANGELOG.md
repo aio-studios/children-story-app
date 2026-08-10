@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-10
+
+### Changed
+
+- 17:31 - **iPad/tablet width pass + landscape-phone reader parity (#86)** — turned the initial reader-only iPad tune into one consistent width system across the app, driven by a batch of UAT feedback:
+  - **Home & Setup fill the width** beside the rail/sidebar on iPad instead of a centered column that left tan "brown bars" down the sides.
+  - The **reader card widens to 720px** (a comfortable reading measure, not full-bleed), its cover is capped as a **banner** rather than scaling into a giant square, title/body/padding scale up, and the story text stays readable.
+  - The reader's auto-hide **top bar spans the full width** so its hamburger sits at the screen edge, and the **menu opens as a proper left drawer** (it previously opened dead-centre because the portaled panel was a 428px box centered on screen).
+  - The immersive **Setup deck cards are locked to a 3/4 aspect** and centered — fixing very tall "sliver" cards on a tall iPad.
+  - **Same treatment now applies to landscape phones**, not just iPad: a landscape iPhone reader used to float as a small centered container with a side shadow; it now fills the width with the card's own shadow, full-width top bar, and left-drawer menu. Hero size is viewport-relative so it stays a slim banner on the short screen.
+  - The reader widens on the **same breakpoints** the rest of the app uses (`useLayoutMode`'s tablet + landscape queries) — one system, not two.
+  - **Phone portrait is unchanged.** Verified via Playwright at iPad 1024×1366 / 1194×834 / 834×1112 and iPhone landscape 844×390 (+ iPhone-portrait regression), driving the menu/interactions open, no horizontal overflow.
+
+### Fixed
+
+- 17:31 - **Setup deck blurb had a stray text-shadow off the card (#86)** — in the landscape split layout the right-pane blurb reused the on-card `.sk-deck-bl` class (whose white-on-art shadow is meant for text over the illustration) alongside `.sk-deck-bl-info`, which recolored the text but never dropped the shadow — so on the plain background it read as blur. Reset the shadow in the `-info` variant; the genre name **on** the card keeps its shadow.
+- 17:31 - **Three CSS source-order collisions surfaced during the width pass (#86)** — the base rules for `.sk-content`, `.ir-dock`, and `.sk-topbar-autohide` are all defined below the tablet override, so equal-specificity overrides lost the tie and the content column, interactive dock, and reader top bar each stayed at their narrow 428px width until caught on-device. Bumped override specificity (`.sk-content.sk-content-reader`, `.ir-canvas .ir-dock`, `.sk-content-reader .sk-topbar-autohide`).
+
 ## 2026-08-08
 
 ### Fixed

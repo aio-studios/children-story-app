@@ -113,7 +113,10 @@ export function AppShell({
           onNavigateNewStory={onNavigateNewStory}
         />
       )}
-      <div className={`sk-content ${flush ? "sk-content-flush" : ""}`}>
+      {/* autoHide marks the immersive reader (nav hidden). It drops the sk-shell-<mode> classes that
+          widen Home/Setup on tablets, so it needs its own width modifier to grow past the phone column
+          on iPad (#86) - see .sk-content-reader in globals.css. */}
+      <div className={`sk-content ${flush ? "sk-content-flush" : ""} ${autoHide ? "sk-content-reader" : ""}`}>
         {autoHide && (
           <header className={`sk-topbar sk-topbar-autohide ${isHeaderHidden ? "sk-topbar-hidden" : ""}`}>
             <NavMenu onNavigateHome={onNavigateHome} onNavigateNewStory={onNavigateNewStory} />

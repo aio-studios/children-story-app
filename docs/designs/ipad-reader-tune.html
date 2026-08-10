@@ -1,0 +1,298 @@
+<title>iPad Reader — responsive tune preview</title>
+<style>
+  /* ---- Storykins reader tokens (mirrors app/globals.css .story-reader-*) ---- */
+  :root {
+    --sr-canvas: #dcd3c1;
+    --sr-page: #fbf7ee;
+    --sr-ink: #2a2116;
+    --sr-ink-soft: #6e6250;
+    --sr-line: rgba(42, 33, 22, 0.14);
+    --sr-btn-primary-text: #fffdf8;
+    /* accent = Adventure genre (warm amber) for the sample */
+    --accent: #c9781f;
+
+    /* page chrome (the preview shell, not the reader itself) */
+    --bg: #efe9dc;
+    --panel: #fbf7ee;
+    --edge: rgba(42, 33, 22, 0.16);
+    --text: #2a2116;
+    --muted: #7b6f5c;
+    --pill: rgba(201, 120, 31, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sr-canvas: #14110b;
+      --sr-page: #221c13;
+      --sr-ink: #f2ebdb;
+      --sr-ink-soft: #b5a890;
+      --sr-line: rgba(242, 235, 219, 0.14);
+      --sr-btn-primary-text: #241a10;
+      --accent: #e79a45;
+
+      --bg: #100d08;
+      --panel: #1b160e;
+      --edge: rgba(242, 235, 219, 0.14);
+      --text: #f2ebdb;
+      --muted: #b5a890;
+      --pill: rgba(231, 154, 69, 0.16);
+    }
+  }
+  :root[data-theme="light"] {
+    --sr-canvas: #dcd3c1; --sr-page: #fbf7ee; --sr-ink: #2a2116; --sr-ink-soft: #6e6250;
+    --sr-line: rgba(42,33,22,0.14); --sr-btn-primary-text: #fffdf8; --accent: #c9781f;
+    --bg: #efe9dc; --panel: #fbf7ee; --edge: rgba(42,33,22,0.16); --text: #2a2116; --muted: #7b6f5c; --pill: rgba(201,120,31,0.12);
+  }
+  :root[data-theme="dark"] {
+    --sr-canvas: #14110b; --sr-page: #221c13; --sr-ink: #f2ebdb; --sr-ink-soft: #b5a890;
+    --sr-line: rgba(242,235,219,0.14); --sr-btn-primary-text: #241a10; --accent: #e79a45;
+    --bg: #100d08; --panel: #1b160e; --edge: rgba(242,235,219,0.14); --text: #f2ebdb; --muted: #b5a890; --pill: rgba(231,154,69,0.16);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
+
+  /* ---- preview header ---- */
+  .head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
+  .head h1 {
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    font-weight: 700; font-size: clamp(22px, 3vw, 30px); margin: 0; letter-spacing: -0.01em; text-wrap: balance;
+  }
+  .head p { margin: 6px 0 0; color: var(--muted); font-size: 14.5px; max-width: 60ch; }
+  .controls { display: flex; gap: 8px; }
+  .btn {
+    font: inherit; font-weight: 800; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--edge); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: 8px 15px; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn[aria-pressed="true"] { background: var(--accent); color: var(--sr-btn-primary-text); border-color: transparent; }
+
+  /* ---- tabs ---- */
+  .tabs { display: inline-flex; gap: 4px; background: var(--panel); border: 1px solid var(--edge); border-radius: 999px; padding: 4px; margin: 26px 0 6px; }
+  .tab { font: inherit; font-weight: 800; font-size: 13px; cursor: pointer; border: none; background: transparent; color: var(--muted); border-radius: 999px; padding: 8px 16px; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--sr-btn-primary-text); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .panel-cap { color: var(--muted); font-size: 13px; margin: 14px 2px 12px; display: flex; align-items: center; gap: 8px; }
+  .panel-cap b { color: var(--text); font-weight: 800; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+
+  /* two side-by-side "devices" (current vs tuned) */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+
+  .device-label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 8px 2px; }
+  .device-label .good { color: var(--accent); }
+
+  /* the tan "canvas" the reader floats in — this is the real .story-reader-canvas backdrop */
+  .canvas {
+    background: var(--sr-canvas);
+    border: 1px solid var(--edge);
+    border-radius: 20px;
+    padding: 26px 18px;
+    display: flex;
+    justify-content: center;
+    min-height: 420px;
+    overflow: hidden;
+  }
+  .canvas.landscape { min-height: 320px; }
+
+  /* ===== the reader card itself (mirrors .story-reader-page) ===== */
+  .reader {
+    position: relative;
+    width: 100%;
+    background: var(--sr-page);
+    color: var(--sr-ink);
+    border-radius: 22px;
+    border: 1px solid var(--sr-line);
+    box-shadow: 0 18px 40px -14px rgba(0,0,0,0.28);
+    display: flex;
+    flex-direction: column;
+  }
+  /* CURRENT: pinned 428px column */
+  .reader.current { max-width: 300px; padding: 22px 18px; gap: 13px; }
+  /* TUNED: wider tablet card, bigger everything */
+  .reader.tuned { max-width: 430px; padding: 30px 30px 26px; gap: 18px; }
+
+  .badge {
+    align-self: flex-start; display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px 6px 10px; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--sr-page));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--sr-page));
+    color: var(--accent); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .reader.current .badge { font-size: 10px; }
+  .reader.tuned .badge { font-size: 12.5px; }
+
+  .hero {
+    width: 100%; aspect-ratio: 4/3; border-radius: 16px; overflow: hidden; display: block; object-fit: cover;
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--sr-line));
+    background:
+      radial-gradient(120% 90% at 30% 15%, color-mix(in srgb, var(--accent) 45%, var(--sr-page)), transparent 60%),
+      linear-gradient(160deg, color-mix(in srgb, var(--accent) 26%, var(--sr-page)), color-mix(in srgb, var(--accent) 8%, var(--sr-page)));
+    position: relative;
+  }
+  .hero::after {
+    content: "🏔️🎈"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(30px, 7vw, 52px); opacity: 0.9;
+  }
+
+  .title {
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+    font-weight: 600; line-height: 1.22; text-wrap: balance; margin: 0;
+  }
+  .reader.current .title { font-size: 20px; }
+  .reader.tuned .title { font-size: 32px; }
+
+  .flourish { display: flex; align-items: center; gap: 8px; }
+  .flourish span { height: 1px; flex: 1; background: color-mix(in srgb, var(--accent) 45%, var(--sr-line)); }
+  .flourish i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+
+  .story { display: flex; flex-direction: column; }
+  .reader.current .story { gap: 11px; }
+  .reader.tuned .story { gap: 15px; }
+  .story p { margin: 0; color: var(--sr-ink); max-width: 34em; white-space: pre-wrap; }
+  .reader.current .story p { font-size: 14px; line-height: 1.7; }
+  .reader.tuned .story p { font-size: 19px; line-height: 1.75; }
+
+  .actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .rbtn { font: inherit; font-weight: 800; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; }
+  .reader.current .rbtn { font-size: 12px; padding: 10px 12px; flex: 1; }
+  .reader.tuned .rbtn { font-size: 15px; padding: 13px 22px; }
+  .rbtn.primary { background: var(--accent); color: var(--sr-btn-primary-text); }
+  .rbtn.secondary { background: transparent; border: 2px solid var(--sr-ink); color: var(--sr-ink); }
+  /* tuned buttons sit at natural width, left-aligned, not stretched across the wide card */
+  .reader.tuned .actions { justify-content: flex-start; }
+
+  .hidden { display: none; }
+
+  .note { margin-top: 26px; background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 18px 20px; }
+  .note h2 { margin: 0 0 10px; font-size: 15px; font-family: ui-rounded, system-ui, sans-serif; }
+  .note ul { margin: 0; padding-left: 18px; }
+  .note li { margin: 5px 0; font-size: 14px; color: var(--muted); }
+  .note li b { color: var(--text); font-weight: 700; }
+  .k { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 800; }
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>iPad reader — responsive tune</h1>
+      <p>The current reader is pinned to a phone-width column that floats in a sea of canvas on iPad. Here's the proposed tune: wider card, bigger hero and type, the 34-em line-length guard kept so text never runs too long. Single column — book-mode spread stays as issue&nbsp;#77.</p>
+    </div>
+    <div class="controls">
+      <button class="btn" id="themeBtn" type="button">🌙 Dark</button>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Device orientation">
+    <button class="tab" role="tab" id="tab-portrait" aria-selected="true" type="button">iPad portrait · 768pt</button>
+    <button class="tab" role="tab" id="tab-landscape" aria-selected="false" type="button">iPad landscape · 1024pt</button>
+  </div>
+
+  <div class="panel-cap"><span class="dot"></span> Left is <b>today</b> (marooned 428&nbsp;px column) · right is the <b>tuned</b> card. Same canvas, same tokens.</div>
+
+  <!-- PORTRAIT -->
+  <section id="view-portrait">
+    <div class="compare">
+      <div>
+        <p class="device-label">Current — phone column</p>
+        <div class="canvas">
+          <div class="reader current" id="r-cur-p"></div>
+        </div>
+      </div>
+      <div>
+        <p class="device-label">Tuned — <span class="good">iPad-native</span></p>
+        <div class="canvas">
+          <div class="reader tuned" id="r-tun-p"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LANDSCAPE -->
+  <section id="view-landscape" class="hidden">
+    <div class="compare">
+      <div>
+        <p class="device-label">Current — phone column</p>
+        <div class="canvas landscape">
+          <div class="reader current" id="r-cur-l"></div>
+        </div>
+      </div>
+      <div>
+        <p class="device-label">Tuned — <span class="good">iPad-native</span></p>
+        <div class="canvas landscape">
+          <div class="reader tuned" id="r-tun-l"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="note">
+    <h2>What changes (single-column tune)</h2>
+    <ul>
+      <li><b>Card width</b> at tablet breakpoints: <span class="k">428&nbsp;→ ~600&nbsp;px</span> so it stops floating in empty canvas.</li>
+      <li><b>Hero image</b> scales with the card — bigger, more immersive cover.</li>
+      <li><b>Body text</b> <span class="k">18&nbsp;→ 19&nbsp;px</span>, title up to <span class="k">~32&nbsp;px</span>, more generous padding &amp; gaps for couch reading.</li>
+      <li><b>Line length</b> stays capped at <span class="k">34&nbsp;em</span> — the existing guard means wider card ≠ unreadably long lines.</li>
+      <li><b>Buttons</b> sit at natural width instead of stretching the full wide card.</li>
+      <li>Applies to both the classic and interactive readers (they share the same tokens). Phone layout is untouched.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  const SAMPLE = {
+    badge: "🗺️ Adventure",
+    title: "Pip and the Balloon That Wouldn't Come Down",
+    paras: [
+      "Pip had exactly one wish for her birthday, and it floated at the end of a long silver string: a balloon the color of a summer sky, big enough to see her whole street from.",
+      "But the moment she stepped outside, a gust of wind gave the balloon a tug — and then another — and before Pip could shout, her sneakers lifted right off the garden path.",
+      "“Well,” said Pip, looking down at the shrinking rooftops, “this is not where I planned to have breakfast.”"
+    ]
+  };
+
+  function fillReader(el) {
+    el.innerHTML = `
+      <span class="badge">${SAMPLE.badge}</span>
+      <div class="hero" role="img" aria-label="Story cover illustration"></div>
+      <h2 class="title">${SAMPLE.title}</h2>
+      <div class="flourish"><span></span><i></i><span></span></div>
+      <div class="story">${SAMPLE.paras.map(p => `<p>${p}</p>`).join("")}</div>
+      <div class="actions">
+        <button class="rbtn primary" type="button">↻ Regenerate</button>
+        <button class="rbtn secondary" type="button">← Back to setup</button>
+      </div>`;
+  }
+  ["r-cur-p","r-tun-p","r-cur-l","r-tun-l"].forEach(id => fillReader(document.getElementById(id)));
+
+  // theme toggle
+  const root = document.documentElement;
+  const tb = document.getElementById("themeBtn");
+  function currentDark() {
+    const t = root.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function syncBtn() { tb.textContent = currentDark() ? "☀️ Light" : "🌙 Dark"; }
+  tb.addEventListener("click", () => { root.setAttribute("data-theme", currentDark() ? "light" : "dark"); syncBtn(); });
+  syncBtn();
+
+  // orientation tabs
+  const tp = document.getElementById("tab-portrait"), tl = document.getElementById("tab-landscape");
+  const vp = document.getElementById("view-portrait"), vl = document.getElementById("view-landscape");
+  function select(portrait) {
+    tp.setAttribute("aria-selected", portrait); tl.setAttribute("aria-selected", !portrait);
+    vp.classList.toggle("hidden", !portrait); vl.classList.toggle("hidden", portrait);
+  }
+  tp.addEventListener("click", () => select(true));
+  tl.addEventListener("click", () => select(false));
+</script>
