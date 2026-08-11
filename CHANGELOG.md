@@ -4,6 +4,10 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ## 2026-08-10
 
+### Added
+
+- 23:00 - **Vercel Web Analytics + Speed Insights** — added the `@vercel/analytics` and `@vercel/speed-insights` packages and mounted `<Analytics />` + `<SpeedInsights />` in the root layout ([app/layout.tsx](app/layout.tsx)). Analytics reports page views and basic device/referrer data; Speed Insights reports real-world Core Web Vitals (LCP/CLS/INP) from actual visitor devices. Cookieless and PII-free (no consent banner needed); both enabled in the Vercel project dashboard. Free-tier at current traffic.
+
 ### Changed
 
 - 17:31 - **iPad/tablet width pass + landscape-phone reader parity (#86)** — turned the initial reader-only iPad tune into one consistent width system across the app, driven by a batch of UAT feedback:
