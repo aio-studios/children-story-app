@@ -6,7 +6,7 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Added
 
-- 23:00 - **Vercel Web Analytics** — added the `@vercel/analytics` package and mounted `<Analytics />` in the root layout ([app/layout.tsx](app/layout.tsx)) so the production app reports page views and basic device/referrer data. Cookieless and PII-free (no consent banner needed); Web Analytics enabled in the Vercel project dashboard. Free-tier at current traffic.
+- 23:00 - **Vercel Web Analytics + Speed Insights** — added the `@vercel/analytics` and `@vercel/speed-insights` packages and mounted `<Analytics />` + `<SpeedInsights />` in the root layout ([app/layout.tsx](app/layout.tsx)). Analytics reports page views and basic device/referrer data; Speed Insights reports real-world Core Web Vitals (LCP/CLS/INP) from actual visitor devices. Cookieless and PII-free (no consent banner needed); both enabled in the Vercel project dashboard. Free-tier at current traffic.
 
 ### Changed
 
