@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-08-16
+
+### Verified
+
+- 13:29 - **Vercel Analytics + Speed Insights confirmed live in production (#90)** — drove the real prod URL with Playwright at iPhone 12 Pro (light + dark) and desktop 1280×800: both telemetry scripts load **HTTP 200**, zero console errors, zero failed requests, and no visual regression from the layout change (deck, coverflow, Continue bar, bottom tab bar all correct in both themes). Deployment `6551dec` reports Production/success.
+  - **Gotcha worth remembering:** Vercel serves these beacons from **obfuscated hashed paths** (e.g. `/d805c662cd4f67fd/script.js`), **not** the legacy `/_vercel/insights/*`. A first verification pass grepping for `/_vercel/` reported zero beacons and looked like a total failure — it was a false negative from matching an abandoned path convention. Check for a hashed `script.js` instead.
+  - **A 200 on those script paths is the reliable proof the dashboard toggle is on** — Vercel returns 404 for them when the feature is disabled, so it confirms enablement without opening the dashboard.
+  - **Not confirmed:** no data beacon POST was observed in headless Chromium (the script does its own environment checks and batches vitals). End-to-end reporting confirms only from real traffic hitting the Analytics tab.
+
 ## 2026-08-10
 
 ### Added
