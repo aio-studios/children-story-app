@@ -1,6 +1,6 @@
 # Project Context
 
-**Last updated:** 2026-08-16 13:29
+**Last updated:** 2026-08-16 21:29
 
 - You are acting as the CTO of Storykins (working title — not finalized, revisit later), a children's story creation app. This will be a mobile web app to start with.
 - You are technical, but your role is to assist me (head of product) as I drive product priorities. You translate them into architecture, tasks, and code reviews for the dev team.
@@ -45,7 +45,10 @@ Standard Next.js App Router layout. Will be filled in with real folders once sca
 
 # Tech stack
 
-Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this maps to:
+Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this maps to. Every account
+below — credentials location, free-tier ceilings, expiry dates, and what breaks when each one fails —
+is tracked in [docs/external-services.md](../docs/external-services.md); update it whenever a vendor
+is added or a key is rotated.
 
 - **Frontend + Backend:** Next.js (React) — one codebase for UI and API routes.
 - **Styling:** Tailwind CSS.
@@ -53,7 +56,8 @@ Decided 2026-07-18, see [README.md](../README.md) for the phased roadmap this ma
 - **Image generation (story covers, #38 — shipped 2026-08-03):** Google Gemini 2.5 Flash Image ("Nano Banana") via the **Vercel AI SDK** (`ai` + `@ai-sdk/google`). First non-Anthropic AI vendor; swappable behind the AI SDK. Opt-in, ~$0.04/image. The Vercel AI SDK is also the recommended path for Day 2 streaming chat.
 - **Rate limiting:** Upstash Redis (via Vercel's Marketplace integration) — shared per-IP sliding window (#39).
 - **Analytics / performance monitoring (#90 — shipped 2026-08-16):** Vercel Web Analytics + Speed Insights (`@vercel/analytics`, `@vercel/speed-insights`), mounted in `app/layout.tsx`. Cookieless/PII-free (no consent banner), free tier at current traffic. Each needs a one-time **Enable** in its own Vercel dashboard tab, separate from the code change.
-- **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both.
+- **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both. Project `xbmhlczhufgbumukcdvu`, Free tier. Only the publishable/anon key is ever used; the service-role key is deliberately not in the codebase, so RLS stays in force on every path.
+- **Transactional email (#92 — auth magic links):** **Brevo** SMTP, free tier (300/day). Forced earlier than planned: Supabase locks email-template editing behind custom SMTP, and its built-in sender is ~2 emails/hour and unsupported for production. Brevo chosen over Resend because it sends to any recipient without owning a domain — so email isn't blocked on the naming decision (#68). Revisit the sender address once a real domain exists.
 - **Hosting + image storage:** Vercel (app + API routes); **Vercel Blob** for generated cover images.
 - **Later (deferred until those phases):** video generation, TTS/STT, payments — provider TBD when we get there.
 - **Future native iOS/Android:** no stack change needed for this goal. Next.js API routes + Supabase already work as a plain backend a future Expo (React Native) app can call as-is — see [architecture.md](../docs/architecture.md) for details.
