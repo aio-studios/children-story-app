@@ -1,42 +1,58 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `28%` — Steps 1–2 done; Step 3 working end-to-end on desktop, pending a real-device test + the two-user RLS check
+**Overall Progress:** `32%` — Steps 1–2 done; Step 3 verified **cross-browser** on desktop, pending a real-device test + the two-user RLS check
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
 **Last updated:** 2026-09-04
 
-## ▶ Resume point (2026-09-04, end of session)
+## ▶ Resume point (2026-09-04, session 2)
 
 **Branch:** `feat/92-accounts-auth-foundation` — 2 commits, **not pushed**, `main` untouched.
-`13f1f7b` the foundation · `70c61ea` code-review fixes.
+`13f1f7b` the foundation · `70c61ea` code-review fixes. Uncommitted: `supabase/migrations/`.
 
-**Blocked on one thing:** the Supabase project `xbmhlczhufgbumukcdvu` **stopped resolving in DNS**
-mid-session. Not a firewall and not our code — `dig @1.1.1.1` returns NXDOMAIN, byte-identical to a
-made-up project ref used as a control, while `supabase.co` resolves and `supabase.com` returns 200.
-Sarthak is checking whether the dashboard shows it Active / Paused / gone. Note the gap:
-the project was created 2026-08-16 and this session ran 2026-09-04, so the **7-day idle auto-pause
-is now a live suspect** after all — the keep-alive cron only runs on a deployed Vercel app, and this
-branch was never pushed. If it is gone, both
-migrations are in the Schema section below — rebuilding is minutes, not a redo.
+**Last session's blocker is cleared.** The Supabase project was in the Free-tier **7-day idle pause**,
+exactly as suspected, and resuming it restored everything — no data lost, no schema rebuild needed.
+`GET /api/cron/supabase-ping` → `{"ok":true}`.
 
-**Done and verified:** Steps 1–2 complete. Step 3 code complete; magic link verified end-to-end on
-desktop (same browser). `/code-review` (6 findings, all fixed) and `/security-review` (no new
-HIGH/MEDIUM) both run against the branch.
+**Trap worth remembering:** during a resume the API gateway comes back *before* Postgres does.
+`/auth/v1/settings` returns healthy config and REST returns a clean `401`, while a table query still
+404s with `PGRST205` "Could not find the table in the schema cache". That combination is
+indistinguishable from a dropped table. It is not one — wait and re-poll. This cost a wrong
+diagnosis mid-session. Written up in `supabase/migrations/README.md`.
+
+**Schema now lives in the repo:** `supabase/migrations/001_stories.sql` + `002_updated_at_trigger.sql`,
+both idempotent (`if not exists` / `drop policy if exists` / `create or replace`), so re-running them
+against a healthy project is a no-op. Previously the schema existed only in this plan doc, which made
+recovery a manual transcription job.
+
+**Step 3 is now verified, including the case it was designed for.** Magic-link sign-in was tested
+**cross-browser**: link requested in Safari, opened and verified in Chrome, session established in
+Chrome. This empirically confirms the `pkce_`-prefixed `token_hash` is inert — the verifier cookie
+lives only in the requesting browser, and verification succeeded without it. That was previously an
+assumption read off the `auth-js` source. Same mechanism the cross-*device* phone test relies on.
+
+Also confirmed this session: `proxy.ts` skipping `/auth/callback` did **not** break session cookies.
+Proved with a throwaway route that set a cookie via `next/headers` `cookies()` and returned a
+self-constructed `NextResponse.redirect` — `set-cookie` was present on the 307. Route was deleted.
 
 **Next actions, in order:**
-1. Restore/confirm the Supabase project, then re-run `curl localhost:3000/api/cron/supabase-ping`
-   (expect `{"ok":true}`).
-2. **Re-verify sign-in end-to-end.** `proxy.ts` no longer runs on `/auth/callback`, so the route
-   handler must set the session cookies itself. This is expected to work (`cookies()` is writable in
-   Route Handlers, unlike Server Components) but has NOT been retested since the change.
-3. Add the preview URL to Supabase → Authentication → Redirect URLs. Open decision: paste the exact
+1. Add the preview URL to Supabase → Authentication → Redirect URLs. Open decision: paste the exact
    URL per deploy, or allowlist `https://children-story-app-*.vercel.app/auth/callback` once.
-4. Push the branch → Vercel preview → **phone test** (the cross-device case `token_hash` exists for).
-   The harness needs `?t=<AUTH_HARNESS_TOKEN>`; the token is set in Vercel's *preview* env.
-5. **Two-user RLS check** — create the second user directly in Supabase (Auth → Users → Add user),
+2. Push the branch → Vercel preview. This is also the real fix for the pause problem: the keep-alive
+   cron only runs on a *deployed* app, so a local-only branch lets the project pause every 7 days.
+3. **Phone test** on the preview — the cross-device case. The harness needs `?t=<AUTH_HARNESS_TOKEN>`;
+   the token is set in Vercel's *preview* env.
+4. **Two-user RLS check** — create the second user directly in Supabase (Auth → Users → Add user),
    no second inbox needed. Confirm user B sees zero of user A's rows.
-6. Then Step 4 (persistence layer).
+5. Then Step 4 (persistence layer).
+
+**Watch-item for the deployed preview (not an issue locally):** mail providers pre-fetch links to
+scan them, and a magic link is single-use — a scanner can consume the token before the user clicks.
+This *cannot* happen with `localhost` links (unreachable from Google's crawlers), so it did not affect
+local testing, but it becomes live the moment the callback is on a public URL. Standard mitigation is
+an interstitial "click to finish signing in" page, since scanners don't press buttons. Decide during
+the phone test rather than pre-building it.
 
 **Carry forward:** Step 5 is still the dangerous one (`discardCover()` deleting a saved story's
 cover). Nothing in this session touched it.
@@ -158,9 +174,13 @@ drop function if exists public.set_updated_at();
   - [x] 🟩 [lib/useSession.ts](../lib/useSession.ts) — session hook, same `useSyncExternalStore` shape as the existing stores, plus `sendMagicLink()` / `signOut()`
   - [x] 🟩 Sign-out clears the local continue slot (shared-device hygiene) — in a `finally`, so a failed network sign-out still clears local state
   - [x] 🟩 **Supabase email templates switched to the `token_hash` form** — the stock templates use `{{ .ConfirmationURL }}` (the PKCE code flow), which would never deliver `token_hash` to the callback. Editing templates **requires custom SMTP**; Supabase's built-in sender is ~2/hr and read-only. Brevo added (see [docs/external-services.md](../docs/external-services.md)).
-  - [x] 🟩 End-to-end magic link verified on desktop, same browser: `/auth/callback` → `307` → `/`, session established
+  - [x] 🟩 End-to-end magic link verified on desktop: `/auth/callback` → `307` → `/`, session established.
+    Verified **cross-browser** (requested in Safari, opened in Chrome) — the harder case, and the one
+    `token_hash` was chosen for. A same-browser-only check would have missed that this works at all.
   - [ ] 🟥 End-to-end magic-link test on a real phone (needs a deploy — a `localhost` link is unreachable from a phone by definition)
-    - The issued token is `pkce_`-prefixed, because `@supabase/ssr` hardcodes `flowType: "pkce"` and stores the verifier in a per-browser **cookie**. This looked like it would reintroduce the cross-device failure, but does not: `verifyOtp` (auth-js:2458) posts `token_hash` to `/verify` and never reads the verifier — only `exchangeCodeForSession` needs it, and the callback never calls that. The prefix is inert here. **Confirm on hardware anyway before trusting it.**
+    - The issued token is `pkce_`-prefixed, because `@supabase/ssr` hardcodes `flowType: "pkce"` and stores the verifier in a per-browser **cookie**. This looked like it would reintroduce the cross-device failure, but does not: `verifyOtp` (auth-js:2458) posts `token_hash` to `/verify` and never reads the verifier — only `exchangeCodeForSession` needs it, and the callback never calls that. The prefix is inert here. **Confirmed empirically 2026-09-04** by the cross-browser test above: the link was requested in
+      Safari (verifier cookie there) and verified in Chrome (no verifier cookie), and the session was
+      still established. Still worth a hardware run, but the mechanism is no longer an assumption.
   - [ ] 🟥 Two-user RLS check (moved from Step 2 — needs real accounts): confirm user B sees zero of user A's rows
 
 - [ ] 🟥 **Step 4: Persistence layer**
