@@ -4,7 +4,42 @@
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-08-16
+**Last updated:** 2026-09-04
+
+## ▶ Resume point (2026-09-04, end of session)
+
+**Branch:** `feat/92-accounts-auth-foundation` — 2 commits, **not pushed**, `main` untouched.
+`13f1f7b` the foundation · `70c61ea` code-review fixes.
+
+**Blocked on one thing:** the Supabase project `xbmhlczhufgbumukcdvu` **stopped resolving in DNS**
+mid-session. Not a firewall and not our code — `dig @1.1.1.1` returns NXDOMAIN, byte-identical to a
+made-up project ref used as a control, while `supabase.co` resolves and `supabase.com` returns 200.
+Sarthak is checking whether the dashboard shows it Active / Paused / gone. Note the gap:
+the project was created 2026-08-16 and this session ran 2026-09-04, so the **7-day idle auto-pause
+is now a live suspect** after all — the keep-alive cron only runs on a deployed Vercel app, and this
+branch was never pushed. If it is gone, both
+migrations are in the Schema section below — rebuilding is minutes, not a redo.
+
+**Done and verified:** Steps 1–2 complete. Step 3 code complete; magic link verified end-to-end on
+desktop (same browser). `/code-review` (6 findings, all fixed) and `/security-review` (no new
+HIGH/MEDIUM) both run against the branch.
+
+**Next actions, in order:**
+1. Restore/confirm the Supabase project, then re-run `curl localhost:3000/api/cron/supabase-ping`
+   (expect `{"ok":true}`).
+2. **Re-verify sign-in end-to-end.** `proxy.ts` no longer runs on `/auth/callback`, so the route
+   handler must set the session cookies itself. This is expected to work (`cookies()` is writable in
+   Route Handlers, unlike Server Components) but has NOT been retested since the change.
+3. Add the preview URL to Supabase → Authentication → Redirect URLs. Open decision: paste the exact
+   URL per deploy, or allowlist `https://children-story-app-*.vercel.app/auth/callback` once.
+4. Push the branch → Vercel preview → **phone test** (the cross-device case `token_hash` exists for).
+   The harness needs `?t=<AUTH_HARNESS_TOKEN>`; the token is set in Vercel's *preview* env.
+5. **Two-user RLS check** — create the second user directly in Supabase (Auth → Users → Add user),
+   no second inbox needed. Confirm user B sees zero of user A's rows.
+6. Then Step 4 (persistence layer).
+
+**Carry forward:** Step 5 is still the dangerous one (`discardCover()` deleting a saved story's
+cover). Nothing in this session touched it.
 
 ## TLDR
 

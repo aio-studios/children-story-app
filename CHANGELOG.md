@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-04
+
+### Added
+
+- 21:41 - **Accounts foundation: Supabase, schema + RLS, magic-link auth (#92, Steps 1-3)** — the plumbing for optional accounts. No user-facing surface yet; the Library and sign-in sheet land in Steps 6-7. Branch `feat/92-accounts-auth-foundation`, not yet merged.
+  - **Supabase clients** — [lib/supabase/client.ts](lib/supabase/client.ts) (browser) and [lib/supabase/server.ts](lib/supabase/server.ts) (per-request, never module-scoped: a shared instance would leak one user's session into another's request). Only the publishable key is used anywhere; the service-role key is deliberately absent from the project so no code path can bypass RLS.
+  - **`stories` table + RLS + a `set_updated_at` trigger.** The trigger is load-bearing, not tidiness: `default now()` never fires on UPDATE, and eviction-oldest-by-`updated_at` would otherwise delete the story being actively read.
+  - **Magic-link auth** via `token_hash`/`verifyOtp` ([app/auth/callback/route.ts](app/auth/callback/route.ts)) rather than the PKCE code exchange, so a link opened in a different browser than requested it still works. `verifyOtp` reads no browser-local state — verified by source inspection after a `pkce_`-prefixed token looked like it might reintroduce the problem.
+  - **[proxy.ts](proxy.ts)** for session refresh — *not* `middleware.ts`, which Next 16.3 deprecated.
+  - **[lib/useSession.ts](lib/useSession.ts)** — session hook in the same `useSyncExternalStore` shape as the existing stores, plus `sendMagicLink()` / `signOut()`.
+  - **Daily Supabase keep-alive cron** ([app/api/cron/supabase-ping/route.ts](app/api/cron/supabase-ping/route.ts) + [vercel.json](vercel.json)), `CRON_SECRET`-guarded, daily rather than weekly because a weekly job leaves no margin against a 7-day pause timer.
+  - **[docs/external-services.md](docs/external-services.md)** — register of all external accounts: credential locations, free-tier ceilings, failure cascades, deliberate-config decisions, and a renewal calendar.
+  - **Brevo SMTP added to the stack** — forced earlier than planned: Supabase locks email-template editing behind custom SMTP, and its built-in sender is ~2/hour and unsupported for production. Chosen over Resend because it sends to any recipient without owning a domain, so email is not blocked on the naming decision (#68).
+
+### Changed
+
+- 21:41 - **Next.js 16.2.10 → 16.3.1** — closes 9 advisories including a middleware/proxy bypass in App Router + Turbopack. Done *before* writing `middleware.ts`, since auth that can be bypassed is not auth. 16.3 also renamed the `middleware` file convention to `proxy`.
+
+### Fixed
+
+- 21:41 - **Open redirect in the magic-link callback (found by `/code-review`)** — `?next=/%09/evil.example` sent a freshly-authenticated user to `https://evil.example/`. `URLSearchParams` decodes `%09` to a literal tab, and the WHATWG URL parser strips tab/LF/CR *before* parsing, turning `/<tab>/evil.example` into protocol-relative `//evil.example`. Same for `%0A`/`%0D`. Replaced the prefix denylist in [lib/authRedirect.ts](lib/authRedirect.ts) with an origin check — resolve against a sentinel origin and require it unchanged — so correctness no longer depends on enumerating attacker tricks. **The original 18 tests all passed**: they only covered attacks already imagined, which is exactly how this class of bug survives review.
+- 21:41 - **The auth test harness was a public magic-link sender on preview deploys** — [app/auth/test/page.tsx](app/auth/test/page.tsx) gated only on production, while preview env vars point at the *production* Supabase project and Brevo sender. Added a required `?t=` token on any deploy, failing closed when unset. Verified across all four env/token combinations.
+- 21:41 - **Proxy ran on routes that never used it** — every API call paid a Supabase `/auth/v1/user` round-trip for signed-in users. Dropped `api/*` from the matcher, plus `auth/callback`, where a failed `getUser()` could emit `maxAge:0` cookie deletions onto the same response carrying the newly established session.
+- 21:41 - **Stale session state and half-done sign-out hygiene** — [lib/useSession.ts](lib/useSession.ts) now resets its module snapshot when the last listener detaches (a remount could otherwise serve a stale signed-in state), and sign-out clears the sticky `has-created` flag via a new `clearLocalStoryState()` in [lib/storyHistory.ts](lib/storyHistory.ts), which the shared-device rationale required but the code only half delivered.
+
+### Verified
+
+- 21:41 - **Magic-link sign-in works end-to-end on desktop** — `/auth/callback` → `307` → `/`, session established. `/code-review` (6 findings, all fixed) and `/security-review` (no new HIGH/MEDIUM) both run against the branch. Build, lint, 21 redirect-guard cases, and all four harness-gate combinations pass.
+  - **Not yet verified:** sign-in has not been retested since `auth/callback` was removed from the proxy matcher; the real-device cross-device test and the two-user RLS check are both still outstanding. Blocked at session end by the Supabase project no longer resolving in DNS — most likely the 7-day idle auto-pause, since the project was created 2026-08-16 and the keep-alive cron only protects a *deployed* app (this branch was never pushed).
+
 ## 2026-08-16
 
 ### Verified

@@ -1,6 +1,6 @@
 # External Services Register
 
-**Last updated:** 2026-08-16 21:29
+**Last updated:** 2026-09-04 21:41
 
 Every third-party account Storykins depends on: what it does, where its credentials live, what it
 costs, what breaks when it fails, and when it needs renewing.
@@ -16,7 +16,7 @@ crash the build, it just stops working for users at some later date with no warn
 | Due | What | Action |
 |---|---|---|
 | **2027-08-16** | **Brevo SMTP key expires** | Generate a new key in Brevo → update it in Supabase's SMTP settings. **Nothing warns you.** When it lapses, magic-link emails stop sending: existing sessions keep working, so the app looks healthy while no one new can sign in. |
-| Rolling, every 7 days idle | Supabase project auto-pause (Free tier) | Automated — the daily cron in [vercel.json](../vercel.json) pings the DB. Only a concern if that cron is removed or silently fails; it returns a non-200 so failures show in Vercel's cron logs. |
+| Rolling, every 7 days idle | Supabase project auto-pause (Free tier) | Automated **only for deployed code** — the daily cron in [vercel.json](../vercel.json) pings the DB, but Vercel crons run on deployments, so a feature branch that is never pushed keeps nothing alive. **This already bit us once** (2026-09-04): the project stopped resolving in DNS entirely — not just refusing connections — which looks alarmingly like a deleted project. `dig` returns NXDOMAIN, identical to a non-existent project ref. Restore from the dashboard. |
 
 ## Accounts
 
