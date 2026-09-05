@@ -49,8 +49,16 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static assets, image files, and the cron keep-alive (which authenticates
-    // with CRON_SECRET and has no user session to refresh).
-    "/((?!_next/static|_next/image|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Page navigations only. Excluded, and why:
+    //  - static assets / images: nothing to refresh.
+    //  - api/*: this refresh exists so Server Components see a live session. Route handlers build
+    //    their own client and can call getUser() themselves, so running here only added a Supabase
+    //    /auth/v1/user round-trip to every story and image generation for signed-in users (guests
+    //    short-circuit with no cookie). When Step 10 keys the rate limiter on user id, that route
+    //    reads its own identity rather than relying on this pass.
+    //  - auth/callback: the callback sets the brand-new session cookies. If an expired refresh token
+    //    makes this pass emit maxAge:0 deletions, they land on the same response and can clobber the
+    //    session that was just established - a sign-in that silently does nothing.
+    "/((?!_next/static|_next/image|favicon.ico|api/|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

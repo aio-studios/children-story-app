@@ -209,6 +209,21 @@ export function clearContinueStory() {
   notify();
 }
 
+// Sign-out hygiene on a shared device: clears the continue slot AND the sticky "has ever created"
+// flag. Separate from clearContinueStory on purpose - that one must leave the flag alone, since
+// finishing a story shouldn't revert Home to "make your first story" (#82). Only signing out means
+// "this is someone else's device now", and leaving the flag set would greet the next person as a
+// returning user.
+export function clearLocalStoryState() {
+  try {
+    window.localStorage.removeItem(CONTINUE_STORY_KEY);
+    window.localStorage.removeItem(HAS_CREATED_KEY);
+  } catch {
+    /* storage blocked (private mode / lockdown) - nothing was persisted to clear */
+  }
+  notify();
+}
+
 export function useContinueStory(): ContinueStory | null {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

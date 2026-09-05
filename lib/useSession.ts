@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "./supabase/client";
-import { clearContinueStory } from "./storyHistory";
+import { clearLocalStoryState } from "./storyHistory";
 
 // Client-side view of "who is signed in", in the same useSyncExternalStore shape as the other stores
 // (see storyHistory.ts / useLayoutMode.ts).
@@ -49,6 +49,11 @@ function subscribe(listener: Listener) {
     if (listeners.size === 0) {
       unsubscribeAuth?.();
       unsubscribeAuth = null;
+      // Reset to the pre-subscription state. Without this, the module keeps the last known snapshot
+      // with loading:false, so a later remount renders that stale value before onAuthStateChange has
+      // re-reported - showing a signed-out user as still signed in if the sign-out happened (another
+      // tab, an expired session) while nothing was subscribed. No notify(): there are no listeners.
+      snapshot = { user: null, loading: true };
     }
   };
 }
@@ -77,13 +82,14 @@ export async function sendMagicLink(email: string): Promise<MagicLinkResult> {
   return { ok: true };
 }
 
-// Clearing the local continue slot is shared-device hygiene: without it, signing out on the family
-// iPad leaves the last story sitting on Home for the next person. In `finally` so a failed network
+// Clearing local story state is shared-device hygiene: without it, signing out on the family iPad
+// leaves the last story sitting on Home for the next person - and leaves the sticky "has created a
+// story" flag set, which would greet them as a returning user. In `finally` so a failed network
 // sign-out still clears local state - the DB copy is the durable one for signed-in users.
 export async function signOut(): Promise<void> {
   try {
     await createClient().auth.signOut();
   } finally {
-    clearContinueStory();
+    clearLocalStoryState();
   }
 }

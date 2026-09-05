@@ -24,10 +24,14 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // Server Components can read cookies but not write them. Refreshed tokens are dropped
-            // here on purpose - middleware.ts re-runs the refresh on every request and *can* write,
-            // so the session still stays alive. Swallowing this is the documented @supabase/ssr
-            // pattern, not a shortcut.
+            // Only Server Components land here: they can read cookies but not write them, so a token
+            // refreshed during a render has nowhere to go. proxy.ts re-runs the refresh on the next
+            // page navigation and *can* write, so the session still stays alive. Swallowing this is
+            // the documented @supabase/ssr pattern, not a shortcut.
+            //
+            // Route Handlers are NOT affected - cookies() is writable there, so /auth/callback sets
+            // its new session itself. That matters because proxy.ts deliberately skips auth/callback
+            // and api/* (see its matcher), leaving no second chance to write those cookies.
           }
         },
       },
