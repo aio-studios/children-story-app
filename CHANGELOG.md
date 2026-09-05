@@ -6,6 +6,8 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Added
 
+- 23:28 - **Database schema moved into the repo** — [supabase/migrations/](supabase/migrations/) now holds `001_stories.sql` (table + RLS) and `002_updated_at_trigger.sql` as the source of truth, with a README covering how to rebuild. Previously the schema existed only inside the plan doc, which would have made recovery a manual transcription job. Every file is idempotent (`if not exists` / `drop policy if exists` / `create or replace`), so re-running one against a healthy project is a no-op rather than a `42P07`. Applied by hand through the Supabase SQL editor — there is no CLI link and no service-role key in the repo by design, so nothing here runs automatically.
+
 - 21:41 - **Accounts foundation: Supabase, schema + RLS, magic-link auth (#92, Steps 1-3)** — the plumbing for optional accounts. No user-facing surface yet; the Library and sign-in sheet land in Steps 6-7. Branch `feat/92-accounts-auth-foundation`, not yet merged.
   - **Supabase clients** — [lib/supabase/client.ts](lib/supabase/client.ts) (browser) and [lib/supabase/server.ts](lib/supabase/server.ts) (per-request, never module-scoped: a shared instance would leak one user's session into another's request). Only the publishable key is used anywhere; the service-role key is deliberately absent from the project so no code path can bypass RLS.
   - **`stories` table + RLS + a `set_updated_at` trigger.** The trigger is load-bearing, not tidiness: `default now()` never fires on UPDATE, and eviction-oldest-by-`updated_at` would otherwise delete the story being actively read.
@@ -18,6 +20,9 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Changed
 
+- 23:28 - **Vercel Deployment Protection turned off for previews** (dashboard, not in the repo) — its SSO wall intercepted `/auth/callback` with a redirect to `vercel.com/sso-api`, which breaks magic links opened from a mail app, since iOS in-app webviews don't share the browser's Vercel cookie. Safe to disable because `/auth/test` has its own server-side `AUTH_HARNESS_TOKEN` gate, and that gate is what actually protects the Brevo quota. Preview URLs are now publicly reachable.
+- 23:28 - **Supabase redirect allowlist gained the preview wildcard** (dashboard) — `https://children-story-app-git-*-aio-studios.vercel.app/**`. Required, not optional: when a redirect target isn't allowlisted Supabase does **not** error, it silently falls back to Site URL. With Site URL still `http://localhost:3000`, an unlisted preview would have sent a phone to its own localhost with no diagnostic anywhere.
+
 - 21:41 - **Next.js 16.2.10 → 16.3.1** — closes 9 advisories including a middleware/proxy bypass in App Router + Turbopack. Done *before* writing `middleware.ts`, since auth that can be bypassed is not auth. 16.3 also renamed the `middleware` file convention to `proxy`.
 
 ### Fixed
@@ -28,6 +33,11 @@ All notable changes to this project are documented here, grouped by day, each en
 - 21:41 - **Stale session state and half-done sign-out hygiene** — [lib/useSession.ts](lib/useSession.ts) now resets its module snapshot when the last listener detaches (a remount could otherwise serve a stale signed-in state), and sign-out clears the sticky `has-created` flag via a new `clearLocalStoryState()` in [lib/storyHistory.ts](lib/storyHistory.ts), which the shared-device rationale required but the code only half delivered.
 
 ### Verified
+
+- 23:28 - **Magic-link sign-in verified on real hardware, both hard cases.** **Cross-browser:** link requested in Safari, opened and verified in Chrome, session established. **Cross-device:** requested on a phone against the Vercel preview, delivered to a mail app, opened in the browser iOS chose, session established. Together these empirically confirm the `pkce_`-prefixed `token_hash` is inert — the verifier cookie lives only in the requesting browser and `verifyOtp` never reads it, which until now was an assumption read off the `auth-js` source. Resolves the "not yet verified" note below; only the two-user RLS check remains in Step 3.
+- 23:28 - **`proxy.ts` skipping `/auth/callback` does not break session cookies** — proved with a throwaway route that set a cookie via `next/headers` `cookies()` and returned a self-constructed `NextResponse.redirect`; `set-cookie` was present on the 307. Route deleted after use.
+- 23:28 - **The Supabase outage was the Free-tier 7-day idle pause**, as suspected. Resuming restored everything — no data lost, no schema rebuild. **Trap worth remembering:** during a resume the API gateway answers *before* Postgres does, so `/auth/v1/settings` returns healthy config and REST returns a clean `401` while a table query still 404s with `PGRST205` "could not find the table in the schema cache". That combination is indistinguishable from a dropped table. It is not one — wait and re-poll. This cost a wrong diagnosis mid-session.
+- 23:28 - **Known gap: the keep-alive cron is running nowhere.** [vercel.json](vercel.json) exists only on the `feat/92-accounts-auth-foundation` branch, and Vercel runs crons only on **production** deployments, so pushing the branch does *not* protect the project — it will keep auto-pausing every 7 days until either #92 merges or a dependency-free ping route lands on `main`.
 
 - 21:41 - **Magic-link sign-in works end-to-end on desktop** — `/auth/callback` → `307` → `/`, session established. `/code-review` (6 findings, all fixed) and `/security-review` (no new HIGH/MEDIUM) both run against the branch. Build, lint, 21 redirect-guard cases, and all four harness-gate combinations pass.
   - **Not yet verified:** sign-in has not been retested since `auth/callback` was removed from the proxy matcher; the real-device cross-device test and the two-user RLS check are both still outstanding. Blocked at session end by the Supabase project no longer resolving in DNS — most likely the 7-day idle auto-pause, since the project was created 2026-08-16 and the keep-alive cron only protects a *deployed* app (this branch was never pushed).
