@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `72%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
+**Overall Progress:** `80%` — Steps 1–4 complete. Auth verified on real hardware, RLS proven with two real users, and the save path verified end-to-end with a real signed-in session (16/16). Step 5 (cover-blob lifecycle + eviction) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -25,7 +25,12 @@ a real outage from the resume trap below: DNS resolves, `/auth/v1/settings` → 
 `/rest/v1/stories` → `200 []` with the anon key. A `PGRST205` on that last one is the trap, not a
 dropped table.
 
-**Next action: Step 4 (persistence layer).** Nothing blocks it.
+**Next action: Step 5 (cover-blob lifecycle + eviction).** Nothing blocks it.
+
+**Steps 1-4 are DONE and verified end-to-end.** `scripts/verify-library-signed-in.mjs` is the
+regression gate for everything that follows - re-run it after any change to the persistence layer.
+It needs `TEST_USER_EMAIL`/`TEST_USER_PASSWORD` in `.env.local` and a running `npm run dev`, and it
+**deletes every story belonging to that account**, so it must stay pointed at a throwaway user.
 
 **⚠️ Pre-merge checklist item (still open):** before this branch merges to `main`, change Supabase
 **Site URL** from `http://localhost:3000` to the production URL. Site URL is the *silent fallback*
@@ -184,7 +189,7 @@ drop function if exists public.set_updated_at();
     - Run it **without RLS** in the SQL editor: it must start as the table owner to seed a row per user, then switches to `authenticated` itself.
     - **Design note worth keeping:** every measurement is taken into a variable while role-switched and written to the results table only after `reset role`. The first draft inserted results while still `authenticated` and died on `42501 permission denied for table rls_check` — correct behaviour from Postgres, and the fix is better than a grant would have been: the role under test now has no write access to the scoreboard at all.
 
-- [ ] 🟨 **Step 4: Persistence layer** ← current
+- [x] 🟩 **Step 4: Persistence layer** (eviction moved to Step 5)
 
   - [x] 🟩 [lib/stories.ts](../lib/stories.ts) — maps the `ClassicContinueStory | InteractiveContinueStory` union to/from a row. Pure mapping, no Supabase calls. `selections`/`content` split so the setup half is mode-independent; `fromRow` returns null instead of throwing so one bad row can't take down the Library; validated via `storyHistory`'s exported `isValidContinueStory` so a row and a slot can't diverge. 29-case round-trip script passed 2026-09-06.
   - [x] 🟩 [lib/storyRepo.ts](../lib/storyRepo.ts) — **added to the plan**: all Supabase calls for stories. Mutations are called from event handlers, not render, so they don't belong in a hook module. Reads intentionally carry no `user_id` filter (RLS does it; a client-side `.eq()` would be decoration). Column list + sort verified against the live table.
@@ -193,11 +198,13 @@ drop function if exists public.set_updated_at();
   - [x] 🟩 Auto-save on create; `opened` set when the reader mounts (not at creation, and not on a Continue-card impression). Wired in [app/create/page.tsx](../app/create/page.tsx) at four call sites: classic generate, classic cover-ready, interactive first beat, interactive updates. `persistInteractive` takes an explicit `isNew` flag — treating a beat as new would write a fresh row per beat.
   - [x] 🟩 Regenerate replaces the previous row in place when `opened = false` — `saveNewStory` in [lib/storyRepo.ts](../lib/storyRepo.ts). Three taps of "Try again" before reading leaves one story, not three drafts; a story someone actually read is kept and the regenerate lands beside it.
   - [x] 🟩 **Guest path verified unchanged** (2026-09-06, Playwright at 390×844): full setup deck → generate → reader, local slot written, **zero Supabase requests**, zero console errors. Guests are still 100% of real users, so this was the regression that mattered.
-  - [ ] 🟥 **Not yet verified end-to-end with a real session.** The save path is unit-verified (29-case mapper round-trip; column list + sort checked against the live table) but no signed-in browser has actually written a row. Closing this needs either a test user with a known password, or Step 6/7's real UI. **Do not call Step 4 done until a row has actually landed.**
+  - [x] 🟩 **Verified end-to-end with a real session, 2026-09-06 — 16/16 assertions.** [scripts/verify-library-signed-in.mjs](../scripts/verify-library-signed-in.mjs) drives a real browser as a real signed-in user and reads the rows back *through RLS with that user's own token*, never as an admin. Proves: a row lands with the right title/mode/selections/prose and `opened = false`; a regenerate replaces that row **in place** (same id, still one row); progress and reading time reach the row; and leaving the story to make a new one produces a **second** row with the first one's prose and progress untouched — the exact data-loss path the code review caught.
+    - Session is built with `@supabase/ssr`'s **own** chunker and base64url helpers, so the cookie is byte-identical to one the app would write. Password grant rather than a magic link, because a magic link needs someone to read an inbox; the magic-link flow itself is verified separately on real hardware.
+    - **One "failure" was the test's fault, worth remembering:** scrolling to the top before leaving the reader wrote `progress = 0`. That is correct — progress is *last position, not furthest* (UAT decision), so resuming reopens where you left off. The assertion now captures progress immediately before leaving and asserts it is unchanged.
   - [ ] 🟥 Evict oldest by `updated_at` past 20, deleting its cover blob — **deliberately deferred into Step 5**, which already owns cover deletion. Writing it here would mean writing blob-deletion logic twice.
   - [x] 🟩 **Interim #46 guard:** `discardCover` no-ops for signed-in users. Leaks an orphaned Blob worth a fraction of a cent; the other way round costs a saved story its cover permanently. Step 5 replaces this with the real lifecycle.
 
-- [ ] 🟥 **Step 5: Rework cover-blob lifecycle (#46 landmine)**
+- [ ] 🟨 **Step 5: Rework cover-blob lifecycle (#46 landmine) + eviction** ← current
 
   - [ ] 🟥 Remove `discardCover()` on continue-slot overwrite in [app/page.tsx](../app/page.tsx) for signed-in users — it would delete a _saved_ story's cover
   - [ ] 🟥 Delete covers only when a story row is deleted (user delete, eviction, regenerate-replace, account delete)
