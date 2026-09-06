@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `52%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
+**Overall Progress:** `60%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -187,7 +187,9 @@ drop function if exists public.set_updated_at();
 - [ ] 🟨 **Step 4: Persistence layer** ← current
 
   - [x] 🟩 [lib/stories.ts](../lib/stories.ts) — maps the `ClassicContinueStory | InteractiveContinueStory` union to/from a row. Pure mapping, no Supabase calls. `selections`/`content` split so the setup half is mode-independent; `fromRow` returns null instead of throwing so one bad row can't take down the Library; validated via `storyHistory`'s exported `isValidContinueStory` so a row and a slot can't diverge. 29-case round-trip script passed 2026-09-06.
-  - [ ] 🟥 `lib/useLibrary.ts` (list) and `lib/useStory.ts` (single, by id)
+  - [x] 🟩 [lib/storyRepo.ts](../lib/storyRepo.ts) — **added to the plan**: all Supabase calls for stories. Mutations are called from event handlers, not render, so they don't belong in a hook module. Reads intentionally carry no `user_id` filter (RLS does it; a client-side `.eq()` would be decoration). Column list + sort verified against the live table.
+  - [x] 🟩 [lib/useLibrary.ts](../lib/useLibrary.ts) — module store (both the Library grid and Home's Continue card read it, so a write must move both). Generation counter discards out-of-order fetches across a sign-out/sign-in; resets when the last listener detaches.
+  - [x] 🟩 [lib/useStory.ts](../lib/useStory.ts) — per-screen state keyed by id, not a module store, so two open readers can't overwrite each other. Loading is *derived during render*, not reset in an effect: a changed id reads as loading in the same commit instead of flashing the previous story. (`react-hooks/set-state-in-effect` flagged the first draft, and it was pointing at exactly that bug.)
   - [ ] 🟥 Auto-save on create; mark `opened` when the reader mounts
   - [ ] 🟥 Regenerate replaces the previous row in place when `opened = false`
   - [ ] 🟥 Evict oldest by `updated_at` past 20, deleting its cover blob
