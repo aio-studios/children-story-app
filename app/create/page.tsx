@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GENRES } from "@/lib/genres";
 import {
   DEFAULT_LESSON,
@@ -23,8 +23,19 @@ import { InteractiveStoryReader } from "@/components/InteractiveStoryReader";
 import { HomeScreen } from "@/components/HomeScreen";
 import { SetupDeck } from "@/components/SetupDeck";
 import { AppShell } from "@/components/AppShell";
+import { useSession } from "@/lib/useSession";
+import { markOpened, saveNewStory, updateStory } from "@/lib/storyRepo";
+import { refreshLibrary } from "@/lib/useLibrary";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
+
+// The library row backing the story on screen. `opened` is what decides whether a regenerate
+// replaces that row or leaves it alone and inserts beside it.
+type SavedRow = { id: string; opened: boolean };
+
+// Exactly the shape the local continue slot accepts, borrowed so localStorage and the database can
+// never be handed two different objects for the same story.
+type PersistableStory = Parameters<typeof saveContinueStory>[0];
 
 function isLessonReady(lesson: LessonSelection): boolean {
   if (lesson.type === "preset") return true;
@@ -110,6 +121,73 @@ export default function Home() {
     setCoverUrl(url);
   }
 
+  // ---- Library persistence (#92, Step 4) ----
+  // A signed-in user's stories are mirrored into Supabase alongside the localStorage continue slot,
+  // which stays exactly as it was: it is still what drives Home's Continue card, and it is the only
+  // copy a guest has. Every function below no-ops without a user, so the guest flow is unchanged.
+  const { user } = useSession();
+  const userIdRef = useRef<string | null>(null);
+  // Ref-mirrored because the callbacks that persist run inside async generation flows and would
+  // otherwise capture whoever was signed in when the request started.
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user]);
+
+  // The library row backing the story currently on screen, or null for a guest, a story generated
+  // before signing in, or one resumed from the local slot (whose row id we don't know until Step 6
+  // opens stories by id).
+  const [savedRow, setSavedRow] = useState<SavedRow | null>(null);
+  const savedRowRef = useRef<SavedRow | null>(null);
+
+  function setSaved(row: SavedRow | null) {
+    savedRowRef.current = row;
+    setSavedRow(row);
+  }
+
+  // Fire-and-forget by design: the story is already generated and on screen, so a failed save must
+  // degrade to "not in the library yet", never to a broken reader. The local slot still holds it.
+  async function persistNewStory(story: PersistableStory) {
+    const userId = userIdRef.current;
+    if (!userId) return;
+    try {
+      const saved = await saveNewStory(story, userId, savedRowRef.current);
+      setSaved({ id: saved.id, opened: saved.opened });
+      refreshLibrary();
+    } catch {
+      // Already logged by the repo. Deliberately silent here - a library sync failure is not
+      // something to interrupt a child's story with.
+      setSaved(null);
+    }
+  }
+
+  // Updates the row for the story already on screen (a cover arriving late, another beat, progress).
+  // Distinct from persistNewStory: this must never insert, or advancing a beat would duplicate the
+  // story every time.
+  async function persistStoryUpdate(story: PersistableStory) {
+    if (!savedRowRef.current || !userIdRef.current) return;
+    try {
+      await updateStory(savedRowRef.current.id, story);
+      refreshLibrary();
+    } catch {
+      // The row is gone (deleted elsewhere) or unreachable. Stop syncing to it rather than retrying
+      // into the same failure on every subsequent beat.
+      setSaved(null);
+    }
+  }
+
+  // "Opened" is what protects a story from being replaced by a regenerate, so it is set when the
+  // reader actually mounts - not at creation, and not on a Continue card impression.
+  useEffect(() => {
+    if (view !== "success" || !savedRow || savedRow.opened) return;
+    const id = savedRow.id;
+    void markOpened(id)
+      .then(() => {
+        // Guard against the story having changed while the request was in flight.
+        if (savedRowRef.current?.id === id) setSaved({ id, opened: true });
+      })
+      .catch(() => {});
+  }, [view, savedRow]);
+
   // Interactive mode and illustrations are opt-in, off by default. They persist while moving through
   // the setup steps, but should NOT carry over into the next story - reset them at every boundary
   // where a new story begins or the current one is left for setup. Not reset at creation itself (the
@@ -174,6 +252,12 @@ export default function Home() {
   // continue-slot still points at. Best-effort: failures are swallowed (server also no-ops on a bad URL).
   function discardCover(url: string | null | undefined) {
     if (!url) return;
+    // #46 landmine (Step 5): for a signed-in user this cover may belong to a row in their library,
+    // and deleting the Blob would leave a saved story with a permanently broken image. Until Step 5
+    // reworks the lifecycle to delete covers only when their row is deleted, signed-in users skip
+    // cleanup entirely. That leaks an orphaned Blob, which costs a fraction of a cent; the other
+    // way round costs someone their child's story cover, permanently.
+    if (userIdRef.current) return;
     void fetch("/api/delete-illustration", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -201,6 +285,7 @@ export default function Home() {
       updateCoverUrl(data.imageUrl);
       setCoverStatus("loaded");
       saveContinueStory({ title, story, ...selections, imageUrl: data.imageUrl });
+      void persistStoryUpdate({ title, story, ...selections, imageUrl: data.imageUrl });
     } catch {
       if (activeGenerationRef.current !== generationId) return;
       setCoverStatus("failed");
@@ -241,6 +326,7 @@ export default function Home() {
       }
       setGeneratedStory({ title: data.title, story: data.story });
       saveContinueStory({ title: data.title, story: data.story, ...selections });
+      void persistNewStory({ title: data.title, story: data.story, ...selections });
       // The new story now owns the continue slot (with no image yet), so the old cover is orphaned.
       discardCover(previousImageUrl);
       setView("success");
@@ -256,12 +342,16 @@ export default function Home() {
     }
   }
 
-  function persistInteractive(story: InteractiveStory, imageUrl: string | null) {
+  // `isNew` picks insert-or-replace vs. update-in-place. Every beat after the first is an update, so
+  // getting this wrong would write a fresh library row per beat.
+  function persistInteractive(story: InteractiveStory, imageUrl: string | null, isNew = false) {
     // Arc progress (beats so far / target length) is a truer "% read" for a branching story than
     // scroll position - it's what the reader's own progress bar already shows (D3 deviation, noted
     // in the plan). Classic stories instead write scroll fraction from the reader itself.
     const progress = story.ended ? 1 : Math.min(1, story.beats.length / story.arc.max);
-    saveContinueStory({ mode: "interactive", interactive: story, imageUrl: imageUrl ?? undefined, progress });
+    const slot = { mode: "interactive" as const, interactive: story, imageUrl: imageUrl ?? undefined, progress };
+    saveContinueStory(slot);
+    void (isNew ? persistNewStory(slot) : persistStoryUpdate(slot));
   }
 
   async function requestStep(story: InteractiveStory, action: StepAction): Promise<StepResult> {
@@ -337,7 +427,7 @@ export default function Home() {
         ended: res.isEnding,
       };
       setStory(story);
-      persistInteractive(story, null);
+      persistInteractive(story, null, true);
       // The new story owns the continue slot now, so any previous cover Blob is orphaned (#46).
       discardCover(previousImageUrl);
       setView("success");
@@ -413,6 +503,8 @@ export default function Home() {
   function handleInteractiveExit() {
     discardCover(coverUrl);
     clearContinueStory();
+    // The library keeps its copy; we just stop tracking it, so the next story is its own row.
+    setSaved(null);
     interactiveStoryRef.current = null;
     setInteractiveStory(null);
     setStepError(null);
@@ -428,6 +520,8 @@ export default function Home() {
     // Clearing the slot orphans this story's cover Blob - delete it too (#46).
     discardCover(coverUrl);
     clearContinueStory();
+    // The library keeps its copy; we just stop tracking it, so the next story is its own row.
+    setSaved(null);
     setGenerationError(null);
     resetOptInToggles();
     setSetupStep(2);

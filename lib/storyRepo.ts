@@ -1,6 +1,6 @@
 import { createClient } from "./supabase/client";
 import { ContinueStory } from "./storyHistory";
-import { fromRow, toRow, SavedStory, StoryRow } from "./stories";
+import { fromRow, toColumns, toRow, SavedStory, StoryRow } from "./stories";
 
 // Data access for `public.stories`. Every Supabase call for stories lives here, so the hooks stay
 // React-shaped and the mappers in stories.ts stay database-free.
@@ -76,6 +76,41 @@ export async function insertStory(
   // bug on our side, not a bad row, and it should be loud.
   if (!saved) fail("insert", "the saved story could not be read back");
   return saved;
+}
+
+// Overwrites the row backing the story currently on screen: a cover finishing after the story is
+// already being read, another interactive beat, a progress bump. Never changes `user_id` (fixed at
+// insert) or `opened` (owned by the reader).
+export async function updateStory(id: string, story: WithoutSavedAt<ContinueStory>): Promise<SavedStory> {
+  const { data, error } = await createClient()
+    .from("stories")
+    .update(toColumns(story))
+    .eq("id", id)
+    .select(COLUMNS)
+    .maybeSingle<StoryRow>();
+
+  if (error) fail("update", error.message);
+  // RLS turns "not yours" into zero rows rather than an error, and a story deleted in another tab
+  // looks identical. Both mean the same thing to the caller: this row is gone, stop syncing to it.
+  if (!data) fail("update", "that story no longer exists");
+
+  const saved = fromRow(data);
+  if (!saved) fail("update", "the saved story could not be read back");
+  return saved;
+}
+
+// Saves a NEWLY generated story - a first generation, or a regenerate.
+//
+// Regenerating replaces the previous row in place, but ONLY if nobody ever opened it. Hitting
+// "Try again" three times before reading should leave one story in the library, not three drafts;
+// but a story someone actually read is theirs to keep, and the regenerate becomes a new row beside it.
+export async function saveNewStory(
+  story: WithoutSavedAt<ContinueStory>,
+  userId: string,
+  previous: { id: string; opened: boolean } | null,
+): Promise<SavedStory> {
+  if (previous && !previous.opened) return updateStory(previous.id, story);
+  return insertStory(story, userId);
 }
 
 // Set once, when the reader actually mounts. This is what makes "regenerate replaces the unread

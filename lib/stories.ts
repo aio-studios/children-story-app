@@ -34,6 +34,12 @@ export type StoryRow = {
 // 002's trigger overrides any value we send, by design).
 export type StoryInsert = Omit<StoryRow, "id" | "created_at" | "updated_at">;
 
+// The columns that describe the story itself, without the two that describe its place in the
+// library. Split out so an in-place update (regenerating an unread story, attaching a cover once it
+// finishes) can reuse the exact same mapping without inventing a `user_id` it has no business
+// setting - a row's owner is fixed at insert, and `opened` is owned by the reader, not the writer.
+export type StoryColumns = Omit<StoryInsert, "user_id" | "opened">;
+
 // A row brought back into app shape, plus the two things only the database knows: which row this is,
 // and whether it has ever been opened (which decides if a regenerate replaces it in place).
 export type SavedStory = ContinueStory & { id: string; opened: boolean };
@@ -43,14 +49,16 @@ export type SavedStory = ContinueStory & { id: string; opened: boolean };
 type WithoutSavedAt<T> = T extends unknown ? Omit<T, "savedAt"> : never;
 
 export function toRow(story: WithoutSavedAt<ContinueStory>, userId: string, opened = false): StoryInsert {
+  return { ...toColumns(story), user_id: userId, opened };
+}
+
+export function toColumns(story: WithoutSavedAt<ContinueStory>): StoryColumns {
   const shared = {
-    user_id: userId,
     image_url: story.imageUrl ?? null,
     // Columns are NOT NULL with defaults, so an absent optional becomes 0 rather than a null that
     // every reader would then have to coalesce.
     progress: clampProgress(story.progress),
     time_spent: Math.max(0, Math.round(story.timeSpent ?? 0)),
-    opened,
   };
 
   if (story.mode === "interactive") {
