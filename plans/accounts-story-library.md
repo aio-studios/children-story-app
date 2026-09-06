@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `80%` — Steps 1–4 complete. Auth verified on real hardware, RLS proven with two real users, and the save path verified end-to-end with a real signed-in session (16/16). Step 5 (cover-blob lifecycle + eviction) is next and unblocked.
+**Overall Progress:** `88%` — Steps 1–5 complete and verified. The #46 landmine is closed: a saved story's cover can no longer be deleted, proven with real Blobs (21/21), and the Step 4 gate still passes (16/16). Step 6 (Library screen + nav) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -25,7 +25,19 @@ a real outage from the resume trap below: DNS resolves, `/auth/v1/settings` → 
 `/rest/v1/stories` → `200 []` with the anon key. A `PGRST205` on that last one is the trap, not a
 dropped table.
 
-**Next action: Step 5 (cover-blob lifecycle + eviction).** Nothing blocks it.
+**Next action (2026-09-06, session 4): Step 5 is DONE — Step 6 (Library screen + nav) is next.**
+
+Migration 003 is applied to the live project. **It is a deploy dependency, not just a local one:**
+`/api/delete-illustration` fails closed, so on any environment where 003 is missing *no cover is
+deleted for anyone, including guests*. Never ship this branch to an environment whose database
+hasn't had it run.
+
+Verification state: `scripts/verify-cover-lifecycle.mjs` 21/21 and
+`scripts/verify-library-signed-in.mjs` 16/16, both re-run *after* the review fixes.
+`/code-review` (4 findings, all fixed) and `/security-review` (no HIGH/MEDIUM) are done.
+
+**Still open before Step 6 ships anything user-facing:** UAT with Sarthak, and the Supabase
+**Site URL** pre-merge item below.
 
 **Steps 1-4 are DONE and verified end-to-end.** `scripts/verify-library-signed-in.mjs` is the
 regression gate for everything that follows - re-run it after any change to the persistence layer.
@@ -204,13 +216,28 @@ drop function if exists public.set_updated_at();
   - [ ] 🟥 Evict oldest by `updated_at` past 20, deleting its cover blob — **deliberately deferred into Step 5**, which already owns cover deletion. Writing it here would mean writing blob-deletion logic twice.
   - [x] 🟩 **Interim #46 guard:** `discardCover` no-ops for signed-in users. Leaks an orphaned Blob worth a fraction of a cent; the other way round costs a saved story its cover permanently. Step 5 replaces this with the real lifecycle.
 
-- [ ] 🟨 **Step 5: Rework cover-blob lifecycle (#46 landmine) + eviction** ← current
+- [x] 🟩 **Step 5: Rework cover-blob lifecycle (#46 landmine) + eviction** — DONE 2026-09-06, verified 21/21
 
-  - [ ] 🟥 Remove `discardCover()` on continue-slot overwrite in [app/page.tsx](../app/page.tsx) for signed-in users — it would delete a _saved_ story's cover
-  - [ ] 🟥 Delete covers only when a story row is deleted (user delete, eviction, regenerate-replace, account delete)
-  - [ ] 🟥 Guests keep today's single-slot behavior unchanged
+  - **The invariant, decided this session:** a cover Blob is deleted only once **no story row references it** — not "once it isn't yours". Ownership is the wrong question, because RLS collapses "referenced by someone else" (must refuse) and "referenced by nobody" (safe to delete) into the same zero rows. "Unreferenced" is also the right answer for a guest, whose covers are referenced by no row at all, so one rule covers both users.
+  - **Ordering rule, everywhere:** remove the reference *first* (clear the slot, overwrite or delete the row), delete the Blob *second*, and only if the first succeeded. The reverse leaves a visible story with a permanently broken cover; this way round leaves an orphan worth a fraction of a cent.
+  - [x] 🟩 [supabase/migrations/003_cover_is_referenced.sql](../supabase/migrations/003_cover_is_referenced.sql) — `security definer` function answering one boolean, plus a partial index on `image_url` (it scans across all users' rows, not just the caller's twenty). Granted to `anon` as well as `authenticated`: guests orphan covers too. **Written, not yet applied — Sarthak runs it in the SQL editor.**
+  - [x] 🟩 Server-side guard in [app/api/delete-illustration/route.ts](../app/api/delete-illustration/route.ts) — 409 on a referenced cover, and **fail closed** (503) if the check itself errors, unlike the rate limiter above it which fails open. A delete we can't verify is a delete we don't do.
+  - [x] 🟩 [lib/coverBlob.ts](../lib/coverBlob.ts) — one place that requests a Blob delete, so the guest path and the repo layer can't drift apart.
+  - [x] 🟩 Remove the interim "signed-in users never clean up" guard in [app/create/page.tsx](../app/create/page.tsx). `discardCover` now skips only a cover the **current row** points at (`SavedRow` gained `imageUrl`, kept fresh when a late cover lands); everything else is offered to the endpoint, which re-checks against the database.
+  - [x] 🟩 Delete covers when their row goes: `saveNewStory` replace-in-place deletes the cover it orphans, `deleteStory(id, imageUrl)` takes the cover with the row.
+  - [x] 🟩 `evictBeyondLimit()` in [lib/storyRepo.ts](../lib/storyRepo.ts), `LIBRARY_LIMIT = 20`, fired fire-and-forget after each successful save. **Silent** — the capacity meter is Step 6's job (decided 2026-09-06). Deliberately does *not* use `listStories()`: that drops rows it can't map, which would hide a corrupt row from eviction and leave the library permanently over the cap.
+  - [x] 🟩 Guests unchanged — `savedRowRef` is always null for them, so every cover they orphan is still deleted exactly as before.
+  - [x] 🟩 **[scripts/verify-cover-lifecycle.mjs](../scripts/verify-cover-lifecycle.mjs) — 21/21, zero console errors.** Uses **real** Blobs on purpose: `deleteIllustration()` no-ops on anything outside its own path prefix, so a test built on fake URLs passes whether the code works or not. Costs ~$0.16 in real covers and wipes `TEST_USER_EMAIL`'s library.
+  - [x] 🟩 Re-run [scripts/verify-library-signed-in.mjs](../scripts/verify-library-signed-in.mjs) — **16/16** after the review fixes. REST calls went 10 → 11, exactly the new authoritative cover read before a replace-in-place.
+  - [x] 🟩 **`/code-review` — 4 findings, all confirmed and fixed.** Two were serious and both were fixed by making the design *simpler*, not by adding guards:
+    - **A regenerate could have deleted the cover of the story it was saving.** A cover is on screen a round trip before the update attaching it to its row commits, so in that window the client *and* the database both call it unreferenced — and the server check cannot help, because the reference genuinely has not landed. `discardCover` is now **guests only**; signed-in covers are deleted exclusively by the row lifecycle. The "skip only if the current row owns it" cleverness that caused this is gone, and `SavedRow.imageUrl` with it.
+    - **Replace-in-place trusted a stale client value.** Now reads the row's real `image_url` immediately before overwriting.
+    - A partly-failed eviction deleted rows but skipped the refresh, leaving deleted stories on screen; rows are now counted only once actually gone.
+    - Cleanup shared the paid-generation rate limit, so routine use leaked permanently (the row is already deleted when the 429 lands). Own budget now.
+  - [x] 🟩 **`/security-review` — no HIGH/MEDIUM findings.** Cleared the definer function (one boolean, `search_path = ''`, fully qualified, explicit grants), the unauthenticated endpoint (now bounded to deleting orphans; before this step it would have deleted any story's cover), the blob-prefix guard (`del()` posts to Vercel's API rather than fetching the URL, so no SSRF), and client-driven eviction (RLS scopes it to the caller's own rows).
+  - **Carry-forward for Step 6:** `markCurrentStoryOpened`'s `opened` flag is unreachable today (every path to Home clears the tracked row first) but becomes reachable once the Library opens a story by id — at which point a concurrent content update could reset it to `false` and let a regenerate overwrite a story the user had read.
 
-- [ ] 🟥 **Step 6: Library screen + nav**
+- [ ] 🟥 **Step 6: Library screen + nav** ← current
 
   - [ ] 🟥 `app/library/page.tsx` — cover grid, History/Favourites segmented tabs (Direction A / frame A1)
   - [ ] 🟥 Capacity meter ("17 of 20 saved") + warning from 17

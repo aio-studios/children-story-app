@@ -1,4 +1,5 @@
 import { createClient } from "./supabase/client";
+import { deleteCoverBlob } from "./coverBlob";
 import { ContinueStory } from "./storyHistory";
 import { fromRow, toContentColumns, toRow, SavedStory, StoryRow } from "./stories";
 
@@ -17,6 +18,22 @@ import { fromRow, toContentColumns, toRow, SavedStory, StoryRow } from "./storie
 type WithoutSavedAt<T> = T extends unknown ? Omit<T, "savedAt"> : never;
 
 const COLUMNS = "id,user_id,mode,title,selections,content,image_url,progress,time_spent,opened,created_at,updated_at";
+
+// How many stories a signed-in user keeps. Anything past this is evicted oldest-first by
+// `updated_at` - the same order the Library lists them in, so the story about to go is always the
+// last card on screen rather than a surprise from the middle.
+export const LIBRARY_LIMIT = 20;
+
+// Ceiling on how many rows one eviction pass will remove. Normally it deletes exactly one (a save
+// pushed the count from 20 to 21); the headroom is for a library that drifted over the cap while
+// evictions were failing, so it still converges instead of trimming one row per save forever.
+const EVICTION_BATCH = 50;
+
+// What the caller knows about the row currently backing the story on screen. Deliberately does NOT
+// carry the cover URL: the client's copy of it lags the database by a round trip (a cover that has
+// just been generated is on screen before the PATCH attaching it has committed), and deciding what
+// to delete from a stale value is how a saved story loses its cover. The row itself is the authority.
+export type PreviousRow = { id: string; opened: boolean };
 
 function fail(action: string, message: string): never {
   // The raw Supabase message goes to the console for us; callers show their own copy to the user.
@@ -111,10 +128,36 @@ export async function updateStory(id: string, story: WithoutSavedAt<ContinueStor
 export async function saveNewStory(
   story: WithoutSavedAt<ContinueStory>,
   userId: string,
-  previous: { id: string; opened: boolean } | null,
+  previous: PreviousRow | null,
 ): Promise<SavedStory> {
-  if (previous && !previous.opened) return updateStory(previous.id, story);
+  if (previous && !previous.opened) {
+    // Read the cover this row ACTUALLY points at, immediately before overwriting it. Postgres
+    // UPDATE ... RETURNING gives back the new row, not the old one, and the client's cached value
+    // can be a round trip behind - so the pre-update value is fetched here rather than passed in.
+    const displaced = await currentCover(previous.id);
+    const saved = await updateStory(previous.id, story);
+    // Nothing references `displaced` any more: that row was its only reference and now points
+    // somewhere else (usually nowhere - a freshly generated story has no cover yet). Deleted only
+    // AFTER the update commits, so a failed update leaves the story on screen with its cover intact.
+    if (displaced && displaced !== saved.imageUrl) deleteCoverBlob(displaced);
+    return saved;
+  }
   return insertStory(story, userId);
+}
+
+// The cover a row currently points at. Its own query rather than a field on the caller's cached row:
+// this is read at the exact moment a cover is about to be orphaned, and a stale answer here either
+// leaks a Blob or deletes one a saved story still needs. Returns null if the row is gone, which
+// correctly means "nothing to clean up".
+async function currentCover(id: string): Promise<string | null> {
+  const { data, error } = await createClient()
+    .from("stories")
+    .select("image_url")
+    .eq("id", id)
+    .maybeSingle<Pick<StoryRow, "image_url">>();
+
+  if (error) fail("read cover", error.message);
+  return data?.image_url ?? null;
 }
 
 // Set once, when the reader actually mounts. This is what makes "regenerate replaces the unread
@@ -138,9 +181,50 @@ export async function saveStoryProgress(id: string, progress: number, timeSpentM
   if (error) fail("saveProgress", error.message);
 }
 
-// The cover blob is NOT deleted here. Blob cleanup is Step 5's job and has to survive a failed row
-// delete, so it is sequenced by the caller rather than buried in this function.
-export async function deleteStory(id: string): Promise<void> {
+// Deleting a story takes its cover with it - a user delete, an eviction, or an account delete.
+//
+// Row first, Blob second, and only if the row actually went: a Blob deleted ahead of a row that
+// survives is a visible story with a permanently broken cover, while the reverse leaves an orphan
+// costing a fraction of a cent. The endpoint independently refuses any URL a row still points at
+// (migration 003), so this ordering is enforced on both sides.
+export async function deleteStory(id: string, imageUrl?: string | null): Promise<void> {
   const { error } = await createClient().from("stories").delete().eq("id", id);
   if (error) fail("delete", error.message);
+  deleteCoverBlob(imageUrl);
+}
+
+// Trims the library back to `limit`, deleting each evicted row's cover with it. Returns how many
+// were removed so the caller can skip a refresh when nothing changed.
+//
+// The story that just triggered this is structurally safe: it was written moments ago, so migration
+// 002's trigger puts it at the top of the `updated_at` order and it can never fall in the tail. The
+// same is true of a story being read, whose progress writes keep bumping the column.
+export async function evictBeyondLimit(limit = LIBRARY_LIMIT): Promise<number> {
+  // Deliberately not listStories(): that maps rows and silently drops any that fail, so a corrupt
+  // row would be invisible here and the library would sit permanently over the cap with no way to
+  // trim it. Eviction needs two columns and an order, not a mapper.
+  const { data, error } = await createClient()
+    .from("stories")
+    .select("id,image_url")
+    .order("updated_at", { ascending: false })
+    .range(limit, limit + EVICTION_BATCH - 1)
+    .returns<Pick<StoryRow, "id" | "image_url">[]>();
+
+  if (error) fail("evict", error.message);
+
+  const stale = data ?? [];
+  // Sequential rather than Promise.all: this is almost always one row, and a failure part-way must
+  // not abandon the rows already deleted. Each is counted only once it is actually gone, so the
+  // caller refreshes on a partial pass instead of leaving deleted stories on screen; the remainder
+  // is retried by the next save.
+  let evicted = 0;
+  for (const row of stale) {
+    try {
+      await deleteStory(row.id, row.image_url);
+      evicted++;
+    } catch {
+      // Already logged by fail(). Keep going: the next row may well delete cleanly.
+    }
+  }
+  return evicted;
 }

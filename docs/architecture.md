@@ -312,7 +312,16 @@ graph TD
 
 Non-blocking guarantees, all in `app/create/page.tsx`: `generateCover()` is fired with `void` after `setView("success")`, guarded by the same `generationId` as the story so a slow image resolving after a Regenerate/navigation is discarded; any failure sets `coverStatus = "failed"` (a graceful in-slot fallback) and never touches the story text. The cover URL is written back into the `localStorage` continue-story slot on success (`ContinueStory.imageUrl?`, validated on read) so a resumed story shows its cover without re-generating. Gemini 2.5 Flash Image is the **first non-Anthropic AI vendor** in the stack; it sits behind the Vercel AI SDK's `generateImage`, so swapping to another `google.image(...)` model (e.g. an Imagen 4 fallback) is a one-line change in `lib/imageClient.ts`.
 
-**Blob cleanup (#46):** a superseded cover Blob is deleted once nothing references it, so storage doesn't grow unbounded. `app/create/page.tsx` captures the outgoing `previousImageUrl` (`coverUrl ?? continueStory?.imageUrl`) and fires a fire-and-forget `discardCover()` → `POST /api/delete-illustration` → prefix-guarded `deleteIllustration()` (`lib/imageClient.ts`, `del()` on our `story-covers/` path only, best-effort/never throws). Deletion runs only *after* the replacement commits to the slot (or the slot is cleared on "Back to setup"), so a failed generation never leaves a saved story pointing at a deleted image. Residual orphan: a cover generated for a story the user regenerates away from before the image resolves — the client never receives that URL to delete.
+**Blob cleanup (#46, reworked in #92 Step 5):** a cover Blob is deleted **only once no story row references it** — "unreferenced", not "not yours". Ownership is the wrong question: RLS makes "referenced by someone else" (must refuse) and "referenced by nobody" (safe to delete) both return zero rows, and "unreferenced" is also the correct answer for a guest, whose covers are referenced by no row at all. One rule covers both.
+
+Who deletes what depends on who owns the cover:
+
+- **Guests** — the cover is owned by the `localStorage` continue slot, so `discardCover()` in `app/create/page.tsx` fires when that slot is overwritten or cleared. Unchanged behaviour.
+- **Signed-in users** — the cover is owned by a `stories` row that outlives the screen, so *only* `lib/storyRepo.ts` deletes it: on a replace-in-place regenerate, on `deleteStory`, and on eviction. The screen deliberately does not try to reason about it, because a cover is on screen a round trip before the update attaching it to its row commits — during that window the client and the database both say "unreferenced" about a Blob that is about to be referenced, and deleting there is exactly the #46 landmine.
+
+The path is `deleteCoverBlob()` (`lib/coverBlob.ts`) → `POST /api/delete-illustration` → `cover_is_referenced` (migration 003, `security definer`) → prefix-guarded `deleteIllustration()` (`lib/imageClient.ts`, `del()` on our `story-covers/` path only, never throws). The route **refuses** (409) any referenced cover and **fails closed** (503) if the check errors — the opposite posture to its rate limiter, deliberately: an unverifiable delete costs an orphan, a wrong one costs a saved story its cover. Cleanup has its own 60/60s rate-limit budget rather than sharing the 3/60s generation budget, because a refused cleanup is a *permanent* leak once the row is gone.
+
+**Ordering rule, everywhere:** remove the reference first (clear the slot, overwrite or delete the row), delete the Blob second, and only if the first succeeded. The reverse leaves a visible story with a broken cover. Residual orphan: a cover whose save failed outright, so no row ever referenced it — a fraction of a cent, and the deliberate trade for never deleting a live one.
 
 This is a snapshot as of #38 (v1: one hero image) + #46/#47. Re-diagram when #37 (branching) extends this to per-scene images.
 
@@ -442,7 +451,11 @@ graph TD
 
 **Failure posture.** `fromRow` returns null instead of throwing, so one corrupt row costs one card rather than the whole Library. Every persistence call is fire-and-forget: the story is already generated and on screen, so a failed save degrades to "not in the library yet", never to a broken reader.
 
-**Open (Step 5):** `discardCover()` currently no-ops for signed-in users. It would otherwise delete the cover Blob of a *saved* story (#46). That leaks an orphaned Blob worth a fraction of a cent; the alternative costs a saved story its cover permanently. Eviction past 20 stories is deferred into Step 5 with it, since both delete covers.
+**Capacity (Step 5).** The library holds `LIBRARY_LIMIT = 20`. `evictBeyondLimit()` runs fire-and-forget after each successful save, deleting the oldest rows by `updated_at` and each one's cover with it. Eviction is silent — the capacity meter lands with the Library screen (Step 6). The story that triggers a pass can never be its own victim: it was written moments ago, so migration 002's trigger puts it at the top of that order, as does every progress write while a story is being read. It deliberately avoids `listStories()`, which drops rows it cannot map — a corrupt row would otherwise be invisible to eviction and hold the library permanently over the cap.
+
+**Cover ownership (Step 5, closes #46).** A regenerate that replaces an unread row reads the row's *actual* `image_url` immediately before overwriting it, rather than trusting the client's cached copy: `UPDATE … RETURNING` hands back the new row, so the displaced value must be fetched deliberately, and a stale one either leaks a Blob or deletes one a saved story still needs. See the Blob cleanup section above for the full rule.
+
+**Open (Step 6):** `markCurrentStoryOpened`'s `opened` flag is unreachable today — every path to Home clears the tracked row first. Once the Library can open a story by id it becomes reachable, and a concurrent content update could reset it to `false`, letting a regenerate overwrite a story the user had already read.
 
 #### Code map: interactive story mode (#37/#48/#49/#50)
 

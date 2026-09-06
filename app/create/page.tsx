@@ -24,7 +24,8 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { SetupDeck } from "@/components/SetupDeck";
 import { AppShell } from "@/components/AppShell";
 import { useSession } from "@/lib/useSession";
-import { markOpened, saveNewStory, saveStoryProgress, updateStory } from "@/lib/storyRepo";
+import { evictBeyondLimit, markOpened, saveNewStory, saveStoryProgress, updateStory } from "@/lib/storyRepo";
+import { deleteCoverBlob } from "@/lib/coverBlob";
 import { refreshLibrary } from "@/lib/useLibrary";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
@@ -153,6 +154,13 @@ export default function Home() {
       const saved = await saveNewStory(story, userId, savedRowRef.current);
       setSaved({ id: saved.id, opened: saved.opened });
       refreshLibrary();
+      // Trim back to the cap. Separate and fire-and-forget: a save that succeeded must not report as
+      // failed because the eviction after it didn't, and the next save retries the trim anyway.
+      void evictBeyondLimit()
+        .then((evicted) => {
+          if (evicted > 0) refreshLibrary();
+        })
+        .catch(() => {});
     } catch {
       // Already logged by the repo. Deliberately silent here - a library sync failure is not
       // something to interrupt a child's story with.
@@ -263,22 +271,24 @@ export default function Home() {
     };
   }
 
-  // Fire-and-forget deletion of a cover Blob that's no longer referenced (#46) - called once the
-  // story it belonged to has been replaced or cleared, so we never delete an image the saved
-  // continue-slot still points at. Best-effort: failures are swallowed (server also no-ops on a bad URL).
+  // Deletion of a cover Blob whose owner is going away (#46, #92 Step 5).
+  //
+  // Guests only, and that is the whole rule. A guest's cover is owned by the local continue slot, so
+  // clearing or overwriting that slot orphans it. A signed-in user's cover is owned by a library ROW
+  // that outlives this screen, and only storyRepo deletes those - when the row is actually replaced,
+  // evicted or deleted, reading the row itself to decide.
+  //
+  // This screen deliberately does NOT try to work out whether a signed-in user's cover is still
+  // needed. It cannot: a cover is on screen a round trip before the update attaching it to the row
+  // has committed, so during that window the client and the database both say "unreferenced" about a
+  // Blob that is about to be referenced. Deleting there is exactly the #46 landmine, and the server's
+  // reference check cannot save us because the reference genuinely has not landed yet. The cost of
+  // this rule is a leaked Blob when a save failed outright; the cost of being clever was a saved
+  // story with a permanently broken cover.
   function discardCover(url: string | null | undefined) {
     if (!url) return;
-    // #46 landmine (Step 5): for a signed-in user this cover may belong to a row in their library,
-    // and deleting the Blob would leave a saved story with a permanently broken image. Until Step 5
-    // reworks the lifecycle to delete covers only when their row is deleted, signed-in users skip
-    // cleanup entirely. That leaks an orphaned Blob, which costs a fraction of a cent; the other
-    // way round costs someone their child's story cover, permanently.
     if (userIdRef.current) return;
-    void fetch("/api/delete-illustration", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    }).catch(() => {});
+    deleteCoverBlob(url);
   }
 
   // Non-blocking cover generation (#38): runs after the story is already on screen. Guarded by the
