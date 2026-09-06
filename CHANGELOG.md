@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-06
+
+### Changed
+
+- 18:36 - **Landing page CTA copy: "Create a story — free" → "Create a story for free"** — both instances, the hero and the closing section ([LandingHero.tsx](components/landing/LandingHero.tsx), [app/page.tsx](app/page.tsx)). Drops the em dash from the button label.
+
 ## 2026-09-05
 
 ### Added
