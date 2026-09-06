@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `45%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
+**Overall Progress:** `52%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -186,7 +186,7 @@ drop function if exists public.set_updated_at();
 
 - [ ] 🟨 **Step 4: Persistence layer** ← current
 
-  - [ ] 🟥 `lib/stories.ts` — map the `ClassicContinueStory | InteractiveContinueStory` union to/from a row
+  - [x] 🟩 [lib/stories.ts](../lib/stories.ts) — maps the `ClassicContinueStory | InteractiveContinueStory` union to/from a row. Pure mapping, no Supabase calls. `selections`/`content` split so the setup half is mode-independent; `fromRow` returns null instead of throwing so one bad row can't take down the Library; validated via `storyHistory`'s exported `isValidContinueStory` so a row and a slot can't diverge. 29-case round-trip script passed 2026-09-06.
   - [ ] 🟥 `lib/useLibrary.ts` (list) and `lib/useStory.ts` (single, by id)
   - [ ] 🟥 Auto-save on create; mark `opened` when the reader mounts
   - [ ] 🟥 Regenerate replaces the previous row in place when `opened = false`
