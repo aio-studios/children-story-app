@@ -1,6 +1,6 @@
 # Landing Page — Implementation Plan
 
-**Overall Progress:** `96%` — desktop UAT rounds 1–2 applied; mobile UAT outstanding
+**Overall Progress:** `100%` — shipped to production 2026-09-05 (PR #100, `fd38786`); #97 and #99 closed
 
 ## ✅ Unblocked (was #99)
 
@@ -154,7 +154,8 @@ Checked against real code on 2026-09-05 — re-verify before changing any of thi
   - [x] 🟩 Desktop UAT round 2 (2026-09-05): whole landing contained inside the 1280 cap (header
     and bands included), screenshot row reduced to three equal columns, more hero padding,
     interactive-mode showcase section, labelled "Not built yet" roadmap strip.
-  - [ ] 🟥 **Mobile UAT — outstanding.** Sarthak is checking phone next.
+  - [x] 🟩 Signed off by Sarthak and shipped. Production verified live: all routes 200, full QA
+    suite re-run against the production URL, golden path driven at an iPhone 12 Pro viewport.
 
 **Standing QA rule added:** the harness now walks every element inside `.sk-lp` and fails if any
 crosses the container edge, asserts the container is centred at ≥1280, and checks the header wordmark

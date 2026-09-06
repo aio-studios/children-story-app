@@ -50,6 +50,9 @@ All notable changes to this project are documented here, grouped by day, each en
 - 20:23 - **Screenshot row is three equal columns** — the lead screenshot used to span full width and read as filler rather than proof.
 - 20:23 - **More air around the hero** (7rem/5.5rem on desktop).
 
+- 21:47 - **Shipped to production and verified live (#97, PR #100).** Squash-merged to `main` as `fd38786`; Vercel deployed in ~40s. On the live site: `/` serves the landing, `/create` the app, and `robots.txt`, `sitemap.xml` and `opengraph-image.jpg` all return 200 — `og:image` and the sitemap resolve to the production domain, confirming `metadataBase` works in the real environment. Full QA suite re-run **against production**: six viewports, light and dark, all passing. Golden path driven in a real browser at an iPhone 12 Pro viewport: landing → CTA → `/create` → generated "Prince Oren and the Door to Kindness" in **7.9s**, zero page errors.
+- 21:47 - **Production outage closed (#99).** `ANTHROPIC_API_KEY` set in Vercel (Production + Preview) and redeployed; generation confirmed **200** across four runs. The merge was deliberately held until this was green — shipping a landing page in front of an app that cannot generate a story would have been worse than the create-first home it replaced.
+
 ### Verified
 
 - 17:25 - **Landing QA at five viewports, light and dark** — laptop 1440×900, iPad 834×1194, iPhone 12 Pro 390×844, landscape phone 844×390, and the 1024×600 breakpoint collision. Checks: correct shape *and* theme screenshot served, no horizontal scroll, no collapsed or invisible elements, Fredoka/Nunito actually loaded, all images decoded, tap targets ≥44px, demo types and replays, reduced-motion renders the finished story statically, CTA resolves to `/create`. All passing against a **production** build.
