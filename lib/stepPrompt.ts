@@ -74,6 +74,7 @@ export function buildStepPrompt(
     "Never include violence, scary content, romance, or anything inappropriate for a young child.",
     "Stay perfectly consistent with the locked character and setup given to you, and with the story so far.",
     "Unless the story is ending, offer exactly 3 short suggested next directions (each at most about 8 words, phrased as a simple action a child could pick).",
+    "Use plain sentence punctuation a young reader can follow: full stops, commas, question marks. Never use em dashes or long dashes.",
     "Respond only with the story content - no meta-commentary, no notes to the parent.",
   ].join(" ");
 

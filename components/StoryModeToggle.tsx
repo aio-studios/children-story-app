@@ -15,7 +15,7 @@ export function StoryModeToggle({ mode, onChange }: StoryModeToggleProps) {
       <div className="sk-illus-body">
         <span className="sk-illus-title">Make it interactive</span>
         <span className="sk-illus-desc">
-          The story unfolds bit by bit — tap to continue or pick what happens next.
+          The story unfolds bit by bit. Tap to continue or pick what happens next.
           <span className="sk-illus-tag">Off by default</span>
         </span>
       </div>

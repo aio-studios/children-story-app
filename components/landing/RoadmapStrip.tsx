@@ -43,7 +43,7 @@ export function RoadmapStrip() {
           Not built yet
         </h2>
         <p className="sk-lp-roadmap-note">
-          Everything above this line works today. Everything below is still an open issue — listed
+          Everything above this line works today. Everything below is still an open issue, listed
           here because the plan is public, not because it&rsquo;s finished.
         </p>
       </div>

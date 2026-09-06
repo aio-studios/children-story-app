@@ -171,7 +171,7 @@ export function StoryCover({ status, url, icon }: { status: CoverStatus; url: st
   return (
     <div className="story-reader-hero is-failed" role="img" aria-label="Cover illustration unavailable">
       <span className="story-reader-hero-fail-orb" aria-hidden="true">{icon}</span>
-      <span className="story-reader-hero-fail-text">The cover didn&apos;t come through this time — but your story is all here.</span>
+      <span className="story-reader-hero-fail-text">The cover didn&apos;t come through this time, but your story is all here.</span>
     </div>
   );
 }

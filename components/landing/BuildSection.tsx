@@ -61,7 +61,7 @@ export function BuildSection() {
       <div className="sk-lp-build-intro">
         <h2 className="sk-lp-h2">One person, product to production.</h2>
         <p className="sk-lp-sub">
-          Storykins is a solo build — discovery, design, architecture and code. The interesting part
+          Storykins is a solo build: discovery, design, architecture and code. The interesting part
           isn&rsquo;t the stack, it&rsquo;s what had to be decided. Three of those decisions, and where they live:
         </p>
       </div>

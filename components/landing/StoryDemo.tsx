@@ -21,7 +21,7 @@ const STATUS_BY_PICK = [
 const STORY =
   "Luna's broomstick had exactly one rule, and Luna had already broken it twice before breakfast. " +
   "“Slowly,” she whispered, gripping the handle with both hands. The broom, who had opinions, " +
-  "went sideways instead — straight over Mrs Pemberly's washing line.";
+  "went sideways instead, straight over Mrs Pemberly's washing line.";
 
 /* Kept short on purpose: the pick sequence is pre-roll, and until typing starts the stage is an empty
    box. At 620ms/pick that was ~2.5s of blank panel as the first thing a cold visitor saw. */

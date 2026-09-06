@@ -14,11 +14,11 @@ import { Wordmark } from "@/components/Wordmark";
    B's scripted demo in the hero. */
 
 export const metadata: Metadata = {
-  title: "Storykins — original bedtime stories for your kid",
+  title: "Storykins: original bedtime stories for your kid",
   description:
     "Pick a world, a hero and a lesson, and Storykins writes and illustrates an original children's story. Your kid chooses what happens next. Free, no account needed.",
   openGraph: {
-    title: "Storykins — original bedtime stories for your kid",
+    title: "Storykins: original bedtime stories for your kid",
     description:
       "Pick a world, a hero and a lesson, and Storykins writes and illustrates an original children's story. Your kid chooses what happens next.",
     type: "website",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Storykins — original bedtime stories for your kid",
+    title: "Storykins: original bedtime stories for your kid",
     description:
       "An original, illustrated children's story from whatever you pick. Free, no account needed.",
   },
@@ -74,7 +74,7 @@ export default function LandingPage() {
             Same story, whatever they&rsquo;re holding.
           </h2>
           <p className="sk-lp-sub">
-            One codebase, three layouts — a bottom bar on a phone, a sidebar on an iPad or laptop, and
+            One codebase, three layouts: a bottom bar on a phone, a sidebar on an iPad or laptop, and
             a reading view that reflows for each.
           </p>
           <div className="sk-lp-device-row">
