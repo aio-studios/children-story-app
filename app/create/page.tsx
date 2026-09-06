@@ -24,7 +24,7 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { SetupDeck } from "@/components/SetupDeck";
 import { AppShell } from "@/components/AppShell";
 import { useSession } from "@/lib/useSession";
-import { markOpened, saveNewStory, updateStory } from "@/lib/storyRepo";
+import { markOpened, saveNewStory, saveStoryProgress, updateStory } from "@/lib/storyRepo";
 import { refreshLibrary } from "@/lib/useLibrary";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
@@ -136,12 +136,12 @@ export default function Home() {
   // The library row backing the story currently on screen, or null for a guest, a story generated
   // before signing in, or one resumed from the local slot (whose row id we don't know until Step 6
   // opens stories by id).
-  const [savedRow, setSavedRow] = useState<SavedRow | null>(null);
+  // A ref, not state: nothing renders from it. It only steers what the next write does, and it is
+  // read from async generation callbacks that would otherwise capture a stale value.
   const savedRowRef = useRef<SavedRow | null>(null);
 
   function setSaved(row: SavedRow | null) {
     savedRowRef.current = row;
-    setSavedRow(row);
   }
 
   // Fire-and-forget by design: the story is already generated and on screen, so a failed save must
@@ -160,6 +160,16 @@ export default function Home() {
     }
   }
 
+  // Progress is written on its own path, never through persistStoryUpdate: a story's content and how
+  // far someone has read it change on completely different schedules, and bundling them meant a late
+  // cover PATCHing `progress: 0` over a reader's real position.
+  function persistProgress(progress: number, timeSpentMs: number) {
+    const row = savedRowRef.current;
+    if (!row || !userIdRef.current) return;
+    // Deliberately not awaited and not surfaced: losing a progress tick costs a scroll position.
+    void saveStoryProgress(row.id, progress, timeSpentMs).catch(() => {});
+  }
+
   // Updates the row for the story already on screen (a cover arriving late, another beat, progress).
   // Distinct from persistNewStory: this must never insert, or advancing a beat would duplicate the
   // story every time.
@@ -175,18 +185,24 @@ export default function Home() {
     }
   }
 
-  // "Opened" is what protects a story from being replaced by a regenerate, so it is set when the
-  // reader actually mounts - not at creation, and not on a Continue card impression.
-  useEffect(() => {
-    if (view !== "success" || !savedRow || savedRow.opened) return;
-    const id = savedRow.id;
-    void markOpened(id)
+  // `opened` protects a story from being replaced by a regenerate. It is deliberately NOT set when
+  // the post-generation reader appears: "Try again" lives inside that very screen, so marking it
+  // there made the replaces-unread branch unreachable and left a discarded draft in the library for
+  // every tap. It is set when a story is re-opened later - from the Library (Step 6) or a resume -
+  // which is the moment the story stops being a draft and becomes one the reader chose to keep.
+  //
+  // What stops a NEW story from overwriting the previous one is `savedRow` being cleared on every
+  // exit from the current story (below), not this flag.
+  function markCurrentStoryOpened() {
+    const row = savedRowRef.current;
+    if (!row || row.opened) return;
+    void markOpened(row.id)
       .then(() => {
-        // Guard against the story having changed while the request was in flight.
-        if (savedRowRef.current?.id === id) setSaved({ id, opened: true });
+        // The user may have moved to a different story while this was in flight.
+        if (savedRowRef.current?.id === row.id) setSaved({ id: row.id, opened: true });
       })
       .catch(() => {});
-  }, [view, savedRow]);
+  }
 
   // Interactive mode and illustrations are opt-in, off by default. They persist while moving through
   // the setup steps, but should NOT carry over into the next story - reset them at every boundary
@@ -530,6 +546,10 @@ export default function Home() {
 
   function handleContinueFromHome() {
     if (!continueStory) return;
+    // Resuming is the moment a story stops being a draft: from here a regenerate should leave it
+    // alone and create a new row beside it. No-ops today for a story resumed from the local slot,
+    // whose row id we don't know until Step 6 opens stories by id - but correct the moment it does.
+    markCurrentStoryOpened();
     if (continueStory.mode === "interactive") {
       const resumed = continueStory.interactive;
       setMode("interactive");
@@ -603,11 +623,17 @@ export default function Home() {
 
   function handleNavigateHome() {
     abandonInFlightGeneration();
+    // Stop tracking this library row. Without this, the next story generated would be treated as a
+    // regenerate of this one and overwrite it in place - losing a story the user had already read.
+    setSaved(null);
     setView("home");
   }
 
   function handleNavigateNewStory() {
     abandonInFlightGeneration();
+    // Same reason as handleNavigateHome: a new story must be its own row, never an overwrite of the
+    // one still sitting in the library.
+    setSaved(null);
     resetOptInToggles();
     setSetupStep(0);
     setView("setup");
@@ -721,6 +747,9 @@ export default function Home() {
           initialTimeSpent={continueStory && continueStory.mode !== "interactive" ? getContinueTimeSpent(continueStory) : 0}
           onRegenerate={generateStory}
           onBackToSetup={handleBackToSetupFromReader}
+          // Fires on the reader's own throttle, only when the local write happened, so the library
+          // row tracks the same position the Continue card shows.
+          onProgressSaved={persistProgress}
         />
       )}
 

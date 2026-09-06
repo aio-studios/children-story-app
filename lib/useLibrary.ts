@@ -60,13 +60,24 @@ async function load() {
   } catch {
     if (mine !== generation) return;
     // The thrown message is a raw Postgres/PostgREST string - useful in the console, not to a parent.
-    setSnapshot({ stories: EMPTY, loading: false, error: "We couldn't load your stories. Pull to refresh, or try again in a moment." });
+    // Keep whatever is already on screen: a failed background refresh should surface an error, not
+    // blank a grid of stories the user can still see and open.
+    setSnapshot({
+      stories: snapshot.stories,
+      loading: false,
+      error: "We couldn't load your stories. Pull to refresh, or try again in a moment.",
+    });
   }
 }
 
 // Called after any write so every subscribed screen moves together. Fire-and-forget by design: a
 // failed refresh shows the error state, it never rejects into a caller that was just saving a story.
 export function refreshLibrary(): void {
+  // With nothing subscribed there is no library on screen to refresh, and `currentUserId` has already
+  // been reset - loading here would write an empty, not-loading snapshot that the next mount renders
+  // as "no stories yet" before the auth listener has re-reported. Auto-save calls this constantly
+  // while the Library is closed, so this is the common path, not an edge case.
+  if (listeners.size === 0) return;
   void load();
 }
 

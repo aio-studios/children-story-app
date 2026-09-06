@@ -22,9 +22,23 @@ const TICK_MS = 15_000;
 //  - PERSIST: last scroll position + cumulative ACTIVE reading time (paused while the tab is hidden)
 //    are written on scroll (throttled), on a periodic tick, on tab-hide, and on unmount, so both the
 //    "% read" and the time-gated completion stay current however the reader is left.
-function useReaderProgress(initialProgress: number, initialTimeSpent: number) {
+function useReaderProgress(
+  initialProgress: number,
+  initialTimeSpent: number,
+  onProgressSaved?: (progress: number, timeSpentMs: number) => void,
+) {
   const targetRef = useRef(initialProgress);
   const baseTimeRef = useRef(initialTimeSpent);
+  // Ref-held so a caller passing an inline arrow doesn't re-run this effect (and re-attach every
+  // scroll/visibility listener) on each render.
+  const onSavedRef = useRef(onProgressSaved);
+  // Synced in its own effect, declared before the listener effect below so it is already current on
+  // mount. Assigning during render trips react-hooks/refs, and re-running the listener effect on
+  // every render (which an inline arrow in the deps would cause) would re-attach every scroll and
+  // visibility listener each time.
+  useEffect(() => {
+    onSavedRef.current = onProgressSaved;
+  }, [onProgressSaved]);
   useEffect(() => {
     function computeDenom(): number {
       return document.documentElement.scrollHeight - window.innerHeight;
@@ -43,7 +57,11 @@ function useReaderProgress(initialProgress: number, initialTimeSpent: number) {
       return baseTimeRef.current + accumulated + (activeStart != null ? Date.now() - activeStart : 0);
     }
     function save() {
-      saveProgress(computeFraction(), totalTimeMs());
+      const fraction = computeFraction();
+      const time = totalTimeMs();
+      // Only mirror onward when the local write actually happened, so the library row is updated on
+      // exactly the same throttle as localStorage rather than on every scroll tick.
+      if (saveProgress(fraction, time)) onSavedRef.current?.(fraction, time);
     }
 
     // Restore only for a genuine mid-story resume (not ~top, not ~end/complete). The programmatic
@@ -93,6 +111,9 @@ function useReaderProgress(initialProgress: number, initialTimeSpent: number) {
 export type CoverStatus = "idle" | "loading" | "loaded" | "failed";
 
 type StoryReaderProps = {
+  // Fired only when progress was actually persisted locally - lets a signed-in reader mirror the
+  // same position into their library row without the reader knowing anything about accounts.
+  onProgressSaved?: (progress: number, timeSpentMs: number) => void;
   genreSelection: GenreSelection;
   title: string;
   story: string;
@@ -155,11 +176,11 @@ export function StoryCover({ status, url, icon }: { status: CoverStatus; url: st
   );
 }
 
-export function StoryReader({ genreSelection, title, story, coverStatus, coverUrl, initialProgress, initialTimeSpent, onRegenerate, onBackToSetup }: StoryReaderProps) {
+export function StoryReader({ genreSelection, title, story, coverStatus, coverUrl, initialProgress, initialTimeSpent, onRegenerate, onBackToSetup, onProgressSaved }: StoryReaderProps) {
   const { icon, label, accent } = genreDisplay(genreSelection);
   const paragraphs = splitParagraphs(story);
   const accentVars = { "--accent-light": accent.light, "--accent-dark": accent.dark } as CSSProperties;
-  useReaderProgress(initialProgress, initialTimeSpent);
+  useReaderProgress(initialProgress, initialTimeSpent, onProgressSaved);
 
   return (
     <main className={`story-reader-canvas ${fredoka.variable} ${nunito.variable}`}>

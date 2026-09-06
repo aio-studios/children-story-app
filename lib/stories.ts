@@ -40,6 +40,13 @@ export type StoryInsert = Omit<StoryRow, "id" | "created_at" | "updated_at">;
 // setting - a row's owner is fixed at insert, and `opened` is owned by the reader, not the writer.
 export type StoryColumns = Omit<StoryInsert, "user_id" | "opened">;
 
+// The story's own content, WITHOUT how far through it someone is. Split out because those two move
+// on completely different schedules: content changes when a beat is added or a cover finishes, while
+// progress changes every few seconds as someone reads. An update that carried both would PATCH
+// `progress: 0` over a reader's real position every time a late cover landed.
+export type StoryContentColumns = Omit<StoryColumns, "progress" | "time_spent">;
+export type StoryProgressColumns = Pick<StoryColumns, "progress" | "time_spent">;
+
 // A row brought back into app shape, plus the two things only the database knows: which row this is,
 // and whether it has ever been opened (which decides if a regenerate replaces it in place).
 export type SavedStory = ContinueStory & { id: string; opened: boolean };
@@ -53,12 +60,21 @@ export function toRow(story: WithoutSavedAt<ContinueStory>, userId: string, open
 }
 
 export function toColumns(story: WithoutSavedAt<ContinueStory>): StoryColumns {
-  const shared = {
-    image_url: story.imageUrl ?? null,
-    // Columns are NOT NULL with defaults, so an absent optional becomes 0 rather than a null that
-    // every reader would then have to coalesce.
+  return { ...toContentColumns(story), ...toProgressColumns(story) };
+}
+
+// Columns are NOT NULL with defaults, so an absent optional becomes 0 rather than a null every
+// reader would then have to coalesce.
+export function toProgressColumns(story: WithoutSavedAt<ContinueStory>): StoryProgressColumns {
+  return {
     progress: clampProgress(story.progress),
     time_spent: Math.max(0, Math.round(story.timeSpent ?? 0)),
+  };
+}
+
+export function toContentColumns(story: WithoutSavedAt<ContinueStory>): StoryContentColumns {
+  const shared = {
+    image_url: story.imageUrl ?? null,
   };
 
   if (story.mode === "interactive") {

@@ -1,6 +1,6 @@
 import { createClient } from "./supabase/client";
 import { ContinueStory } from "./storyHistory";
-import { fromRow, toColumns, toRow, SavedStory, StoryRow } from "./stories";
+import { fromRow, toContentColumns, toRow, SavedStory, StoryRow } from "./stories";
 
 // Data access for `public.stories`. Every Supabase call for stories lives here, so the hooks stay
 // React-shaped and the mappers in stories.ts stay database-free.
@@ -54,6 +54,9 @@ export async function getStory(id: string): Promise<SavedStory | null> {
     .eq("id", id)
     .maybeSingle<StoryRow>();
 
+  // 22P02 is "invalid input syntax for type uuid" - a hand-typed or stale URL, not an outage. It
+  // must read as not-found, or the reader offers a Try again that can never succeed.
+  if (error && error.code === "22P02") return null;
   if (error) fail("get", error.message);
   return data ? fromRow(data) : null;
 }
@@ -78,13 +81,14 @@ export async function insertStory(
   return saved;
 }
 
-// Overwrites the row backing the story currently on screen: a cover finishing after the story is
-// already being read, another interactive beat, a progress bump. Never changes `user_id` (fixed at
-// insert) or `opened` (owned by the reader).
+// Overwrites the CONTENT of the row backing the story on screen: a cover finishing after the story
+// is already being read, another interactive beat. Deliberately does not touch progress/time_spent
+// (saveStoryProgress owns those - a late cover must not reset how far someone has read), nor
+// `user_id` (fixed at insert) or `opened`.
 export async function updateStory(id: string, story: WithoutSavedAt<ContinueStory>): Promise<SavedStory> {
   const { data, error } = await createClient()
     .from("stories")
-    .update(toColumns(story))
+    .update(toContentColumns(story))
     .eq("id", id)
     .select(COLUMNS)
     .maybeSingle<StoryRow>();

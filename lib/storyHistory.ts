@@ -176,32 +176,36 @@ export function saveContinueStory(story: Saveable<ContinueStory>) {
 // there's no slot or it's unreadable, so a stray call can never create or corrupt one.
 // Position is last-left (not furthest): the reader restores this exact spot on resume (see
 // StoryReader), so "left at 40%, come back" reopens at 40% and the card reflects it (UAT 2026-08-07).
-export function saveProgress(fraction: number, timeSpentMs: number) {
+// Returns whether it actually wrote, so a caller mirroring progress elsewhere (the library row for a
+// signed-in reader) fires on exactly the same schedule as the local write instead of on every
+// throttled tick.
+export function saveProgress(fraction: number, timeSpentMs: number): boolean {
   const clamped = Math.max(0, Math.min(1, fraction));
   const time = Math.max(0, Math.round(timeSpentMs));
   let raw: string | null;
   try {
     raw = window.localStorage.getItem(CONTINUE_STORY_KEY);
   } catch {
-    return;
+    return false;
   }
-  if (!raw) return;
+  if (!raw) return false;
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return;
+    return false;
   }
-  if (!isValidContinueStory(parsed)) return;
-  if (parsed.progress === clamped && parsed.timeSpent === time) return; // no change - skip the write
+  if (!isValidContinueStory(parsed)) return false;
+  if (parsed.progress === clamped && parsed.timeSpent === time) return false; // no change - skip the write
   // No notify() on purpose: Home isn't mounted while reading, and it reads fresh progress via
   // getSnapshot when it (re)mounts on navigation. A live notify here would only re-render the reader
   // (through page's useContinueStory subscription) on every throttled write, for no benefit.
   try {
     window.localStorage.setItem(CONTINUE_STORY_KEY, JSON.stringify({ ...parsed, progress: clamped, timeSpent: time }));
   } catch {
-    return;
+    return false;
   }
+  return true;
 }
 
 export function clearContinueStory() {
