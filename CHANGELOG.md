@@ -24,6 +24,7 @@ All notable changes to this project are documented here, grouped by day, each en
 
 - 19:10 - **`/api/delete-illustration` is no longer an open delete.** It refuses (409) any cover a story row still points at, and **fails closed** (503) if that check itself errors — the opposite of the rate limiter above it, deliberately: a delete we can't verify is a delete we don't do. The cost of refusing is an orphaned Blob worth a fraction of a cent; the cost of proceeding blind is a child's story losing its cover permanently.
 - 19:10 - **Cover cleanup got its own rate-limit budget** (60/60s, [lib/rateLimit.ts](lib/rateLimit.ts)). It had been sharing the 3-per-60s budget sized for *paid generation*, which is the opposite kind of request — cleanup costs nothing and deletes something nothing references. A higher cap is safe here specifically because of the reference check above: the worst any caller can achieve through that endpoint is deleting orphans, which is its entire purpose.
+- 18:36 - **Landing page CTA copy: "Create a story — free" → "Create a story for free"** — both instances, the hero and the closing section ([LandingHero.tsx](components/landing/LandingHero.tsx), [app/page.tsx](app/page.tsx)). Drops the em dash from the button label.
 - 16:31 - **Branch merged up to `main`**, so the accounts work now sits on top of the landing page (#97). The app is at `app/create/page.tsx`; the #46 cover-blob landmine moved with it.
 
 

@@ -27,7 +27,7 @@ export function LandingHero() {
 
         <div className="sk-lp-cta-row">
           <a className="sk-lp-btn sk-lp-btn-primary" href="/create">
-            Create a story — free
+            Create a story for free
           </a>
           <a className="sk-lp-btn sk-lp-btn-ghost" href="#how-its-built">
             How it&rsquo;s built

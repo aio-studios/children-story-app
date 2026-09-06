@@ -101,7 +101,7 @@ export default function LandingPage() {
           <h2 className="sk-lp-h2">Make one tonight.</h2>
           <p className="sk-lp-sub">Nothing to install, nothing to sign up for.</p>
           <a className="sk-lp-btn sk-lp-btn-primary" href="/create">
-            Create a story — free
+            Create a story for free
           </a>
         </section>
       </main>
