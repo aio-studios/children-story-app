@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `60%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
+**Overall Progress:** `72%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -190,9 +190,12 @@ drop function if exists public.set_updated_at();
   - [x] 🟩 [lib/storyRepo.ts](../lib/storyRepo.ts) — **added to the plan**: all Supabase calls for stories. Mutations are called from event handlers, not render, so they don't belong in a hook module. Reads intentionally carry no `user_id` filter (RLS does it; a client-side `.eq()` would be decoration). Column list + sort verified against the live table.
   - [x] 🟩 [lib/useLibrary.ts](../lib/useLibrary.ts) — module store (both the Library grid and Home's Continue card read it, so a write must move both). Generation counter discards out-of-order fetches across a sign-out/sign-in; resets when the last listener detaches.
   - [x] 🟩 [lib/useStory.ts](../lib/useStory.ts) — per-screen state keyed by id, not a module store, so two open readers can't overwrite each other. Loading is *derived during render*, not reset in an effect: a changed id reads as loading in the same commit instead of flashing the previous story. (`react-hooks/set-state-in-effect` flagged the first draft, and it was pointing at exactly that bug.)
-  - [ ] 🟥 Auto-save on create; mark `opened` when the reader mounts
-  - [ ] 🟥 Regenerate replaces the previous row in place when `opened = false`
-  - [ ] 🟥 Evict oldest by `updated_at` past 20, deleting its cover blob
+  - [x] 🟩 Auto-save on create; `opened` set when the reader mounts (not at creation, and not on a Continue-card impression). Wired in [app/create/page.tsx](../app/create/page.tsx) at four call sites: classic generate, classic cover-ready, interactive first beat, interactive updates. `persistInteractive` takes an explicit `isNew` flag — treating a beat as new would write a fresh row per beat.
+  - [x] 🟩 Regenerate replaces the previous row in place when `opened = false` — `saveNewStory` in [lib/storyRepo.ts](../lib/storyRepo.ts). Three taps of "Try again" before reading leaves one story, not three drafts; a story someone actually read is kept and the regenerate lands beside it.
+  - [x] 🟩 **Guest path verified unchanged** (2026-09-06, Playwright at 390×844): full setup deck → generate → reader, local slot written, **zero Supabase requests**, zero console errors. Guests are still 100% of real users, so this was the regression that mattered.
+  - [ ] 🟥 **Not yet verified end-to-end with a real session.** The save path is unit-verified (29-case mapper round-trip; column list + sort checked against the live table) but no signed-in browser has actually written a row. Closing this needs either a test user with a known password, or Step 6/7's real UI. **Do not call Step 4 done until a row has actually landed.**
+  - [ ] 🟥 Evict oldest by `updated_at` past 20, deleting its cover blob — **deliberately deferred into Step 5**, which already owns cover deletion. Writing it here would mean writing blob-deletion logic twice.
+  - [x] 🟩 **Interim #46 guard:** `discardCover` no-ops for signed-in users. Leaks an orphaned Blob worth a fraction of a cent; the other way round costs a saved story its cover permanently. Step 5 replaces this with the real lifecycle.
 
 - [ ] 🟥 **Step 5: Rework cover-blob lifecycle (#46 landmine)**
 
