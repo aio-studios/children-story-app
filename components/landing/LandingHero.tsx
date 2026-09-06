@@ -21,7 +21,7 @@ export function LandingHero() {
           An original bedtime story, written and illustrated in <em>about twenty seconds</em>.
         </h1>
         <p className="sk-lp-sub">
-          Pick a world, a hero and the lesson you want it to land. Your kid picks what happens next,
+          Pick a world, a hero and the lesson you want it to land. Your kid picks what happens next —
           and no two stories come out the same.
         </p>
 

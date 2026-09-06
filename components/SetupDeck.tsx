@@ -77,7 +77,7 @@ function worldCards(): DeckCard[] {
   }));
   genres.push({
     name: "Your own world",
-    blurb: "Describe any world you can dream up, and we'll build the story around it.",
+    blurb: "Describe any world you can dream up — we'll build the story around it.",
     art: "/your-own.jpg",
     accent: CUSTOM_GENRE_ACCENT,
     custom: true,
@@ -242,7 +242,7 @@ export function SetupDeck(props: SetupDeckProps) {
           title: "Pick your hero",
           sub: "Who is this story about?",
         }
-      : { eyebrow: "Choose a world", title: "Which world today?", sub: "Swipe to explore, tap to choose." };
+      : { eyebrow: "Choose a world", title: "Which world today?", sub: "Swipe to explore — tap to choose." };
 
   // Custom "make your own" form panel — one shared full-panel treatment for BOTH the custom world
   // (one field) and the custom hero (three fields), replacing the deck (UAT: keep the two entry

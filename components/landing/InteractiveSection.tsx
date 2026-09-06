@@ -33,7 +33,7 @@ export function InteractiveSection() {
         </h2>
         <p className="sk-lp-sub">
           Switch it on and the story becomes a conversation. The same setup never plays out the same
-          way twice, because the plot is theirs, not the model&rsquo;s.
+          way twice — because the plot is theirs, not the model&rsquo;s.
         </p>
         <ol className="sk-lp-beats">
           {BEATS.map((beat) => (
@@ -50,7 +50,7 @@ export function InteractiveSection() {
           pin="phone"
           slot="interactive"
           caption="Steering the story"
-          alt="An interactive story mid-flow: a Continue button, a Choose button, and three suggested directions (the door glows and creaks open, a small voice asks who is there, a golden key falls from the sky), plus a “Write your own” option."
+          alt="An interactive story mid-flow: a Continue button, a Choose button, and three suggested directions — the door glows and creaks open, a small voice asks who is there, a golden key falls from the sky — plus a “Write your own” option."
         />
       </div>
     </section>

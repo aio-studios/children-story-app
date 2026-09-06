@@ -8,7 +8,7 @@ export const GENRES: Genre[] = [
     accent: { light: "#B85C27", dark: "#E8A06B" },
     image: "/genres/adventure.jpg",
     blurb:
-      "The map is unrolled and the boots are laced. Somewhere past the hill, an adventure is waiting to be found.",
+      "The map is unrolled and the boots are laced — somewhere past the hill, an adventure is waiting to be found.",
     characters: [
       {
         id: "finn",

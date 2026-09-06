@@ -58,7 +58,7 @@ export function buildStoryPrompt(selections: StorySelections): { system: string;
     "You are a children's story writer for a mobile app called Storykins.",
     "Write a complete, original, wholesome story appropriate for young children.",
     "Never include violence, scary content, romance, or anything inappropriate for a young child.",
-    "Use plain sentence punctuation a young reader can follow: full stops, commas, question marks. Never use em dashes or long dashes.",
+    "Favour plain sentence punctuation a young reader can follow: full stops, commas, question marks. Use em dashes sparingly, for a real pause, never as a routine connector.",
     "Respond only with the story itself - no meta-commentary, no notes to the parent.",
   ].join(" ");
 
