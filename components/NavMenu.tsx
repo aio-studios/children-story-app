@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { fredoka, nunito } from "@/lib/fonts";
+import { Wordmark } from "./Wordmark";
 
 type NavMenuProps = {
   onNavigateHome: () => void;
@@ -107,7 +108,7 @@ export function NavMenu({ onNavigateHome, onNavigateNewStory }: NavMenuProps) {
             <div className="sk-nav-panel-backdrop" onClick={() => setIsOpen(false)} />
             <div className="sk-nav-panel-menu">
               <div className="sk-nav-panel-head">
-                <span className="sk-nav-panel-brand">Storykins</span>
+                <Wordmark className="sk-nav-panel-brand" />
                 <button
                   ref={closeButtonRef}
                   type="button"

@@ -2,6 +2,7 @@
 
 import { ReactNode, useSyncExternalStore } from "react";
 import { LayoutMode } from "@/lib/useLayoutMode";
+import { Wordmark } from "./Wordmark";
 
 type AppNavProps = {
   mode: LayoutMode;
@@ -192,7 +193,7 @@ export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory }: 
         // Collapse control lives INSIDE the sidebar header (the deferred mock fix) so the collapsed
         // rail still shows it as a reopen affordance - no protruding tab floating over the content.
         <div className="sk-appnav-head">
-          {!collapsed && <span className="sk-appnav-brand">Storykins</span>}
+          {!collapsed && <Wordmark className="sk-appnav-brand" />}
           <button
             type="button"
             className="sk-appnav-toggle"

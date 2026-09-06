@@ -2,6 +2,64 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-05
+
+### Added
+
+- 16:05 - **Landing page at `/` (#97)** — a real marketing page for cold visitors, replacing the create-first home as the site's front door. Hero with a scripted "watch it write one" demo, three real app screenshots, a "Behind the build" section for technical readers, and a closing CTA. Static server component; the only client JS is the demo ([components/landing/StoryDemo.tsx](components/landing/StoryDemo.tsx)). Direction C + B's demo, from [docs/designs/landing-page-directions.html](docs/designs/landing-page-directions.html).
+- 16:05 - **Per-shape screenshots** — [components/landing/AppScreenshot.tsx](components/landing/AppScreenshot.tsx) serves laptop, iPad or phone captures via `<picture>`, using the *same* media queries as [lib/useLayoutMode.ts](lib/useLayoutMode.ts) so the landing and the app never disagree about a device's shape. Light and dark variants for each. 18 optimised JPEGs in `public/landing/`.
+- 16:05 - **SEO + link previews** — real `title`/`description`, Open Graph and Twitter card metadata, a designed 1200×630 OG image ([app/opengraph-image.jpg](app/opengraph-image.jpg)) with alt text, plus [app/robots.ts](app/robots.ts) and [app/sitemap.ts](app/sitemap.ts). Origin resolution centralised in [lib/siteUrl.ts](lib/siteUrl.ts).
+
+### Changed
+
+- 16:05 - **The app moved from `/` to `/create`** ([app/create/page.tsx](app/create/page.tsx)) — file moved unchanged. No internal links needed rewriting: the app had zero `href`s, `next/link`s or `useRouter` calls, navigating entirely by callbacks through `AppShell`.
+- 16:05 - **Product is now officially Storykins (#68)** — closed after checking domains (every obvious candidate is registered/parked) and re-weighting the criteria for the current audience.
+
+### Fixed
+
+- 17:10 - **`metadataBase` was unset** ([app/layout.tsx](app/layout.tsx)) — Next resolved `og:image` against `localhost`, so every shared link would have rendered a broken preview card.
+- 17:10 - **Landscape phones were served iPad screenshots** — `AppScreenshot` matched on width alone; `useLayoutMode`'s tablet query also requires `min-height: 600px`. Caught by QA at 844×390.
+- 17:10 - **Landing and app disagreed at 1024×600** — both the landscape and tablet CSS blocks match there; `useLayoutMode` resolves tablet-first, so the tablet block now comes last in the cascade to match.
+- 17:10 - **Landing tap targets were under 44px** — the sticky header CTA, the demo's Replay button and the outbound link pills. Same class of bug as #20/#21/#22.
+- 17:10 - **Demo re-announced the whole story on every keystroke** — `aria-live` sat on the paragraph that mutates per character. The typing effect is now `aria-hidden`, with the finished text announced once via a `sr-only` live region.
+- 17:10 - **`NEXT_PUBLIC_SITE_URL` without a scheme crashed the build** ([lib/siteUrl.ts](lib/siteUrl.ts)) — an easy mistake since Vercel's own URL env vars carry no scheme. Now normalised.
+
+### Changed
+
+- 18:18 - **One wordmark everywhere** ([components/Wordmark.tsx](components/Wordmark.tsx)) — "Story" in ink + "kins" in brand, now shared by the sidebar, nav panel, reader bar and landing page. Previously the app rendered it all-brand while the landing was two-tone, so the product disagreed with its own front door.
+- 18:18 - **Desktop app is capped and centred** — the whole shell maxes at `--sk-max` (1280px) above 1280px wide, with canvas painted behind it and gutters on the content. Below that nothing changes, so the wide-iPad "brown bars" regression can't return. The landing shares the same token.
+- 18:18 - **Landing sections given room to breathe** on tablet/laptop — hero, screenshots, build section and closing CTA all get substantially more vertical padding.
+- 18:18 - **Sample story cards now have cover art** ([components/HomeScreen.tsx](components/HomeScreen.tsx)) — reusing existing genre/character art rather than commissioning covers for placeholder data. The emoji is now a fallback shown only if the image fails, instead of sitting on top of it.
+
+### Added
+
+- 18:18 - **Device showcase on the landing** — a section pinned to iPhone and iPad screenshots (`AppScreenshot` gained a `pin` prop), showing the form factors the visitor isn't currently on.
+
+### Fixed
+
+- 18:18 - **The width cap collapsed the setup deck to 469px** — `margin-inline: auto` on `.sk-shell-tablet` cancelled the flex `stretch` it gets as a child of `<body class="flex flex-col">`, making it shrink-to-fit. Home happened to measure 1280 because the story shelves are intrinsically wide; the deck (`overflow: hidden`) collapsed. Now `width: 100%` + `align-self: center`. Deck content went 229px → 1040px.
+
+### Added
+
+- 20:23 - **Interactive mode gets its own section on the landing** ([components/landing/InteractiveSection.tsx](components/landing/InteractiveSection.tsx)) — the app's most capable feature (#37) was getting one line. Now a three-step explainer beside a real screenshot of a story mid-flow: Continue / Choose, three generated directions and "Write your own".
+- 20:23 - **A labelled roadmap strip** ([components/landing/RoadmapStrip.tsx](components/landing/RoadmapStrip.tsx)) — accounts & library (#23), favourites & sharing (#56), read-aloud (#26) and other languages (#70), each linking to its open issue. Headed "Not built yet", styled dashed and muted, and explicitly separated from everything above it so it can never read as a feature list.
+
+### Changed
+
+- 20:23 - **The whole landing is now contained** — header, tinted bands and footer all sit inside the same 1280px cap as the app, centred on canvas. Previously the header ran edge-to-edge while the content was inset, so the wordmark didn't line up with anything.
+- 20:23 - **Screenshot row is three equal columns** — the lead screenshot used to span full width and read as filler rather than proof.
+- 20:23 - **More air around the hero** (7rem/5.5rem on desktop).
+
+### Verified
+
+- 17:25 - **Landing QA at five viewports, light and dark** — laptop 1440×900, iPad 834×1194, iPhone 12 Pro 390×844, landscape phone 844×390, and the 1024×600 breakpoint collision. Checks: correct shape *and* theme screenshot served, no horizontal scroll, no collapsed or invisible elements, Fredoka/Nunito actually loaded, all images decoded, tap targets ≥44px, demo types and replays, reduced-motion renders the finished story statically, CTA resolves to `/create`. All passing against a **production** build.
+- 17:25 - **Story generation timing measured** — text in 7.9–9.4s, full flow including the illustrated cover in 15.9–18.2s across three shapes. The hero's "about twenty seconds" is accurate and slightly conservative.
+- 17:25 - **Security review: no findings.** No new API routes, no user input on the landing, no `dangerouslySetInnerHTML`/`eval`, all external links carry `rel="noopener noreferrer"`.
+
+### Fixed (production)
+
+- 15:10 - **Production was down: story generation returned 502 (#99)** — found while capturing screenshots. Two stacked faults: the Anthropic API key was invalid (`401 authentication_error`) *and* the account had no credit (`400 invalid_request_error`). The site loaded normally throughout, so the outage was invisible until someone actually tried to create a story. Key rotated and credits added; generation verified locally. **Production still needs the new key in Vercel env vars + a redeploy.**
+
 ## 2026-08-16
 
 ### Verified
@@ -139,15 +197,15 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Added
 
-- 18:40 - Optional AI **cover illustration per story** (#38). A new opt-in toggle on the Customize step (default **OFF**) adds one AI-generated cover image to the top of the story reader. Story text renders immediately as before; the cover generates in a **separate, non-blocking** call and fills in after (shimmer placeholder while it works), with a graceful fallback message if it fails - the story is never blocked by the image. Image generated by **Gemini 2.5 Flash Image ("Nano Banana")** via the **Vercel AI SDK**, stored in **Vercel Blob**, and prompted from a character sheet built from the same validated selections the story used, so the illustrated character matches the tale. The cover URL persists alongside the "Continue story" slot, so resuming a story keeps its picture without re-generating (and re-paying for) it. Scoped to one hero image so it drops into #37's future per-scene illustrations. New files: `app/api/generate-illustration/route.ts`, `lib/imagePrompt.ts`, `lib/imageClient.ts`, `components/IllustrationToggle.tsx`. New deps: `ai`, `@ai-sdk/google`, `@vercel/blob`. New env vars: `GOOGLE_GENERATIVE_AI_API_KEY`, `BLOB_READ_WRITE_TOKEN`. Design approved in `docs/designs/illustration-hero-preview.html`.
+- 18:18 - Optional AI **cover illustration per story** (#38). A new opt-in toggle on the Customize step (default **OFF**) adds one AI-generated cover image to the top of the story reader. Story text renders immediately as before; the cover generates in a **separate, non-blocking** call and fills in after (shimmer placeholder while it works), with a graceful fallback message if it fails - the story is never blocked by the image. Image generated by **Gemini 2.5 Flash Image ("Nano Banana")** via the **Vercel AI SDK**, stored in **Vercel Blob**, and prompted from a character sheet built from the same validated selections the story used, so the illustrated character matches the tale. The cover URL persists alongside the "Continue story" slot, so resuming a story keeps its picture without re-generating (and re-paying for) it. Scoped to one hero image so it drops into #37's future per-scene illustrations. New files: `app/api/generate-illustration/route.ts`, `lib/imagePrompt.ts`, `lib/imageClient.ts`, `components/IllustrationToggle.tsx`. New deps: `ai`, `@ai-sdk/google`, `@vercel/blob`. New env vars: `GOOGLE_GENERATIVE_AI_API_KEY`, `BLOB_READ_WRITE_TOKEN`. Design approved in `docs/designs/illustration-hero-preview.html`.
 
 ### Changed
 
-- 18:40 - Extracted the request-validation layer (`validateSelections` + its sub-validators + `collectCustomText`) out of `app/api/generate-story/route.ts` into a shared `lib/validateSelections.ts`, now used by both the story and illustration routes - no behavior change to story generation. Exported `describeGenre`/`describeCharacter` from `lib/storyPrompt.ts` so the image prompt reuses the exact same character/genre descriptions instead of re-deriving them.
+- 18:18 - Extracted the request-validation layer (`validateSelections` + its sub-validators + `collectCustomText`) out of `app/api/generate-story/route.ts` into a shared `lib/validateSelections.ts`, now used by both the story and illustration routes - no behavior change to story generation. Exported `describeGenre`/`describeCharacter` from `lib/storyPrompt.ts` so the image prompt reuses the exact same character/genre descriptions instead of re-deriving them.
 
 ### Security
 
-- 18:40 - The illustration route re-validates and re-safety-checks every input server-side (a separate entry point can't trust that the client already passed the story route's checks). Unlike story generation, the story **title** also feeds the image prompt and is client-supplied, so it runs through both safety gates too (local rules filter + Haiku classifier) - closing a defense-in-depth gap where a direct caller could pair safe preset selections with a malicious title to steer the image model. Caught in `/code-review`. Gemini's own safety filter + SynthID watermark remain a backstop.
+- 18:18 - The illustration route re-validates and re-safety-checks every input server-side (a separate entry point can't trust that the client already passed the story route's checks). Unlike story generation, the story **title** also feeds the image prompt and is client-supplied, so it runs through both safety gates too (local rules filter + Haiku classifier) - closing a defense-in-depth gap where a direct caller could pair safe preset selections with a malicious title to steer the image model. Caught in `/code-review`. Gemini's own safety filter + SynthID watermark remain a backstop.
 
 ### Fixed
 
@@ -329,7 +387,7 @@ All notable changes to this project are documented here, grouped by day, each en
 - 18:18 - Clarified target users/UX ownership in docs/PRD.md: setup/selection is always parent-operated; under-3 is fully parent-driven; 3+ has the child as reader (Day 1) and direct chat participant (Day 2, icon-forward/large-touch-target UI). Target age range ~0-10.
 - 18:24 - Set "Storykins" as a working title in README.md and persona/CTO.md (not finalized - "Once Upon a Time" and "Wondertales" were ruled out due to existing competing products of the same name). GitHub repo/org names left unchanged until a permanent name is picked.
 - 18:30 - Documented future native iOS/Android goal (F23 in docs/PRD.md) and confirmed no tech stack change is needed for it: Next.js API routes + Supabase already work as a plain backend a future Expo (React Native) app can reuse as-is. Noted the one practice worth adopting now (separate business logic from UI components) in docs/architecture.md.
-- 18:35 - Filed 25 GitHub issues: Epic 1 (Day 1 MVP) fully decomposed into 5 Features and 13 User Stories (#3-#22), plus Epics 2-7 (#23-#28) filed as single undecomposed issues for Day 2/Later phases.
+- 20:23 - Filed 25 GitHub issues: Epic 1 (Day 1 MVP) fully decomposed into 5 Features and 13 User Stories (#3-#22), plus Epics 2-7 (#23-#28) filed as single undecomposed issues for Day 2/Later phases.
 - 20:46 - docs/PRD.md: new "Design Principles" section - "smart defaults everywhere" (pre-select sensible defaults at every step so a tired parent can move through setup with minimal decisions).
 - 20:52 - docs/PRD.md: new "User Personas" section (Tired Parent, Inquisitive Parent, Curious Child) for Day 2 ideation, explicitly left open for more to be added later. Noted Day 1's static per-genre content as a Day 2 candidate for live AI generation.
 - 21:34 - GitHub Projects board ("Storykins Roadmap", linked to the repo) with Backlog/Todo/In Progress/In Review/Done columns; all 26 issues triaged onto it (Epic 1 -> Todo, Day 2/Later -> Backlog).

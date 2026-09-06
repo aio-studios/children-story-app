@@ -5,6 +5,7 @@ import { fredoka, nunito } from "@/lib/fonts";
 import { useLayoutMode } from "@/lib/useLayoutMode";
 import { AppNav } from "./AppNav";
 import { NavMenu } from "./NavMenu";
+import { Wordmark } from "./Wordmark";
 
 type AppShellProps = {
   onNavigateHome: () => void;
@@ -120,7 +121,11 @@ export function AppShell({
         {autoHide && (
           <header className={`sk-topbar sk-topbar-autohide ${isHeaderHidden ? "sk-topbar-hidden" : ""}`}>
             <NavMenu onNavigateHome={onNavigateHome} onNavigateNewStory={onNavigateNewStory} />
-            <span className={`sk-brand-mark ${pageTitle ? "sk-brand-mark-page" : ""}`}>{pageTitle || "Storykins"}</span>
+            {pageTitle ? (
+              <span className="sk-brand-mark sk-brand-mark-page">{pageTitle}</span>
+            ) : (
+              <Wordmark className="sk-brand-mark" />
+            )}
             <span className="sk-icon-btn sk-icon-btn-spacer" aria-hidden="true" />
           </header>
         )}

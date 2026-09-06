@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useSyncExternalStore } from "react";
+import { CSSProperties, useState, useSyncExternalStore } from "react";
 import { CUSTOM_GENRE_ACCENT, GENRES, getGenreAccent, getGenreById } from "@/lib/genres";
 import {
   ContinueStory,
@@ -59,16 +59,20 @@ function BookIcon() {
 // Placeholder discovery content: there's no stories DB / popularity feed yet (decided explicitly, D7
 // in the plan). Real cards with covers + captured metadata replace these once a catalog lands; until
 // then the rows degrade gracefully to sample stories on colored cards (no on-the-fly image gen).
-type SampleStory = { title: string; genreId: string; level: string; length: string; emoji: string };
+type SampleStory = { title: string; genreId: string; level: string; length: string; emoji: string; image: string };
+/* `image` reuses art already in the repo (the genre tiles and character cards) rather than
+   commissioning covers for placeholder catalogue data. The emoji stays as the fallback when an
+   asset 404s. Each entry points at the character the title actually names, so the pairing is not
+   arbitrary. */
 const SAMPLE_STORIES: SampleStory[] = [
-  { title: "The Kindness Dragon", genreId: "fantasy", level: "Early reader", length: "~2 min", emoji: "🐉" },
-  { title: "Coco's Very Big Shortcut", genreId: "animals", level: "Toddler", length: "~2 min", emoji: "🦊" },
-  { title: "Nova Builds a Friend", genreId: "sci-fi", level: "Independent", length: "~10 min", emoji: "🤖" },
-  { title: "Willow and the Last Star", genreId: "bedtime", level: "Early reader", length: "~2 min", emoji: "🧚" },
-  { title: "Pip Climbs the Cloud Peak", genreId: "adventure", level: "Early reader", length: "~10 min", emoji: "🐐" },
-  { title: "Ember's Tiny Spark", genreId: "fantasy", level: "Toddler", length: "~2 min", emoji: "🐲" },
-  { title: "Baxter's Honey Hunt", genreId: "animals", level: "Toddler", length: "~2 min", emoji: "🐻" },
-  { title: "Cosmo Meets a Comet", genreId: "sci-fi", level: "Early reader", length: "~10 min", emoji: "👨‍🚀" },
+  { title: "The Kindness Dragon", genreId: "fantasy", level: "Early reader", length: "~2 min", emoji: "🐉", image: "/genres/fantasy.jpg" },
+  { title: "Coco's Very Big Shortcut", genreId: "animals", level: "Toddler", length: "~2 min", emoji: "🦊", image: "/characters/coco.jpg" },
+  { title: "Nova Builds a Friend", genreId: "sci-fi", level: "Independent", length: "~10 min", emoji: "🤖", image: "/characters/nova.jpg" },
+  { title: "Willow and the Last Star", genreId: "bedtime", level: "Early reader", length: "~2 min", emoji: "🧚", image: "/characters/willow.jpg" },
+  { title: "Pip Climbs the Cloud Peak", genreId: "adventure", level: "Early reader", length: "~10 min", emoji: "🐐", image: "/characters/pip.jpg" },
+  { title: "Ember's Tiny Spark", genreId: "fantasy", level: "Toddler", length: "~2 min", emoji: "🐲", image: "/characters/ember.jpg" },
+  { title: "Baxter's Honey Hunt", genreId: "animals", level: "Toddler", length: "~2 min", emoji: "🐻", image: "/characters/baxter.jpg" },
+  { title: "Cosmo Meets a Comet", genreId: "sci-fi", level: "Early reader", length: "~10 min", emoji: "👨‍🚀", image: "/characters/cosmo.jpg" },
 ];
 
 function accentStyle(genreId: string): CSSProperties {
@@ -79,12 +83,28 @@ function accentStyle(genreId: string): CSSProperties {
 // Presentational only (no story to open behind these yet, D7) - a <div>, not a button, so it doesn't
 // promise an action it can't keep.
 function CoverCard({ story }: { story: SampleStory }) {
+  // The emoji is the fallback, not a decoration on top of the art: it only appears if the image
+  // fails to load, otherwise it would sit over the character it duplicates.
+  const [artFailed, setArtFailed] = useState(false);
+
   return (
     <div className="sk-cover-card" style={accentStyle(story.genreId)}>
       <span className="sk-cover-art" aria-hidden="true" />
+      {!artFailed && (
+        // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
+        <img
+          src={story.image}
+          alt=""
+          className="sk-cover-art-img"
+          loading="lazy"
+          onError={() => setArtFailed(true)}
+        />
+      )}
       <span className="sk-cover-scrim" aria-hidden="true" />
       <span className="sk-cover-lvl">{story.level}</span>
-      <span className="sk-cover-emoji" aria-hidden="true">{story.emoji}</span>
+      {artFailed && (
+        <span className="sk-cover-emoji" aria-hidden="true">{story.emoji}</span>
+      )}
       <span className="sk-cover-foot">
         <span className="sk-cover-title">{story.title}</span>
         <span className="sk-cover-badges">
