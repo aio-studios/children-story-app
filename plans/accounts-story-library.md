@@ -1,54 +1,49 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `38%` — Steps 1–3 done and verified on real hardware; only the two-user RLS check remains before Step 4
+**Overall Progress:** `45%` — Steps 1–3 complete and verified on real hardware, two-user RLS check included. Step 4 (persistence) is next and unblocked.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-09-04
+**Last updated:** 2026-09-06
 
-## ▶ Resume point (2026-09-04, session 2)
+## ▶ Resume point (2026-09-06, session 3)
 
-**Branch:** `feat/92-accounts-auth-foundation` — **pushed**, live on a Vercel preview. `main` untouched.
-`13f1f7b` foundation · `70c61ea` review fixes · `9b7d348` schema-into-repo + cross-browser verification.
+**Branch:** `feat/92-accounts-auth-foundation` — pushed, live on a Vercel preview. `main` untouched.
+Now merged up to date with `main` (the #97 landing page), so `app/page.tsx` is the landing page and
+the app lives at `app/create/page.tsx` — **Step 5's `discardCover()` work points at `app/create/page.tsx`
+now, not `app/page.tsx`.**
 
 **Preview:** `https://children-story-app-git-feat-92-accounts-auth-2cafb2-aio-studios.vercel.app`
 Harness: append `/auth/test?t=<AUTH_HARNESS_TOKEN>` (Preview-scoped env var, rotated 2026-09-04).
 
-**Steps 1–3 are done and verified on real hardware.** Magic-link sign-in passed both hard cases:
-**cross-browser** (requested in Safari, verified in Chrome) and **cross-device** (requested on a
-phone, opened from a mail app). Together these empirically confirm the `pkce_`-prefixed `token_hash`
-is inert — the verifier cookie lives only in the requesting browser and `verifyOtp` never reads it.
-That was previously an assumption read off the `auth-js` source.
+**Steps 1–3 are DONE.** Magic-link sign-in passed cross-browser and cross-device on real hardware,
+and the two-user RLS check passed all 8 assertions on 2026-09-06. Nothing in the auth or data-isolation
+foundation is outstanding.
 
-**Only open item in Step 3:** the two-user RLS check.
+**Supabase was awake on 2026-09-06** — no idle pause to recover from. Health probe that distinguishes
+a real outage from the resume trap below: DNS resolves, `/auth/v1/settings` → `200`, and
+`/rest/v1/stories` → `200 []` with the anon key. A `PGRST205` on that last one is the trap, not a
+dropped table.
 
-**Config changed this session (all dashboard-side, not in the repo):**
+**Next action: Step 4 (persistence layer).** Nothing blocks it.
+
+**⚠️ Pre-merge checklist item (still open):** before this branch merges to `main`, change Supabase
+**Site URL** from `http://localhost:3000` to the production URL. Site URL is the *silent fallback*
+when a redirect target is not allowlisted — Supabase does not error, it just redirects there. With it
+pointing at localhost, any production sign-in that misses the allowlist sends the user to their own
+machine with no diagnostic anywhere. Harmless today only because production has no sign-in UI yet.
+
+**Config changed in session 2 (all dashboard-side, not in the repo):**
 - Vercel **Deployment Protection → Vercel Authentication turned OFF**. It was intercepting
   `/auth/callback` with an SSO redirect, which breaks magic links from mail apps (in-app webviews
   don't share the browser's Vercel cookie). Safe because `/auth/test` has its own server-side
   `AUTH_HARNESS_TOKEN` gate — that gate is what actually protects the Brevo quota.
 - Supabase **Redirect URLs** gained `https://children-story-app-git-*-aio-studios.vercel.app/**`.
-  **Site URL is still `http://localhost:3000`.**
-
-**⚠️ Pre-merge checklist item:** before this branch merges to `main`, change Supabase **Site URL** to
-the production URL. Site URL is the *silent fallback* when a redirect target is not allowlisted —
-Supabase does not error, it just redirects there. With it pointing at localhost, any production
-sign-in that misses the allowlist sends the user to their own machine with no diagnostic anywhere.
-Harmless today only because production has no sign-in UI yet.
-
-**Next actions, in order:**
-1. **Two-user RLS check.** Create a second user in Supabase (Auth → Users → Add user), then test the
-   policies directly in the SQL editor rather than through the app — Step 4 doesn't exist yet, so
-   there is no UI that reads `stories`. Insert one row per user as `postgres`, then per user run
-   `set local role authenticated;` plus
-   `set local request.jwt.claims = '{"sub":"<uuid>"}';` and confirm each `select` returns only
-   that user's row.
-2. Then Step 4 (persistence layer).
 
 **Known trap, for whenever the project pauses again:** during a Supabase resume the API gateway
 answers before Postgres does — healthy `/auth/v1/settings` and a clean REST `401` while table
 queries 404 with `PGRST205`. Indistinguishable from a dropped table. Wait and re-poll. Cost a wrong
-diagnosis this session. Written up in `supabase/migrations/README.md`.
+diagnosis in session 2. Written up in `supabase/migrations/README.md`.
 
 **Watch-item, still live:** mail providers pre-fetch links to scan them, and a magic link is
 single-use, so a scanner can consume the token before the user taps. Did **not** occur during the
@@ -56,7 +51,7 @@ single-use, so a scanner can consume the token before the user taps. Did **not**
 an interstitial "click to finish signing in" page — scanners don't press buttons.
 
 **Carry forward:** Step 5 is still the dangerous one (`discardCover()` deleting a saved story's
-cover). Nothing in this session touched it.
+cover). Nothing has touched it yet.
 
 ## TLDR
 
@@ -158,15 +153,15 @@ drop function if exists public.set_updated_at();
     - **Daily (`0 7 * * *`), not weekly as originally planned** — a weekly job leaves zero margin against a 7-day pause timer if one run is skipped, and the invocation cost is nil. Daily is also the max frequency Vercel's Hobby tier allows, so this works on either plan.
     - **Do not use `{ head: true }` on the probe.** A HEAD against a missing table 404s with an empty body, and postgrest-js ([issues/295](https://github.com/supabase/postgrest-js/issues/295)) converts exactly that case into a 204 with `error === null` — the health check reports `ok:true` even when `stories` doesn't exist. Verified live. Uses a real GET with `.limit(0)` instead.
 
-- [ ] 🟨 **Step 2: Schema + RLS**
+- [x] 🟩 **Step 2: Schema + RLS**
 
   - [x] 🟩 Apply migration 001 (`stories` table + RLS) via the Supabase SQL editor
   - [x] 🟩 Apply migration 002 (`set_updated_at` trigger) — added after 001 was already live, because `default now()` does not fire on UPDATE and eviction-by-`updated_at` would otherwise have silently evicted the story being read
     - Verified by backdating `updated_at`, then updating with a deliberately stale `updated_at`; the stored value came back as the current time, proving the trigger fires *and* overrides the caller. Note for future tests: `now()` is the *transaction* timestamp, so an insert-then-update inside one `begin…rollback` shows no delta even when the trigger works correctly.
   - [x] 🟩 Verify RLS as an anonymous caller: `SELECT` → `[]`, `INSERT` → `42501 row-level security violation` (401)
-  - [ ] 🟥 Verify RLS with two real signed-in users once auth exists (Step 3) — confirm user B sees zero of user A's rows
+  - [x] 🟩 Verify RLS with two real signed-in users once auth exists (Step 3) — done 2026-09-06, see Step 3
 
-- [ ] 🟥 **Step 3: Auth flow (magic link)**
+- [x] 🟩 **Step 3: Auth flow (magic link)**
 
   - [x] 🟩 Bump Next.js `16.2.10` → `16.3.1` first — closes 9 advisories including a **middleware/proxy bypass in App Router + Turbopack**; auth that can be bypassed is not auth
   - [x] 🟩 [app/auth/callback/route.ts](../app/auth/callback/route.ts) — verify via `token_hash` (works cross-device; the PKCE code flow breaks when the email opens in a different browser)
@@ -185,9 +180,11 @@ drop function if exists public.set_updated_at();
     - The issued token is `pkce_`-prefixed, because `@supabase/ssr` hardcodes `flowType: "pkce"` and stores the verifier in a per-browser **cookie**. This looked like it would reintroduce the cross-device failure, but does not: `verifyOtp` (auth-js:2458) posts `token_hash` to `/verify` and never reads the verifier — only `exchangeCodeForSession` needs it, and the callback never calls that. The prefix is inert here. **Confirmed empirically 2026-09-04** by the cross-browser test above: the link was requested in
       Safari (verifier cookie there) and verified in Chrome (no verifier cookie), and the session was
       still established. Still worth a hardware run, but the mechanism is no longer an assumption.
-  - [ ] 🟥 Two-user RLS check (moved from Step 2 — needs real accounts): confirm user B sees zero of user A's rows
+  - [x] 🟩 Two-user RLS check (moved from Step 2 — needs real accounts) — **all 8 assertions PASS, 2026-09-06**. Committed as [supabase/checks/rls_two_user_check.sql](../supabase/checks/rls_two_user_check.sql), not run ad hoc, because it must be re-run after any policy change. Covers both directions of read isolation, B's blocked update/delete of A's row (silent 0-row no-ops — the `using` clause filters the row out before the write, so nothing raises), and B forging a row owned by A (this one *does* raise `42501`: a `with check` violation has no row to filter out).
+    - Run it **without RLS** in the SQL editor: it must start as the table owner to seed a row per user, then switches to `authenticated` itself.
+    - **Design note worth keeping:** every measurement is taken into a variable while role-switched and written to the results table only after `reset role`. The first draft inserted results while still `authenticated` and died on `42501 permission denied for table rls_check` — correct behaviour from Postgres, and the fix is better than a grant would have been: the role under test now has no write access to the scoreboard at all.
 
-- [ ] 🟥 **Step 4: Persistence layer**
+- [ ] 🟨 **Step 4: Persistence layer** ← current
 
   - [ ] 🟥 `lib/stories.ts` — map the `ClassicContinueStory | InteractiveContinueStory` union to/from a row
   - [ ] 🟥 `lib/useLibrary.ts` (list) and `lib/useStory.ts` (single, by id)
