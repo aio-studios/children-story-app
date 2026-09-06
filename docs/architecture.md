@@ -409,6 +409,41 @@ Home's greeting mascot is a **generated storybook owl** (same #59 art pipeline; 
 
 This is a snapshot of the code as of issues #29/#30 — re-diagram if it goes stale. Deferred from this pass (tracked as a follow-up issue): a real "Saved stories" library, Account/Settings/Premium nav items - all blocked on infra (Supabase auth, #27's billing decision) that doesn't exist yet.
 
+##### Library persistence (`lib/stories.ts` / `lib/storyRepo.ts` / `lib/useLibrary.ts` / `lib/useStory.ts`) — #92 Step 4, 2026-09-06
+
+Signed-in users get every story mirrored into Postgres alongside the `localStorage` slot above, which is unchanged and remains the only copy a guest has. Three layers, split so each is testable and replaceable on its own:
+
+```mermaid
+graph TD
+  Page["app/create/page.tsx<br/>generate / cover / beat / progress"]
+  Page -->|"saveContinueStory (always)"| LS[("localStorage<br/>storykins:continue-story")]
+  Page -->|"persistNewStory / persistStoryUpdate / persistProgress<br/>(no-op without a user)"| Repo
+
+  subgraph Persistence
+    Repo["lib/storyRepo.ts<br/>every Supabase call"]
+    Map["lib/stories.ts<br/>pure mapping, no DB"]
+    Repo -->|"toRow / toContentColumns / fromRow"| Map
+  end
+
+  Repo -->|"insert / update / delete<br/>anon key + RLS"| DB[("public.stories")]
+  Repo -->|"refreshLibrary&#40;&#41;"| Lib["lib/useLibrary.ts<br/>shared module store"]
+  DB --> Lib
+  DB --> One["lib/useStory.ts<br/>per-screen, keyed by id"]
+  Lib --> Grid["Library grid (Step 6)<br/>+ Home Continue card"]
+```
+
+**Why the split.** `stories.ts` holds no Supabase calls, so the mapping is unit-testable without a database (29-case round-trip). `storyRepo.ts` holds every query, so mutations called from event handlers don't live inside a hook module. The hooks stay React-shaped.
+
+**Column layout.** `selections` (setup: genre/character/length/readingLevel/tone/lesson) is identical for both story modes, so the Library renders a card without discriminating on `mode`, and a future list query can select it alone instead of fetching every beat. `content` holds the mode-specific payload (`{story}` classic; `{arc, beats, choices, beatChoices, ended}` interactive). `progress`/`time_spent` are a **third** set, updated only by `saveStoryProgress` — content and reading position change on completely different schedules, and bundling them meant a late cover PATCHing `progress: 0` over a reader's real position.
+
+**Authorization.** Reads carry no `user_id` filter on purpose: RLS is the boundary, and a client-side `.eq("user_id", …)` would read like security while protecting nothing. `user_id` appears only on insert, where the `with check` policy verifies it. Proven by `supabase/checks/rls_two_user_check.sql` (8 assertions, both read directions plus update/delete/forge), which is committed because it must be re-run after any policy change.
+
+**Row lifecycle.** `savedRowRef` in `app/create/page.tsx` tracks the row backing the story on screen. A regenerate replaces that row **in place** only when `opened` is false, so three taps of Try again leave one story rather than three drafts. `opened` is set when a story is *re-opened* later (a resume, and the Library in Step 6) — deliberately **not** when the post-generation reader appears, since Try again lives inside that very screen and marking it there made the replace branch unreachable. What stops a *new* story from overwriting the previous one is `setSaved(null)` on every exit from a story, not the flag.
+
+**Failure posture.** `fromRow` returns null instead of throwing, so one corrupt row costs one card rather than the whole Library. Every persistence call is fire-and-forget: the story is already generated and on screen, so a failed save degrades to "not in the library yet", never to a broken reader.
+
+**Open (Step 5):** `discardCover()` currently no-ops for signed-in users. It would otherwise delete the cover Blob of a *saved* story (#46). That leaks an orphaned Blob worth a fraction of a cent; the alternative costs a saved story its cover permanently. Eviction past 20 stories is deferred into Step 5 with it, since both delete covers.
+
 #### Code map: interactive story mode (#37/#48/#49/#50)
 
 An **opt-in** mode (Setup toggle, `StoryModeToggle`) where a story advances one **beat** at a time. It runs entirely stateless server-side — the whole story-state lives client-side and is re-sent each beat, so it needs **no accounts/DB** (the #23 dependency in #37 only applies to *cross-session* character reuse, which this doesn't do). Classic one-shot generation is untouched and lives alongside it, selected by `mode` in `app/create/page.tsx`.
@@ -456,7 +491,7 @@ Existing Day 1 generation flow is reused for the initial story; the conversation
 
 ### Hosting
 - Vercel: Next.js app + API routes. **Live as of 2026-07-22**: https://children-story-app-lac.vercel.app/ - connected to the `aio-studios/children-story-app` GitHub repo, auto-deploys on every push to `main`.
-- Supabase: managed Postgres + Auth (Day 2+, not yet provisioned).
+- Supabase: managed Postgres + Auth. **Provisioned 2026-08-16** (project `xbmhlczhufgbumukcdvu`, Free tier). Magic-link auth and the `stories` table are live on `feat/92-accounts-auth-foundation`; not yet merged to `main`, so production has no sign-in UI. Free tier pauses after 7 idle days - a daily Vercel cron (`app/api/cron/supabase-ping`) prevents it, but **only from a production deployment**, so the branch does not protect it. Email is sent via Brevo SMTP (Supabase's built-in sender is ~2/hour and cannot use custom templates).
 - All secrets via environment variables (`.env.local` locally, Vercel project settings in production) - never committed. Confirmed post-deploy: `ANTHROPIC_API_KEY` never reaches the client bundle, generation + full 3-layer safety check verified working against production.
 - Observability (2026-08-16): **Vercel Web Analytics + Speed Insights**, mounted as `<Analytics />` and `<SpeedInsights />` in `app/layout.tsx` (`@vercel/analytics/next`, `@vercel/speed-insights/next`). Analytics = page views + device/referrer; Speed Insights = real-world Core Web Vitals (LCP/CLS/INP) from actual visitor devices. Both are cookieless/PII-free, so no consent banner is required, and both need a one-time **Enable** in the Vercel dashboard (per-feature tab) on top of the code change. Free tier at current traffic. **Verification gotcha:** the beacon scripts are served from *obfuscated hashed paths* (e.g. `/d805c662cd4f67fd/script.js`), **not** the legacy `/_vercel/insights/*` — grepping for `/_vercel/` gives a false "analytics is broken" negative. A **200** on those hashed script paths is the reliable signal the dashboard toggle is on (Vercel returns 404 when the feature is disabled).
 - Rate limiting: `app/api/generate-story/route.ts` calls `lib/rateLimit.ts`, a shared per-IP limiter (3 requests/60s, sliding window) backed by Upstash Redis via Vercel's Marketplace integration - holds correctly across serverless instances (the prior in-memory version didn't). Story generation fails **open** on a Redis error so an infra blip can't take down story generation; `checkRateLimit(id, failClosed=true)` lets a caller opt into failing **closed** instead, which the paid image endpoint (`/api/generate-illustration`) does so a Redis outage can't leave per-IP spend uncapped (#47). Vercel injects credentials as `KV_REST_API_URL`/`KV_REST_API_TOKEN` (its "KV" naming for the Upstash integration), not the classic `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`.

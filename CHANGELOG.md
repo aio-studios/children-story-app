@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-06
+
+### Added
+
+- 17:20 - **Stories save themselves to your library (#92, Step 4)** — a signed-in user's stories are now mirrored into Supabase as they're created, in both classic and interactive mode, plus covers and reading position. No user-facing surface yet: the Library screen lands in Step 6. Guests are completely unaffected — every persistence call no-ops without a signed-in user, and the localStorage continue slot still works exactly as before (it remains the only copy a guest has).
+  - **[lib/stories.ts](lib/stories.ts)** — pure mapping between the app's story shape and a `stories` row, with no Supabase calls, so it's testable without a database. `selections` and `content` are separate columns: the setup half is identical for both story modes, so the Library can render a card without first discriminating on mode, and a future list query can skip dragging every beat over the wire. `fromRow` returns null rather than throwing — one corrupt row must cost one card, not the whole Library.
+  - **[lib/storyRepo.ts](lib/storyRepo.ts)** — every Supabase call for stories. Reads deliberately carry **no** `user_id` filter: RLS enforces that in Postgres, and a client-side `.eq()` would read like security while protecting nothing. `user_id` appears only on insert, where the `with check` policy verifies it.
+  - **[lib/useLibrary.ts](lib/useLibrary.ts)** — shared store, because the Library grid and Home's Continue card both read the list and a write from anywhere has to move both. A generation counter discards out-of-order fetches, so a slow response for one user can't land in the next user's library after a sign-out/sign-in.
+  - **[lib/useStory.ts](lib/useStory.ts)** — deliberately *not* shared: per-screen state keyed by story id, so two open readers can't overwrite each other.
+- 16:41 - **[supabase/checks/rls_two_user_check.sql](supabase/checks/rls_two_user_check.sql)** — a re-runnable two-user RLS check, committed rather than run ad hoc because it must be re-run after any policy change. Eight assertions covering both directions of read isolation, a blocked update and delete of another user's row, and a forged insert. Self-cleaning: seed rows are deleted on the way out, an error rolls the whole block back, and a broken *policy* records a FAIL row instead of raising, so the results table survives to name it.
+
+### Changed
+
+- 16:31 - **Branch merged up to `main`**, so the accounts work now sits on top of the landing page (#97). The app is at `app/create/page.tsx`; the #46 cover-blob landmine moved with it.
+
+### Fixed
+
+- 17:36 - **A new story could silently overwrite a story you'd already read.** Navigating Home or starting a new story never cleared the tracked library row, so the next story was treated as a regenerate of the previous one and replaced it in place. Real data loss, introduced and caught the same afternoon. Every exit from a story now clears the tracked row — that, not the `opened` flag, is what keeps each story in its own row.
+- 17:36 - **"Try again" left a discarded draft in the library every time.** `opened` was set the moment the reader appeared, but Try again lives inside that same screen — so the replaces-unread branch was unreachable and three regenerates left four rows. `opened` now marks a story as kept when it's *re-opened* later (a resume, and the Library in Step 6), which is the moment it stops being a draft.
+- 17:36 - **Reading position never reached the database, and a late cover reset it to zero.** Content and progress are now separate column sets — they change on completely different schedules — and the reader mirrors its position onward only when its local write actually happened, so the saved row tracks the same throttle as the Continue card.
+- 17:36 - **A background refresh failure blanked an already-loaded Library**, and a refresh with nothing subscribed wrote an empty "not loading" snapshot that the next Library mount would have rendered as "no stories yet". Auto-save triggers that refresh constantly while the Library is closed, so it was the common path, not an edge case.
+- 17:36 - **A malformed story id surfaced a retryable error instead of not-found** — offering a "Try again" that could never succeed.
+- 17:36 - **The RLS check left its forged probe row behind on the one run where it matters** — the failing one, where a bogus row would sit in a real user's library.
+
+### Verified
+
+- 16:47 - **Two-user RLS check passed, all 8 assertions (#92, Step 3 complete).** User B cannot read, update, delete, or forge user A's stories. This is the check the anonymous one couldn't stand in for: a policy of `using (true)` passes an anonymous test and still shows every parent every other family's stories. **Run it without RLS** in the SQL editor — it must start as the table owner to seed a row per user, then switches role itself.
+- 17:15 - **Guest path verified unchanged end-to-end** (Playwright, 390x844): full setup deck through generation to the reader, local slot written, **zero Supabase requests**, zero console errors. Re-run after the review fixes. Guests are still every real user, so this was the regression that mattered.
+- 16:49 - **29-case round-trip on the row mapper** — both story modes plus malformed content, missing selections, an unparseable timestamp, an absent `beatChoices` array, and out-of-range progress. Column list and sort order checked against the live table (a deliberately bad column name returns 400, so the check is meaningful).
+- 17:44 - **`/code-review` (7 findings, all confirmed and fixed) and `/security-review` (no HIGH/MEDIUM findings)** run against the branch. Security review noted two non-vulnerabilities worth tracking: the RLS check operates on the two oldest real `auth.users` rows, which should become dedicated test users before real families sign up; and Supabase **Site URL** still points at localhost, which stays harmless only until Step 7 ships a sign-in UI.
+- 16:35 - **Supabase was awake** — no idle pause to recover from. Health probe that tells a real outage apart from the resume trap: DNS resolves, `/auth/v1/settings` returns 200, and `/rest/v1/stories` returns `200 []`. A `PGRST205` on that last one is the trap, not a dropped table.
+
 ## 2026-09-05
 
 ### Added
