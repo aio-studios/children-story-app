@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { siteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Without this, Next falls back to localhost when resolving relative metadata URLs, so og:image
+  // ships as http://localhost:3000/... and every shared link renders a broken preview card.
+  metadataBase: new URL(siteUrl()),
   title: "Storykins",
   description: "Create a custom bedtime story for your kid.",
 };

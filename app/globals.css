@@ -570,6 +570,10 @@ select:focus-visible,
   --sk-brand-wash: rgba(138, 109, 59, 0.14);
   --sk-card-bg: #fffdf8;
   --sk-shadow: 0 10px 30px -12px rgba(42, 33, 22, 0.28);
+  /* Desktop container. 1280px is the common app-shell max (Tailwind's max-w-7xl); the landing uses
+     the same token so the two never drift apart. */
+  --sk-max: 1280px;
+  --sk-gutter: 1.5rem;
   /* "Create your own" CTA (#65): its own bronze ramp so text stays legible on the gradient in both
      themes (the light-mode --sk-brand gold would fail white text). */
   --cta-from: #a3814a;
@@ -2183,3 +2187,677 @@ a,
 }
 .sk-deck-portrait .sk-deck-createbar { padding-bottom: 0.9rem; }
 .sk-deck-create { background: var(--sk-brand); }
+
+/* ============================================================================
+   Landing page (#97) - `.sk-lp-*`
+   Static marketing page at `/`; the app lives at `/create`.
+
+   Uses the same --sk-* tokens as the app (defined on :root above, light + dark), and the same
+   Fredoka/Nunito pairing, so the click from `/` into `/create` doesn't feel like two products.
+
+   Responsive model mirrors lib/useLayoutMode.ts EXACTLY rather than inventing new breakpoints, so
+   the landing and the app can never disagree about what shape a device is:
+     - (min-width:768px) and (min-height:600px)  -> tablet/laptop: the app shows a sidebar and fills
+       the width, so the landing goes genuinely wide here too
+     - (orientation:landscape) and (max-height:600px) -> landscape phone: short viewport, so the hero
+       has to stay reachable without scrolling
+     - everything else -> portrait phone, the baseline written first
+   ============================================================================ */
+
+.sk-lp {
+  --lp-max: var(--sk-max);
+  --lp-pad: 1.25rem;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--sk-bg);
+  color: var(--sk-ink);
+  font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+}
+
+.sk-lp main {
+  flex: 1 1 auto;
+}
+
+/* --- wordmark + top bar --- */
+
+.sk-lp-word {
+  font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--sk-ink);
+}
+.sk-lp-word span { color: var(--sk-brand); }
+
+.sk-lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem var(--lp-pad);
+  background: color-mix(in srgb, var(--sk-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--sk-line-soft);
+}
+
+.sk-lp-navbtn {
+  font-size: var(--text-caption);
+  font-weight: 800;
+  text-decoration: none;
+  background: var(--sk-brand);
+  color: var(--sk-card-bg);
+  border-radius: 999px;
+  /* >=44px tall: this is the sticky header's only CTA, and undersized tap targets have bitten this
+     project before on a real iPhone (#20/#21/#22). Same minimum applied to .sk-lp-link and
+     .sk-lp-demo-replay below. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1.1rem;
+  white-space: nowrap;
+}
+
+/* --- shared type + buttons --- */
+
+.sk-lp-eyebrow {
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-weight: 800;
+  color: var(--sk-brand);
+  margin: 0 0 0.6rem;
+}
+
+.sk-lp-h1 {
+  font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
+  font-size: clamp(1.9rem, 7vw, 2.6rem);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+  text-wrap: balance;
+}
+.sk-lp-h1 em { font-style: normal; color: var(--sk-brand); }
+
+.sk-lp-h2 {
+  font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
+  font-size: clamp(1.45rem, 4.5vw, 1.9rem);
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.sk-lp-sub {
+  font-size: var(--text-note);
+  line-height: 1.6;
+  color: var(--sk-ink-soft);
+  margin: 0 0 1.25rem;
+  max-width: 46ch;
+}
+
+.sk-lp-btn {
+  display: inline-block;
+  font-family: var(--font-nunito), sans-serif;
+  font-size: var(--text-body);
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 14px;
+  padding: 0.85rem 1.4rem;
+  border: 1px solid var(--sk-brand);
+  transition: background 160ms ease, color 160ms ease;
+}
+.sk-lp-btn-primary { background: var(--sk-brand); color: var(--sk-card-bg); }
+.sk-lp-btn-ghost { background: transparent; color: var(--sk-brand); }
+.sk-lp-btn-ghost:hover { background: var(--sk-brand-wash); }
+
+.sk-lp-cta-row { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.sk-lp-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+}
+.sk-lp-trust li { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sk-lp-dot { width: 5px; height: 5px; border-radius: 999px; background: var(--sk-brand); }
+
+/* --- hero --- */
+
+.sk-lp-hero {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 3rem var(--lp-pad) 2.5rem;
+  display: grid;
+  gap: 1.75rem;
+  align-items: center;
+}
+
+/* --- scripted demo (the one client island) --- */
+
+.sk-lp-demo {
+  border: 1px solid var(--sk-line);
+  background: var(--sk-card-bg);
+  border-radius: 18px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  box-shadow: var(--sk-shadow);
+}
+
+.sk-lp-demo-picks { display: flex; gap: 0.4rem; }
+.sk-lp-demo-pick {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--text-micro);
+  font-weight: 800;
+  text-align: center;
+  border: 1px solid var(--sk-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.3rem;
+  color: var(--sk-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+.sk-lp-demo-pick.is-on {
+  border-color: var(--sk-brand);
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+}
+
+.sk-lp-demo-stage {
+  border: 1px solid var(--sk-line-soft);
+  background: var(--sk-bg);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+.sk-lp-demo-text {
+  font-family: var(--font-nunito), sans-serif;
+  font-size: var(--text-note);
+  line-height: 1.62;
+  color: var(--sk-ink);
+  margin: 0;
+  /* Reserves the finished story's height so the card doesn't grow as it types. */
+  min-height: 7.5rem;
+}
+.sk-lp-demo-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  vertical-align: -0.15em;
+  background: var(--sk-brand);
+  animation: sk-lp-blink 1s steps(2, start) infinite;
+}
+@keyframes sk-lp-blink { 50% { opacity: 0; } }
+
+.sk-lp-demo-foot { display: flex; align-items: center; gap: 0.6rem; }
+.sk-lp-demo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-micro);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+}
+.sk-lp-demo-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sk-brand);
+  animation: sk-lp-pulse 1.4s ease-in-out infinite;
+}
+.sk-lp-demo-pulse.is-done { animation: none; }
+@keyframes sk-lp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.sk-lp-demo-replay {
+  font-family: var(--font-nunito), sans-serif;
+  font-size: var(--text-micro);
+  font-weight: 800;
+  color: var(--sk-brand);
+  background: transparent;
+  border: 1px solid var(--sk-line);
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0 0.95rem;
+  cursor: pointer;
+}
+.sk-lp-demo-replay:hover { background: var(--sk-brand-wash); border-color: var(--sk-brand); }
+
+/* --- screenshots --- */
+
+.sk-lp-shots {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 1rem var(--lp-pad) 2.5rem;
+  display: grid;
+  gap: 1.5rem;
+}
+.sk-lp-shot { margin: 0; }
+.sk-lp-shot picture { display: block; }
+.sk-lp-shot-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--sk-line);
+  background: var(--sk-card-bg);
+}
+.sk-lp-shot-cap {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+  text-align: center;
+}
+
+/* --- behind the build --- */
+
+.sk-lp-build {
+  background: var(--sk-canvas);
+  border-top: 1px solid var(--sk-line-soft);
+  border-bottom: 1px solid var(--sk-line-soft);
+  padding: 2.25rem var(--lp-pad);
+}
+.sk-lp-build > * {
+  max-width: var(--lp-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* The tonal shift from product to engineering. It's the direction's main risk, so it's an explicit
+   labelled divider rather than a silent change of subject. */
+.sk-lp-seam { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+.sk-lp-seam-line { flex: 1 1 auto; height: 1px; background: var(--sk-line); }
+.sk-lp-seam-label {
+  font-size: var(--text-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  color: var(--sk-ink-soft);
+}
+
+.sk-lp-build-intro { margin-bottom: 1.5rem; }
+
+.sk-lp-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0 auto 1.75rem;
+  padding: 0;
+}
+.sk-lp-tech {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-micro);
+  border: 1px solid var(--sk-line);
+  background: var(--sk-card-bg);
+  color: var(--sk-ink-soft);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+}
+
+.sk-lp-decisions {
+  display: grid;
+  gap: 1.25rem;
+  list-style: none;
+  margin: 0 auto 1.75rem;
+  padding: 0;
+}
+.sk-lp-decision { border-left: 2px solid var(--sk-brand); padding-left: 0.9rem; }
+.sk-lp-decision-h {
+  font-size: var(--text-body);
+  font-weight: 800;
+  margin: 0 0 0.3rem;
+  color: var(--sk-ink);
+}
+.sk-lp-decision-p {
+  font-size: var(--text-note);
+  line-height: 1.55;
+  color: var(--sk-ink-soft);
+  margin: 0 0 0.5rem;
+}
+.sk-lp-decision-file {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: var(--text-micro);
+  color: var(--sk-brand);
+  font-weight: 600;
+}
+
+.sk-lp-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sk-lp-link {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-brand);
+  border: 1px solid var(--sk-brand);
+  border-radius: 999px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
+  text-decoration: none;
+}
+.sk-lp-link:hover { background: var(--sk-brand-wash); }
+
+/* --- closing CTA + footer --- */
+
+.sk-lp-close {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 2.5rem var(--lp-pad);
+  text-align: center;
+}
+.sk-lp-close .sk-lp-sub { margin-left: auto; margin-right: auto; }
+
+.sk-lp-foot {
+  background: var(--sk-canvas);
+  border-top: 1px solid var(--sk-line-soft);
+  padding: 1.75rem var(--lp-pad) 2.25rem;
+  text-align: center;
+}
+.sk-lp-foot-note {
+  font-size: var(--text-caption);
+  color: var(--sk-ink-soft);
+  margin: 0.6rem 0 0;
+}
+.sk-lp-foot-note a { color: var(--sk-brand); font-weight: 700; }
+
+/* Order matters: at exactly 1024x600 BOTH queries below match. lib/useLayoutMode.ts checks
+   TABLET_QUERY first and returns "tablet", so tablet must win here too - in CSS that means the
+   tablet block comes LAST. Swapping these two blocks silently makes the landing disagree with the
+   app on that viewport. */
+
+/* --- landscape phone: short viewport, so the hero must not push the CTA off-screen --- */
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .sk-lp-hero {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+  .sk-lp-h1 { font-size: 1.6rem; }
+  .sk-lp-sub { font-size: var(--text-caption); margin-bottom: 0.9rem; }
+  .sk-lp-cta-row { flex-direction: row; }
+  .sk-lp-demo-text { min-height: 5.5rem; }
+  .sk-lp-shots { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* --- tablet / laptop: the app fills the width here, so the landing does too --- */
+
+@media (min-width: 768px) and (min-height: 600px) {
+  .sk-lp { --lp-pad: 2rem; }
+
+  .sk-lp-nav { padding: 1rem var(--lp-pad); }
+  .sk-lp-word { font-size: 1.4rem; }
+
+  .sk-lp-hero {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 3rem;
+    padding: 7rem var(--lp-pad) 5.5rem;
+  }
+  .sk-lp-h1 { font-size: clamp(2.3rem, 3.6vw, 3.1rem); }
+  .sk-lp-sub { font-size: var(--text-body); }
+  .sk-lp-cta-row { flex-direction: row; }
+
+  .sk-lp-demo-text { min-height: 8.5rem; }
+
+  /* Three equal columns. The first shot used to span the full width as a "look at it" moment, but
+     at this size it read as filler rather than proof - the device showcase below now carries the
+     large-format job. */
+  .sk-lp-shots { grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem var(--lp-pad) 5.5rem; }
+
+  .sk-lp-build { padding: 5.5rem var(--lp-pad); }
+  .sk-lp-build-intro { margin-bottom: 2.5rem; }
+  .sk-lp-stack { margin-bottom: 2.75rem; }
+  .sk-lp-decisions { margin-bottom: 2.75rem; }
+  .sk-lp-decisions { grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+  .sk-lp-close { padding: 6rem var(--lp-pad); }
+  .sk-lp-foot { padding: 3rem var(--lp-pad); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-lp-demo-caret,
+  .sk-lp-demo-pulse { animation: none; }
+  .sk-lp-demo-pick,
+  .sk-lp-btn { transition: none; }
+}
+
+/* ============================================================================
+   Desktop pass (2026-09-05 UAT) — shared wordmark, capped app width, cover art
+   ============================================================================ */
+
+/* Sample-story cover art. Sits above the gradient placeholder and below the scrim, so the existing
+   readability treatment for the title/badges still applies unchanged. */
+.sk-cover-art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* One wordmark treatment everywhere (app nav, nav panel, reader bar, landing). Declared after the
+   per-context classes so it wins the colour on equal specificity; those classes still own size,
+   alignment and truncation. */
+.sk-wordmark {
+  color: var(--sk-ink);
+}
+.sk-wordmark > span {
+  color: var(--sk-brand);
+}
+
+/* --- Desktop: cap and centre the whole app ---------------------------------
+   Below this width nothing changes, so the wide-iPad "brown bars" regression that made
+   `.sk-content` full-bleed in the first place cannot come back (an iPad is 834px).
+   The surround is painted canvas rather than the page's default white/near-black, which would
+   otherwise frame the cream app in hard bars. */
+@media (min-width: 1280px) {
+  body:has(.sk-shell-tablet),
+  body:has(.sk-lp) {
+    background: var(--sk-canvas);
+  }
+  /* The landing is capped as a whole - header, tinted bands and all - so nothing on the page runs
+     wider than the app does. Same flex-item trap as .sk-shell-tablet below: <body> is
+     `flex flex-col`, so centring must be `align-self`, never `margin-inline: auto`. */
+  .sk-lp {
+    width: 100%;
+    max-width: var(--sk-max);
+    align-self: center;
+  }
+  /* `align-self: center` + `width: 100%`, NOT `margin-inline: auto`. <body> is a column flex
+     container (`flex flex-col` in layout.tsx), so the shell is a flex item: an auto inline margin
+     cancels the default `stretch` and collapses the item to shrink-to-fit. On Home that happened to
+     measure 1280 because the story shelves are intrinsically wide, but the setup deck
+     (`.sk-content-flush`, `overflow: hidden`) collapsed the whole app to 469px. */
+  .sk-shell-tablet {
+    width: 100%;
+    max-width: var(--sk-max);
+    align-self: center;
+  }
+  .sk-shell-tablet .sk-content {
+    padding-inline: var(--sk-gutter);
+  }
+  /* The immersive setup deck manages its own full-height layout; leave its gutters alone. */
+  .sk-shell-tablet .sk-content-flush {
+    padding-inline: 0;
+  }
+}
+
+/* --- landing: device showcase (#97 desktop UAT) --- */
+.sk-lp-devices {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 0 var(--lp-pad) 3rem;
+  text-align: center;
+}
+.sk-lp-devices .sk-lp-sub { margin-left: auto; margin-right: auto; }
+.sk-lp-device-row {
+  display: grid;
+  gap: 1.75rem;
+  justify-items: center;
+  align-items: start;
+  margin-top: 1.75rem;
+}
+/* Each device keeps its own natural proportions - a phone shot stretched to an iPad's width is
+   exactly the "one screenshot, resized" look this section exists to disprove. */
+.sk-lp-shot-phone { max-width: 260px; }
+.sk-lp-shot-ipad { max-width: 420px; }
+
+@media (min-width: 768px) and (min-height: 600px) {
+  .sk-lp-devices { padding: 0 var(--lp-pad) 5.5rem; }
+  .sk-lp-device-row {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 2.5rem;
+  }
+  .sk-lp-shot-phone { max-width: 280px; }
+  .sk-lp-shot-ipad { max-width: 460px; }
+}
+
+/* --- landing: interactive mode showcase --- */
+.sk-lp-interactive {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 0 var(--lp-pad) 3rem;
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+.sk-lp-beats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.1rem;
+  counter-reset: sk-lp-beat;
+}
+/* Numbered because the three steps ARE a sequence - the story pauses, then offers choices, then
+   ends. Not decoration. */
+.sk-lp-beat {
+  counter-increment: sk-lp-beat;
+  padding-left: 2.2rem;
+  position: relative;
+}
+.sk-lp-beat::before {
+  content: counter(sk-lp-beat);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+  font-size: var(--text-micro);
+  font-weight: 800;
+}
+.sk-lp-beat-h {
+  font-size: var(--text-body);
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+  color: var(--sk-ink);
+}
+.sk-lp-beat-p {
+  font-size: var(--text-note);
+  line-height: 1.55;
+  color: var(--sk-ink-soft);
+  margin: 0;
+}
+.sk-lp-interactive-shot { display: flex; justify-content: center; }
+.sk-lp-interactive-shot .sk-lp-shot { max-width: 280px; }
+
+/* --- landing: roadmap (explicitly NOT shipped) --- */
+.sk-lp-roadmap {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 2.5rem var(--lp-pad);
+}
+.sk-lp-roadmap-head { margin-bottom: 1.5rem; }
+.sk-lp-h3 {
+  font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
+  font-size: var(--text-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.4rem;
+  color: var(--sk-ink);
+}
+.sk-lp-roadmap-note {
+  font-size: var(--text-note);
+  line-height: 1.55;
+  color: var(--sk-ink-soft);
+  margin: 0;
+  max-width: 58ch;
+}
+.sk-lp-roadmap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+/* Dashed, unfilled and muted on purpose: this must never read as a feature list. */
+.sk-lp-roadmap-item {
+  border: 1px dashed var(--sk-line);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: transparent;
+}
+.sk-lp-roadmap-status {
+  display: inline-block;
+  font-size: var(--text-micro);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--sk-ink-soft);
+  margin-bottom: 0.35rem;
+}
+.sk-lp-roadmap-title {
+  font-size: var(--text-body);
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+  color: var(--sk-ink);
+}
+.sk-lp-roadmap-body {
+  font-size: var(--text-note);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+  margin: 0 0 0.4rem;
+}
+.sk-lp-roadmap-issue {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  color: var(--sk-brand);
+  text-decoration: none;
+}
+
+@media (min-width: 768px) and (min-height: 600px) {
+  .sk-lp-interactive {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 3.5rem;
+    padding: 1rem var(--lp-pad) 5.5rem;
+  }
+  .sk-lp-roadmap { padding: 4rem var(--lp-pad); }
+  .sk-lp-roadmap-list { grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+  .sk-lp-roadmap-head { margin-bottom: 2rem; }
+}
