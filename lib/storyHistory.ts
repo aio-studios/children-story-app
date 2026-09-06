@@ -110,7 +110,11 @@ function isValidInteractive(v: Record<string, unknown>): boolean {
   );
 }
 
-function isValidContinueStory(value: unknown): value is ContinueStory {
+// Exported so the Supabase mapper (lib/stories.ts) validates a DB row against the SAME shape check
+// as a localStorage slot, rather than growing a second, silently-diverging definition of "valid
+// story". A row's jsonb columns are as untrusted as localStorage: both are round-tripped JSON that a
+// schema change can leave stale.
+export function isValidContinueStory(value: unknown): value is ContinueStory {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return v.mode === "interactive" ? isValidInteractive(v) : isValidClassic(v);
