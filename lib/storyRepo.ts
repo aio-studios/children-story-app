@@ -149,6 +149,11 @@ export async function saveNewStory(
 // this is read at the exact moment a cover is about to be orphaned, and a stale answer here either
 // leaks a Blob or deletes one a saved story still needs. Returns null if the row is gone, which
 // correctly means "nothing to clean up".
+//
+// Deliberately does NOT throw on a failed read, unlike everything else here. Both callers are about
+// to change the row itself, and a cleanup lookup must not be able to abort the write it precedes -
+// that would trade a leaked Blob worth a fraction of a cent for a story that never got saved. An
+// unreadable cover is treated as "nothing to clean up", which leaks in the safe direction.
 async function currentCover(id: string): Promise<string | null> {
   const { data, error } = await createClient()
     .from("stories")
@@ -156,7 +161,10 @@ async function currentCover(id: string): Promise<string | null> {
     .eq("id", id)
     .maybeSingle<Pick<StoryRow, "image_url">>();
 
-  if (error) fail("read cover", error.message);
+  if (error) {
+    console.error("stories: read cover failed —", error.message);
+    return null;
+  }
   return data?.image_url ?? null;
 }
 
@@ -187,7 +195,13 @@ export async function saveStoryProgress(id: string, progress: number, timeSpentM
 // survives is a visible story with a permanently broken cover, while the reverse leaves an orphan
 // costing a fraction of a cent. The endpoint independently refuses any URL a row still points at
 // (migration 003), so this ordering is enforced on both sides.
-export async function deleteStory(id: string, imageUrl?: string | null): Promise<void> {
+//
+// The cover is read here rather than taken from the caller. A Library card can sit on screen for
+// minutes while another tab regenerates that story and attaches a new cover, and deleting from the
+// cached URL would then delete the cover the row no longer points at while orphaning the one it does
+// - the same stale-value trap `currentCover` exists to close for replace-in-place.
+export async function deleteStory(id: string): Promise<void> {
+  const imageUrl = await currentCover(id);
   const { error } = await createClient().from("stories").delete().eq("id", id);
   if (error) fail("delete", error.message);
   deleteCoverBlob(imageUrl);
@@ -202,13 +216,14 @@ export async function deleteStory(id: string, imageUrl?: string | null): Promise
 export async function evictBeyondLimit(limit = LIBRARY_LIMIT): Promise<number> {
   // Deliberately not listStories(): that maps rows and silently drops any that fail, so a corrupt
   // row would be invisible here and the library would sit permanently over the cap with no way to
-  // trim it. Eviction needs two columns and an order, not a mapper.
+  // trim it. Eviction needs one column and an order, not a mapper - deleteStory reads each row's
+  // cover for itself.
   const { data, error } = await createClient()
     .from("stories")
-    .select("id,image_url")
+    .select("id")
     .order("updated_at", { ascending: false })
     .range(limit, limit + EVICTION_BATCH - 1)
-    .returns<Pick<StoryRow, "id" | "image_url">[]>();
+    .returns<Pick<StoryRow, "id">[]>();
 
   if (error) fail("evict", error.message);
 
@@ -220,7 +235,7 @@ export async function evictBeyondLimit(limit = LIBRARY_LIMIT): Promise<number> {
   let evicted = 0;
   for (const row of stale) {
     try {
-      await deleteStory(row.id, row.image_url);
+      await deleteStory(row.id);
       evicted++;
     } catch {
       // Already logged by fail(). Keep going: the next row may well delete cleanly.

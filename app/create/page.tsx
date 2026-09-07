@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { GENRES } from "@/lib/genres";
 import {
   DEFAULT_LESSON,
@@ -11,7 +12,7 @@ import {
   STORY_LENGTHS,
   TONES,
 } from "@/lib/storyOptions";
-import { clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
+import { ContinueStory, attachRowId, clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
 import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction, StepResult } from "@/lib/interactive";
 import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, StoryMode, Tone } from "@/lib/types";
 import { PillSelector } from "@/components/PillSelector";
@@ -27,6 +28,7 @@ import { useSession } from "@/lib/useSession";
 import { evictBeyondLimit, markOpened, saveNewStory, saveStoryProgress, updateStory } from "@/lib/storyRepo";
 import { deleteCoverBlob } from "@/lib/coverBlob";
 import { refreshLibrary } from "@/lib/useLibrary";
+import { useStory } from "@/lib/useStory";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
 
@@ -52,7 +54,20 @@ function defaultCharacterFor(genreId: string): SelectedCharacter {
 
 const EMPTY_CUSTOM_CHARACTER: SelectedCharacter = { type: "custom", name: "", traits: "", description: "" };
 
-export default function Home() {
+// useSearchParams forces the tree up to the nearest Suspense boundary to render on the client. That
+// is already true of this whole page ("use client" + a generation state machine), so the boundary
+// costs nothing here - it just keeps Next from erroring during prerender.
+export default function CreatePage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateApp />
+    </Suspense>
+  );
+}
+
+function CreateApp() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<View>("home");
   const [setupStep, setSetupStep] = useState(0);
   const continueStory = useContinueStory();
@@ -153,6 +168,9 @@ export default function Home() {
     try {
       const saved = await saveNewStory(story, userId, savedRowRef.current);
       setSaved({ id: saved.id, opened: saved.opened });
+      // Stamp the row id onto the local slot too, so deleting this story from the Library later can
+      // tell that the Continue card on Home is the same story and clear it.
+      attachRowId(saved.id);
       refreshLibrary();
       // Trim back to the cap. Separate and fire-and-forget: a save that succeeded must not report as
       // failed because the eviction after it didn't, and the next save retries the trim anyway.
@@ -557,9 +575,16 @@ export default function Home() {
   function handleContinueFromHome() {
     if (!continueStory) return;
     // Resuming is the moment a story stops being a draft: from here a regenerate should leave it
-    // alone and create a new row beside it. No-ops today for a story resumed from the local slot,
-    // whose row id we don't know until Step 6 opens stories by id - but correct the moment it does.
+    // alone and create a new row beside it. No-ops for a story resumed from the local slot, whose row
+    // id we don't know - openSavedStory below is the path that has one.
     markCurrentStoryOpened();
+    openStoryInReader(continueStory);
+  }
+
+  // Puts an already-generated story on screen in its reader. Shared by the Home Continue card (local
+  // slot) and by the Library opening a story by id - one hydration path, so a field the Library
+  // forgot to restore would break resume too, instead of only the newer of the two.
+  function openStoryInReader(continueStory: ContinueStory) {
     if (continueStory.mode === "interactive") {
       const resumed = continueStory.interactive;
       setMode("interactive");
@@ -605,6 +630,64 @@ export default function Home() {
     }
     setView("success");
   }
+
+  // Deep links from the Library. `?story=<id>` opens that saved story in its reader; `?new=1` starts
+  // a fresh setup. Home and Setup live in this page's state machine, so a cross-route nav has no way
+  // to reach them except through the URL.
+  //
+  // Both params are consumed exactly once (guarded by a ref, which also absorbs React's double-invoked
+  // effects in development) and then stripped, so a refresh doesn't re-open a story the user has since
+  // left and Back doesn't fire the same navigation twice.
+  const storyParam = searchParams.get("story");
+  const newParam = searchParams.get("new");
+  const openTarget = useStory(storyParam);
+  const consumedDeepLinkRef = useRef<string | null>(null);
+
+  // Derived, not stored: a story that can't be opened leaves `?story=<id>` in the URL untouched, so
+  // the failure is describable from the params alone. Keeping the id there also means a refresh
+  // retries - which is the right response to a transient fetch failure, and harmless for a story
+  // that is genuinely gone.
+  const deepLinkError =
+    storyParam && !openTarget.loading && !openTarget.story
+      ? openTarget.notFound
+        ? "That story isn't in your library any more."
+        : (openTarget.error ?? "We couldn't open that story.")
+      : null;
+
+  useEffect(() => {
+    if (newParam === null || consumedDeepLinkRef.current === "new") return;
+    consumedDeepLinkRef.current = "new";
+    router.replace("/create", { scroll: false });
+    handleNavigateNewStory();
+    // handleNavigateNewStory is a stable in-render closure over setState only; re-running this on
+    // every render would restart setup while someone is filling it in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newParam, router]);
+
+  useEffect(() => {
+    if (!storyParam || consumedDeepLinkRef.current === storyParam) return;
+    // Nothing to act on until the fetch settles - `useStory` reports loading for the id in flight.
+    if (openTarget.loading) return;
+    // A story deleted in another tab, an evicted one, or someone else's id (RLS makes both read as
+    // not-found) leaves the URL alone and falls through to `deepLinkError` on Home.
+    const story = openTarget.story;
+    if (!story) return;
+
+    consumedDeepLinkRef.current = storyParam;
+    router.replace("/create", { scroll: false });
+    abandonInFlightGeneration();
+    // Track the row BEFORE marking it opened - markCurrentStoryOpened reads this ref.
+    setSaved({ id: story.id, opened: story.opened });
+    // Opening from the Library is exactly the moment a story stops being a draft: a later regenerate
+    // must land beside it, not overwrite it.
+    markCurrentStoryOpened();
+    // Mirror it into the local slot so Home's Continue card, progress writes and a refresh all point
+    // at the story now on screen instead of whatever was there before.
+    saveContinueStory(story);
+    openStoryInReader(story);
+    // Same reason as above: these handlers close over setState only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyParam, openTarget, router]);
 
   // Lands on Setup Step 1 (Genre) rather than skipping to Character - the genre still comes in
   // pre-selected, but the jump to a differently-themed screen was confusing without seeing the
@@ -681,11 +764,32 @@ export default function Home() {
     <AppShell
       onNavigateHome={handleNavigateHome}
       onNavigateNewStory={handleNavigateNewStory}
+      onNavigateLibrary={() => router.push("/library")}
       pageTitle={pageTitle}
       activeTab={view === "home" ? "home" : view === "setup" ? "create" : undefined}
       autoHide={view === "success"}
       flush={view === "setup"}
     >
+      {/* Covers the moment between tapping a Library card and its reader mounting. Without it the
+          previous Home (or the previous story) sits there looking like the tap missed. */}
+      {storyParam && openTarget.loading && (
+        <div className="sk-opening" role="status">
+          <span className="sk-opening-dot" aria-hidden="true" />
+          <span>Opening your story…</span>
+          {/* The fetch has no timeout, so this overlay needs a door. Dropping the param stops the
+              wait and leaves the user on Home rather than staring at a spinner until they reload. */}
+          <button type="button" className="sk-nav-btn sk-opening-out" onClick={() => router.replace("/create")}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {view === "home" && deepLinkError && (
+        <p className="sk-deeplink-error" role="alert">
+          {deepLinkError}
+        </p>
+      )}
+
       {view === "home" && (
         <HomeScreen
           continueStory={continueStory}

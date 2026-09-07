@@ -65,7 +65,9 @@ async function load() {
     setSnapshot({
       stories: snapshot.stories,
       loading: false,
-      error: "We couldn't load your stories. Pull to refresh, or try again in a moment.",
+      // No "pull to refresh" here: the screen has a Try again button, and promising a gesture that
+      // isn't implemented is worse than saying nothing.
+      error: "We couldn't load your stories.",
     });
   }
 }

@@ -1,74 +1,70 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `88%` — Steps 1–5 complete and verified. The #46 landmine is closed: a saved story's cover can no longer be deleted, proven with real Blobs (21/21), and the Step 4 gate still passes (16/16). Step 6 (Library screen + nav) is next and unblocked.
+**Overall Progress:** `92%` — Steps 1–6 complete and verified. The Library screen is live and the app has its first user-facing account surface: a signed-in user can see, open and delete saved stories, and a guest can sign in from inside the app. Three gates green (42/42 screen, 16/16 persistence, 21/21 covers). Step 7 (the end-of-story ask) is next.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-09-06
+**Last updated:** 2026-09-06 (session 5)
 
-## ▶ Resume point (2026-09-06, session 3)
+## ▶ Resume point (2026-09-06, session 5)
 
-**Branch:** `feat/92-accounts-auth-foundation` — pushed, live on a Vercel preview. `main` untouched.
-Now merged up to date with `main` (the #97 landing page), so `app/page.tsx` is the landing page and
-the app lives at `app/create/page.tsx` — **Step 5's `discardCover()` work points at `app/create/page.tsx`
-now, not `app/page.tsx`.**
+**Branch:** `feat/92-accounts-auth-foundation` — 6 commits ahead of origin, **Step 6's work is
+uncommitted in the working tree.** `main` untouched.
 
-**Preview:** `https://children-story-app-git-feat-92-accounts-auth-2cafb2-aio-studios.vercel.app`
-Harness: append `/auth/test?t=<AUTH_HARNESS_TOKEN>` (Preview-scoped env var, rotated 2026-09-04).
+**Next action: Step 7 (the end-of-story sign-in sheet).** Most of the hard part is already built —
+[components/SignInForm.tsx](../components/SignInForm.tsx) is the email + send + "check your email" +
+resend-cooldown block, used inline by the Library's guest state. Step 7 is placement (a dismissible
+sheet at the end of a story, frame A2) plus the "Saved on this phone only" line inside the Library.
 
-**Steps 1–3 are DONE.** Magic-link sign-in passed cross-browser and cross-device on real hardware,
-and the two-user RLS check passed all 8 assertions on 2026-09-06. Nothing in the auth or data-isolation
-foundation is outstanding.
+**Steps 1–6 are DONE and verified.** Step 6 shipped: `/library` route, cover grid, History/Favourites
+tabs, capacity meter, delete-with-confirmation, guest sign-in, Library in all three nav shapes, and
+opening a saved story by id (`/create?story=<id>`).
 
-**Supabase was awake on 2026-09-06** — no idle pause to recover from. Health probe that distinguishes
-a real outage from the resume trap below: DNS resolves, `/auth/v1/settings` → `200`, and
-`/rest/v1/stories` → `200 []` with the anon key. A `PGRST205` on that last one is the trap, not a
-dropped table.
+**Three regression gates, re-run after ANY persistence change:**
+- `scripts/verify-library-screen.mjs` — **42/42** (new; seeds rows via PostgREST, free and fast)
+- `scripts/verify-library-signed-in.mjs` — **16/16**
+- `scripts/verify-cover-lifecycle.mjs` — **21/21** (~$0.16 in real cover images per run)
 
-**Next action (2026-09-06, session 4): Step 5 is DONE — Step 6 (Library screen + nav) is next.**
+All three need `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` in `.env.local` and a running `npm run dev`,
+and all three **delete every story belonging to that account** — keep it a throwaway user.
+Run them **spaced out**: back-to-back runs trip the 3/60s story-generation rate limit, which presents
+as a Playwright timeout waiting for "Regenerate", not as a code failure.
 
-Migration 003 is applied to the live project. **It is a deploy dependency, not just a local one:**
-`/api/delete-illustration` fails closed, so on any environment where 003 is missing *no cover is
-deleted for anyone, including guests*. Never ship this branch to an environment whose database
-hasn't had it run.
+**Reviews for Step 6 are done.** `/code-review` at high found 7, all confirmed and all fixed (see the
+Step 6 task list). `/security-review` found no HIGH/MEDIUM.
 
-Verification state: `scripts/verify-cover-lifecycle.mjs` 21/21 and
-`scripts/verify-library-signed-in.mjs` 16/16, both re-run *after* the review fixes.
-`/code-review` (4 findings, all fixed) and `/security-review` (no HIGH/MEDIUM) are done.
-
-**Still open before Step 6 ships anything user-facing:** UAT with Sarthak, and the Supabase
-**Site URL** pre-merge item below.
-
-**Steps 1-4 are DONE and verified end-to-end.** `scripts/verify-library-signed-in.mjs` is the
-regression gate for everything that follows - re-run it after any change to the persistence layer.
-It needs `TEST_USER_EMAIL`/`TEST_USER_PASSWORD` in `.env.local` and a running `npm run dev`, and it
-**deletes every story belonging to that account**, so it must stay pointed at a throwaway user.
+**⚠️ Migration 003 is a DEPLOY dependency.** On any environment whose database has not had it run,
+cover cleanup fails closed for *everyone including guests*. Never ship this branch somewhere 003 has
+not been applied.
 
 **⚠️ Pre-merge checklist item (still open):** before this branch merges to `main`, change Supabase
 **Site URL** from `http://localhost:3000` to the production URL. Site URL is the *silent fallback*
 when a redirect target is not allowlisted — Supabase does not error, it just redirects there. With it
 pointing at localhost, any production sign-in that misses the allowlist sends the user to their own
-machine with no diagnostic anywhere. Harmless today only because production has no sign-in UI yet.
+machine with no diagnostic anywhere. **This is now urgent in a way it wasn't:** Step 6 put a real
+sign-in form on a public page, so production sign-in is no longer hypothetical.
 
-**Config changed in session 2 (all dashboard-side, not in the repo):**
+**⚠️ Also new with Step 6:** the magic-link sender is now reachable by anyone who opens `/library`,
+not just by the token-gated `/auth/test` harness. That is the intended product behaviour, but it puts
+the **Brevo free tier (300 emails/day)** on the critical path for the first time. Worth a look at
+Supabase's own per-address auth rate limits before this ships to production.
+
+**Config changed in earlier sessions (all dashboard-side, not in the repo):**
 - Vercel **Deployment Protection → Vercel Authentication turned OFF**. It was intercepting
   `/auth/callback` with an SSO redirect, which breaks magic links from mail apps (in-app webviews
   don't share the browser's Vercel cookie). Safe because `/auth/test` has its own server-side
-  `AUTH_HARNESS_TOKEN` gate — that gate is what actually protects the Brevo quota.
+  `AUTH_HARNESS_TOKEN` gate.
 - Supabase **Redirect URLs** gained `https://children-story-app-git-*-aio-studios.vercel.app/**`.
 
 **Known trap, for whenever the project pauses again:** during a Supabase resume the API gateway
 answers before Postgres does — healthy `/auth/v1/settings` and a clean REST `401` while table
-queries 404 with `PGRST205`. Indistinguishable from a dropped table. Wait and re-poll. Cost a wrong
-diagnosis in session 2. Written up in `supabase/migrations/README.md`.
+queries 404 with `PGRST205`. Indistinguishable from a dropped table. Wait and re-poll. Written up in
+`supabase/migrations/README.md`.
 
 **Watch-item, still live:** mail providers pre-fetch links to scan them, and a magic link is
 single-use, so a scanner can consume the token before the user taps. Did **not** occur during the
 2026-09-04 phone test, but the risk is real on any public URL. Mitigation if it starts happening:
 an interstitial "click to finish signing in" page — scanners don't press buttons.
-
-**Carry forward:** Step 5 is still the dangerous one (`discardCover()` deleting a saved story's
-cover). Nothing has touched it yet.
 
 ## TLDR
 
@@ -237,20 +233,32 @@ drop function if exists public.set_updated_at();
   - [x] 🟩 **`/security-review` — no HIGH/MEDIUM findings.** Cleared the definer function (one boolean, `search_path = ''`, fully qualified, explicit grants), the unauthenticated endpoint (now bounded to deleting orphans; before this step it would have deleted any story's cover), the blob-prefix guard (`del()` posts to Vercel's API rather than fetching the URL, so no SSRF), and client-driven eviction (RLS scopes it to the caller's own rows).
   - **Carry-forward for Step 6:** `markCurrentStoryOpened`'s `opened` flag is unreachable today (every path to Home clears the tracked row first) but becomes reachable once the Library opens a story by id — at which point a concurrent content update could reset it to `false` and let a regenerate overwrite a story the user had read.
 
-- [ ] 🟥 **Step 6: Library screen + nav** ← current
+- [x] 🟩 **Step 6: Library screen + nav** — DONE 2026-09-06, verified 42/42
 
-  - [ ] 🟥 `app/library/page.tsx` — cover grid, History/Favourites segmented tabs (Direction A / frame A1)
-  - [ ] 🟥 Capacity meter ("17 of 20 saved") + warning from 17
-  - [ ] 🟥 Per-story delete with confirmation
-  - [ ] 🟥 Favourites tab = empty-state shell, labelled as shipping with #55
-  - [ ] 🟥 Guest empty state explaining what sign-in gets you — not a locked door
-  - [ ] 🟥 `components/AppNav.tsx`: Library takes the Favourites seat, all three layouts (bottom bar / rail / sidebar)
+  - [x] 🟩 [app/library/page.tsx](../app/library/page.tsx) + [components/LibraryScreen.tsx](../components/LibraryScreen.tsx) — cover grid, History/Favourites segmented tabs (Direction A / frame A1). Its own route, not a fifth view in `/create`: no generation state to hold, deep-linkable, and the screen a signed-in user reaches most often after Home.
+  - [x] 🟩 Capacity meter ("18 of 20 saved") + warning for the last three slots
+  - [x] 🟩 Per-story delete behind an `alertdialog` that names the story — the one irreversible action in the app
+  - [x] 🟩 Favourites tab = empty-state shell, labelled as shipping with #55
+  - [x] 🟩 Guest empty state explaining what sign-in gets you — not a locked door
+  - [x] 🟩 [components/AppNav.tsx](../components/AppNav.tsx): Library takes the Favourites seat, all three layouts (bottom bar / rail / sidebar)
+  - [x] 🟩 **Added to the plan: opening a saved story by id.** A library you can't open stories from is a wall of pretty dead cards, and it makes [lib/useStory.ts](../lib/useStory.ts) (written in Step 4) reachable at last. `/create?story=<id>`, consumed once and stripped. **This closes the Step 5 carry-forward** — `markCurrentStoryOpened` is now reachable, and the row is tracked *before* the mark since the mark reads that ref.
+  - [x] 🟩 **Added to the plan: [components/SignInForm.tsx](../components/SignInForm.tsx).** Pulled forward from Step 7 so a guest can actually sign in from inside the app rather than via the token-gated harness. Step 7 wraps the same component in its sheet instead of writing a second one.
+  - [x] 🟩 **Cross-route nav plumbing.** `AppNav` keeps its callback interface; the Library implements them as route pushes, and `/create` consumes `?new=1` / `?story=<id>` once each behind a ref guard (which also absorbs React's double-invoked effects).
+  - [x] 🟩 **[scripts/verify-library-screen.mjs](../scripts/verify-library-screen.mjs) — 42/42, zero console errors.** Drives the real screen as a guest and as a real signed-in user, and checks the **database** after every mutation. Rows are seeded through PostgREST rather than generated: this suite is about the screen, and 19 real generations would cost money and minutes without testing anything more. (The cover suite is the opposite case — there, fake data makes the test meaningless.)
+  - [x] 🟩 **`/code-review` at high — 7 findings, all confirmed and fixed.** The three that mattered:
+    - **Deleting a story left its Continue card on Home**, offering to resume a story that existed nowhere. The continue slot now carries the row id it mirrors (`attachRowId`), so `clearContinueStoryForRow` clears that card and only that card.
+    - **A card dated itself from `updated_at`**, which migration 002's trigger bumps on every touch — so opening a two-month-old story relabelled it "Today". `SavedStory` gained `createdAt`; ordering and eviction still use `updated_at`, which is what they want.
+    - **`deleteStory` trusted a caller-cached `image_url`** — the same stale-value trap replace-in-place already closed. It reads the row's cover itself now, and eviction stopped passing one.
+    - Also: `currentCover` degrades instead of throwing (a failed lookup must not abort the save it precedes); the "Opening your story…" overlay gained a Cancel (`useStory` has no timeout); a failed load offers Try again instead of a red line over an empty grid; and the delete dialog is keyboard-safe (Escape, focus on "Keep it", focus restored on close).
+  - [x] 🟩 **`/security-review` — no HIGH/MEDIUM findings.** Cleared the `?story=` deep link (PostgREST parameterises, RLS scopes, `22P02` reads as not-found), the newly public magic-link form, and the narrowed `deleteStory` signature.
+  - [x] 🟩 Screenshots at iPhone 12 Pro and iPad, light **and** dark, plus guest / empty / grid / Favourites / delete-dialog states
 
-- [ ] 🟥 **Step 7: The ask + the honesty line**
+- [ ] 🟥 **Step 7: The ask + the honesty line** ← current
 
-  - [ ] 🟥 End-of-story sign-in sheet (frame A2) — email field, "Send me a link", dismissible "Not now"
-  - [ ] 🟥 "Check your email" state with resend cooldown
+  - [ ] 🟥 End-of-story sign-in sheet (frame A2) — dismissible "Not now", wrapping the existing [components/SignInForm.tsx](../components/SignInForm.tsx) rather than a second form
+  - [x] 🟩 "Check your email" state with resend cooldown — **built in Step 6** (45s), lives in `SignInForm`
   - [ ] 🟥 "Saved on this phone only" line **inside the Library screen** (B's honesty, no banner on Home)
+  - [ ] 🟥 Delete the `/auth/test` harness once a real sign-in path exists on every surface that needs one
 
 - [ ] 🟥 **Step 8: Home — real stories (closes #67)**
 

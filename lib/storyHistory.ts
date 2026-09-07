@@ -13,6 +13,11 @@ const HAS_CREATED_KEY = "storykins:has-created";
 export type ClassicContinueStory = {
   // Absent on stories saved before interactive mode existed - treated as classic (see isValid* below).
   mode?: "classic";
+  // The `public.stories` row this slot mirrors, for a signed-in user. Absent for a guest, and absent
+  // for the moment between a story appearing on screen and its insert coming back with an id (see
+  // attachRowId). Its only job is to answer "is the story on the Continue card the one that was just
+  // deleted from the Library?" - nothing reads it to fetch anything.
+  id?: string;
   title: string;
   story: string;
   genre: GenreSelection;
@@ -38,6 +43,8 @@ export type ClassicContinueStory = {
 // An in-progress (or finished) interactive story (#37), so Home can resume it mid-beat.
 export type InteractiveContinueStory = {
   mode: "interactive";
+  // See ClassicContinueStory.id.
+  id?: string;
   interactive: InteractiveStory;
   imageUrl?: string;
   progress?: number;
@@ -206,6 +213,48 @@ export function saveProgress(fraction: number, timeSpentMs: number): boolean {
     return false;
   }
   return true;
+}
+
+// Stamps the library row id onto the slot already on screen, once the insert that created it comes
+// back. Merged into the existing slot rather than passed to saveContinueStory, because the id arrives
+// a round trip AFTER the story does - and rewriting the whole slot here would clobber any progress
+// written in between. Same merge-don't-replace shape as saveProgress above.
+export function attachRowId(rowId: string) {
+  const slot = readSlot();
+  if (!slot || slot.id === rowId) return;
+  writeSlot({ ...slot, id: rowId });
+}
+
+// Clears the slot only if it is mirroring the row that was just deleted. Deleting a story from the
+// Library has to take its Continue card with it - otherwise Home keeps offering to resume a story
+// that no longer exists anywhere. Scoped by id so deleting story #14 doesn't wipe the Continue card
+// for story #3.
+export function clearContinueStoryForRow(rowId: string) {
+  const slot = readSlot();
+  if (slot?.id !== rowId) return;
+  clearContinueStory();
+}
+
+// Reads and validates the slot for the merge helpers above. Every failure mode (storage blocked,
+// unparseable, stale shape) is the same answer: there is no slot to merge into.
+function readSlot(): ContinueStory | null {
+  try {
+    const raw = window.localStorage.getItem(CONTINUE_STORY_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return isValidContinueStory(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSlot(slot: ContinueStory) {
+  try {
+    window.localStorage.setItem(CONTINUE_STORY_KEY, JSON.stringify(slot));
+  } catch {
+    return;
+  }
+  notify();
 }
 
 export function clearContinueStory() {

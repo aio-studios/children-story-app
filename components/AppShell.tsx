@@ -10,10 +10,11 @@ import { Wordmark } from "./Wordmark";
 type AppShellProps = {
   onNavigateHome: () => void;
   onNavigateNewStory: () => void;
+  onNavigateLibrary: () => void;
   /** Page-aware center title for the reader's top bar (the story title). */
   pageTitle?: string;
   /** Which global-nav destination the current view maps to, for the active highlight. */
-  activeTab?: "home" | "create";
+  activeTab?: "home" | "create" | "library";
   /** Story-reader mode: hides the global nav (immersive, D1) and swaps in the slim auto-hide top
    *  title bar (Safari-reader style: shown on landing, auto-hides after ~2.5s idle, hides on scroll
    *  down, reveals on scroll up or a tap near the top edge). */
@@ -35,6 +36,7 @@ const SCROLL_DELTA_THRESHOLD_PX = 6;
 export function AppShell({
   onNavigateHome,
   onNavigateNewStory,
+  onNavigateLibrary,
   pageTitle,
   activeTab,
   autoHide = false,
@@ -112,6 +114,7 @@ export function AppShell({
           activeTab={activeTab}
           onNavigateHome={onNavigateHome}
           onNavigateNewStory={onNavigateNewStory}
+          onNavigateLibrary={onNavigateLibrary}
         />
       )}
       {/* autoHide marks the immersive reader (nav hidden). It drops the sk-shell-<mode> classes that

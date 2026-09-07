@@ -7,9 +7,10 @@ import { Wordmark } from "./Wordmark";
 type AppNavProps = {
   mode: LayoutMode;
   /** Which destination the current view maps to, for the active highlight. */
-  activeTab?: "home" | "create";
+  activeTab?: "home" | "create" | "library";
   onNavigateHome: () => void;
   onNavigateNewStory: () => void;
+  onNavigateLibrary: () => void;
 };
 
 // Sidebar collapsed/open state persists across visits (localStorage now, account later once Supabase
@@ -64,15 +65,18 @@ function CreateIcon() {
   );
 }
 
-function FavoritesIcon() {
+// Library takes the seat Favorites used to hold (#92 / frame A1). Favourites isn't gone - it moves
+// inside the Library as a tab, so the nav keeps five seats instead of growing a sixth.
+function LibraryIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path
-        d="M12 20.3C8 17 4 14 4 9.6 4 7.1 6 5.2 8.4 5.2c1.6 0 2.9.9 3.6 2.1.7-1.2 2-2.1 3.6-2.1C18 5.2 20 7.1 20 9.6c0 4.4-4 7.4-8 10.7Z"
+        d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+      <path d="M8 7h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -126,10 +130,10 @@ type NavItem = {
 };
 
 // One nav model, three shapes (Nav-2, #73/#75). Bottom bar (portrait), 64px icon rail (landscape),
-// collapsible left sidebar (tablet). Home + Create are live; Favorites/Music/Settings are shown
+// collapsible left sidebar (tablet). Home + Create + Library are live; Music/Settings are shown
 // greyed with a "Soon" badge so the roadmap reads at a glance (they don't exist yet). Create owns the
 // primary action and, in the bottom bar, sits dead-center as the raised FAB.
-export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory }: AppNavProps) {
+export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory, onNavigateLibrary }: AppNavProps) {
   const isSidebar = mode === "tablet";
   const collapsed = useSyncExternalStore(subscribeCollapsed, getCollapsedSnapshot, () => false);
 
@@ -145,16 +149,16 @@ export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory }: 
 
   const home: NavItem = { key: "home", label: "Home", icon: <HomeIcon />, active: activeTab === "home", onClick: onNavigateHome };
   const create: NavItem = { key: "create", label: "Create", icon: <CreateIcon />, create: true, active: activeTab === "create", onClick: onNavigateNewStory };
-  const favorites: NavItem = { key: "favorites", label: "Favorites", icon: <FavoritesIcon /> };
+  const library: NavItem = { key: "library", label: "Library", icon: <LibraryIcon />, active: activeTab === "library", onClick: onNavigateLibrary };
   const music: NavItem = { key: "music", label: "Music", icon: <MusicIcon /> };
   const settings: NavItem = { key: "settings", label: "Settings", icon: <SettingsIcon /> };
 
-  // Bottom bar centers Create (FAB between two greyed tabs each side); the vertical rail/sidebar keep
-  // Create high, right under Home, with the "Soon" items below.
+  // Bottom bar centers Create (the raised FAB), with Home + Library either side of it; the vertical
+  // rail/sidebar keep Create high, right under Home, with Library and the "Soon" items below.
   const items: NavItem[] =
     mode === "portrait"
-      ? [home, favorites, create, music, settings]
-      : [home, create, favorites, music, settings];
+      ? [home, library, create, music, settings]
+      : [home, create, library, music, settings];
 
   function renderItem(item: NavItem) {
     const soon = !item.onClick;

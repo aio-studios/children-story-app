@@ -570,6 +570,9 @@ select:focus-visible,
   --sk-brand-wash: rgba(138, 109, 59, 0.14);
   --sk-card-bg: #fffdf8;
   --sk-shadow: 0 10px 30px -12px rgba(42, 33, 22, 0.28);
+  /* Destructive actions (deleting a saved story, #92). Warm red so it reads as "careful" inside the
+     bronze palette rather than as a browser-default error. */
+  --sk-danger: #a33a2a;
   /* Desktop container. 1280px is the common app-shell max (Tailwind's max-w-7xl); the landing uses
      the same token so the two never drift apart. */
   --sk-max: 1280px;
@@ -595,6 +598,7 @@ select:focus-visible,
     --sk-brand-wash: rgba(217, 184, 118, 0.16);
     --sk-card-bg: #241d13;
     --sk-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+    --sk-danger: #f08a75;
     /* Dark: lighter bronze ramp with dark ink text (white text would glare on the lighter fill). */
     --cta-from: #c19a55;
     --cta-to: #8a6733;
@@ -2860,4 +2864,403 @@ a,
   .sk-lp-roadmap { padding: 4rem var(--lp-pad); }
   .sk-lp-roadmap-list { grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
   .sk-lp-roadmap-head { margin-bottom: 2rem; }
+}
+
+/* ============================================================================
+   Library (#92 Step 6) - approved design docs/designs/library-accounts-directions.html,
+   Direction A frame A1: cover grid, History/Favourites tabs, capacity meter.
+   Reuses the Home cover-card language (accent gradient + scrim + white foot text) so a saved story
+   and a discovery card read as the same object, rather than inventing a second card style.
+   ============================================================================ */
+.sk-lib { padding: 0.4rem 0 2.5rem; }
+.sk-lib-head { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1.1rem 0.5rem; }
+.sk-lib-h1 {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-title);
+  color: var(--sk-ink);
+}
+
+/* Segmented control. A sunken track with a raised active pill - the same "physical" treatment the
+   setup pills use, so the tab metaphor doesn't need a second visual vocabulary. */
+.sk-lib-seg {
+  display: flex;
+  gap: 4px;
+  margin: 0 1.1rem 0.9rem;
+  padding: 4px;
+  background: var(--sk-brand-wash);
+  border-radius: 999px;
+}
+.sk-lib-seg-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  color: var(--sk-ink-soft);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.sk-lib-seg-on { background: var(--sk-card-bg); color: var(--sk-brand); box-shadow: 0 2px 6px -3px rgba(0, 0, 0, 0.35); }
+@media (prefers-reduced-motion: reduce) {
+  .sk-lib-seg-btn { transition: none; }
+}
+
+.sk-lib-pane { padding: 0 1.1rem; }
+
+/* Capacity meter. The number leads; the warning only appears in the last three slots, so the bar is
+   a quiet count for the 17 saves before it and a nudge for the three after. */
+.sk-lib-cap { margin-bottom: 0.9rem; }
+.sk-lib-cap-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  color: var(--sk-ink-soft);
+  margin-bottom: 6px;
+}
+.sk-lib-cap-warn { color: var(--sk-danger); }
+.sk-lib-cap-bar { height: 6px; border-radius: 999px; background: var(--sk-line-soft); overflow: hidden; }
+.sk-lib-cap-fill { display: block; height: 100%; border-radius: 999px; background: var(--sk-brand); }
+.sk-lib-cap-fill-warn { background: var(--sk-danger); }
+
+/* Two up on a phone, then as many 150px+ columns as fit. auto-fill rather than a fixed count so the
+   iPad sidebar layout and landscape rail both get a sensible grid without their own breakpoints. */
+.sk-lib-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+@media (min-width: 700px) {
+  .sk-lib-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+.sk-lib-card { position: relative; --accent: var(--accent-light); }
+@media (prefers-color-scheme: dark) {
+  .sk-lib-card { --accent: var(--accent-dark); }
+}
+/* The whole card is one button so the tap target is the card, not just the title. */
+.sk-lib-open {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.sk-lib-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--sk-line);
+  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.5);
+}
+/* Genre gradient, shown whenever there is no generated cover (illustrations are opt-in, so this is
+   the common case, not the fallback). Same ramp as .sk-cover-art on Home. */
+.sk-lib-art {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 82% at 26% 14%, color-mix(in srgb, var(--accent) 80%, white 20%), transparent 60%),
+    linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 42%, black 14%));
+}
+.sk-lib-art-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sk-lib-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 4%, transparent 40%);
+}
+.sk-lib-progress {
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  font-size: var(--text-micro);
+  font-weight: 800;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.sk-lib-progress-done { background: color-mix(in srgb, var(--accent) 88%, black 6%); }
+
+/* Title and meta sit OUTSIDE the cover, not over it (frame A1). Two lines of a real title beat one
+   truncated line laid over art the illustration is trying to show. */
+.sk-lib-meta { display: block; padding: 0.5rem 2px 0; }
+.sk-lib-title {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--sk-ink);
+  /* Two lines, then ellipsis - a generated title can run long and a ragged grid reads as broken. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sk-lib-sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+}
+
+.sk-lib-dots {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+.sk-lib-dots:hover { background: rgba(0, 0, 0, 0.6); }
+
+.sk-lib-menu {
+  position: absolute;
+  top: 42px;
+  right: 6px;
+  z-index: 5;
+  min-width: 148px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--sk-card-bg);
+  border: 1px solid var(--sk-line);
+  box-shadow: var(--sk-shadow);
+}
+.sk-lib-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  color: var(--sk-ink);
+  cursor: pointer;
+}
+.sk-lib-menu-item:hover { background: var(--sk-brand-wash); }
+.sk-lib-menu-danger { color: var(--sk-danger); }
+
+/* Loading skeleton: cover-shaped, so the grid doesn't reflow when the real cards land. */
+.sk-lib-skeleton {
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  background: var(--sk-line-soft);
+  animation: sk-lib-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sk-lib-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-lib-skeleton { animation: none; }
+}
+
+.sk-lib-empty,
+.sk-lib-guest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.55rem;
+  padding: 2.2rem 1rem 1rem;
+}
+.sk-lib-empty-ico {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+  margin-bottom: 0.2rem;
+}
+.sk-lib-empty-a {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-heading);
+  color: var(--sk-ink);
+}
+.sk-lib-empty-b {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+  max-width: 34ch;
+}
+.sk-lib-soon {
+  margin-top: 0.3rem;
+  font-size: var(--text-micro);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-brand);
+  background: var(--sk-brand-wash);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* Guest state: a pitch with a working form, not a locked door. The ask is what sign-in BUYS - stories
+   that follow you - never "sign in to continue", because nothing here is gated. */
+.sk-lib-guest-h {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-title);
+  color: var(--sk-ink);
+}
+.sk-lib-guest-b {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  line-height: 1.55;
+  color: var(--sk-ink-soft);
+  max-width: 38ch;
+}
+.sk-lib-guest-form { width: 100%; max-width: 340px; margin-top: 0.5rem; }
+.sk-lib-guest-note {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  color: var(--sk-ink-soft);
+  max-width: 34ch;
+}
+
+/* A failed load is a banner WITH a way out - the grid behind it can be empty, and a red line over
+   nothing is a dead end. Wraps on a phone so the retry never squeezes the message to two words. */
+.sk-lib-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 700;
+  color: var(--sk-danger);
+  background: color-mix(in srgb, var(--sk-danger) 12%, transparent);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.8rem;
+}
+.sk-lib-retry { flex: none; padding: 0.4rem 0.8rem; font-size: var(--text-note); color: var(--sk-ink); }
+
+/* Delete confirmation. A real alertdialog rather than window.confirm: this is the one irreversible
+   action in the app, and it should name the story it is about to take. */
+.sk-lib-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+.sk-lib-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: 1.25rem;
+  border-radius: 20px;
+  background: var(--sk-card-bg);
+  border: 1px solid var(--sk-line);
+  box-shadow: var(--sk-shadow);
+}
+.sk-lib-modal-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-heading);
+  color: var(--sk-ink);
+  margin-bottom: 0.5rem;
+}
+.sk-lib-modal-body {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+  margin-bottom: 1rem;
+}
+.sk-lib-modal-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+.sk-lib-danger-btn { background: var(--sk-danger); border-color: var(--sk-danger); color: var(--sk-card-bg); }
+.sk-lib-danger-btn:not(:disabled):hover { filter: brightness(1.08); }
+
+/* ---- Sign-in form (shared with Step 7's end-of-story sheet) ---- */
+.sk-signin { display: flex; flex-direction: column; gap: 0.45rem; text-align: left; width: 100%; }
+.sk-signin-go { margin-top: 0.35rem; }
+.sk-signin-error {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-danger);
+}
+.sk-signin-sent {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  line-height: 1.5;
+  color: var(--sk-ink);
+  background: var(--sk-brand-wash);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+}
+.sk-signin-addr { font-weight: 800; overflow-wrap: anywhere; }
+
+/* ---- Opening a story from the Library ---- */
+.sk-opening {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  background: var(--sk-bg);
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+}
+.sk-opening-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--sk-brand-wash);
+  border-top-color: var(--sk-brand);
+  animation: sk-opening-spin 0.8s linear infinite;
+}
+@keyframes sk-opening-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-opening-dot { animation: none; }
+}
+.sk-opening-out { margin-top: 0.4rem; }
+
+.sk-deeplink-error {
+  margin: 0.6rem 1.1rem 0;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 700;
+  color: var(--sk-danger);
+  background: color-mix(in srgb, var(--sk-danger) 12%, transparent);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
 }

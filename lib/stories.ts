@@ -47,9 +47,15 @@ export type StoryColumns = Omit<StoryInsert, "user_id" | "opened">;
 export type StoryContentColumns = Omit<StoryColumns, "progress" | "time_spent">;
 export type StoryProgressColumns = Pick<StoryColumns, "progress" | "time_spent">;
 
-// A row brought back into app shape, plus the two things only the database knows: which row this is,
-// and whether it has ever been opened (which decides if a regenerate replaces it in place).
-export type SavedStory = ContinueStory & { id: string; opened: boolean };
+// A row brought back into app shape, plus the three things only the database knows: which row this
+// is, whether it has ever been opened (which decides if a regenerate replaces it in place), and when
+// it was created.
+//
+// `createdAt` is separate from the inherited `savedAt` on purpose. `savedAt` maps `updated_at`, which
+// migration 002's trigger bumps on every touch - opening a story, a progress tick - because that is
+// what the eviction order and the Library's sort need. Dating a card from it would relabel a
+// two-month-old story "Today" for the crime of being read. The card wants the story's birthday.
+export type SavedStory = ContinueStory & { id: string; opened: boolean; createdAt: number };
 
 // Distributes across the union so each variant keeps its discriminant while dropping the
 // localStorage-only timestamp - same trick as storyHistory's `Saveable`.
@@ -121,7 +127,7 @@ export function fromRow(row: StoryRow): SavedStory | null {
   // never disagree about what a valid story is.
   if (!isValidContinueStory(candidate)) return null;
 
-  return { ...candidate, id: row.id, opened: row.opened };
+  return { ...candidate, id: row.id, opened: row.opened, createdAt: parseTimestamp(row.created_at) };
 }
 
 function toInteractive(row: StoryRow): InteractiveStory {
