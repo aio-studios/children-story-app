@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteIllustration } from "@/lib/imageClient";
+import { canonicalCoverUrl, deleteIllustration } from "@/lib/imageClient";
 import { checkDeleteRateLimit } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,8 +32,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  // Canonicalised ONCE, then used for both the check and the delete - see canonicalCoverUrl. Handing
+  // the raw string to each would let the two disagree about which blob is being talked about, and the
+  // disagreement always resolves in favour of deleting.
+  const coverUrl = canonicalCoverUrl(url);
+  if (!coverUrl) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
   const supabase = await createClient();
-  const { data: referenced, error } = await supabase.rpc("cover_is_referenced", { cover_url: url });
+  const { data: referenced, error } = await supabase.rpc("cover_is_referenced", { cover_url: coverUrl });
 
   // Fail CLOSED, unlike the rate limiter above. A delete we can't verify is a delete we don't do:
   // the cost of refusing is an orphaned Blob, and the cost of proceeding is someone's saved story
@@ -46,6 +54,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That cover still belongs to a saved story." }, { status: 409 });
   }
 
-  await deleteIllustration(url);
+  await deleteIllustration(coverUrl);
   return NextResponse.json({ ok: true });
 }

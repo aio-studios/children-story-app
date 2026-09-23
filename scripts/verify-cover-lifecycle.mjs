@@ -157,6 +157,22 @@ check('the endpoint refuses it', refused.status === 409, `got ${refused.status}`
 check('the Blob is still there', await blobExists(coverA));
 check('the row still points at it', (await rows()).find(x => x.id === rowA.id)?.image_url === coverA);
 
+// The reference check is byte-exact equality against stories.image_url, but del() resolves several
+// spellings of the same blob. A spelling that slips past the check still deletes, so the route
+// canonicalises once and uses that for both steps. Without it these variants destroy a saved
+// story's cover - the exact landmine section 1 exists to guard.
+for (const [label, variant] of [
+  ['a query string', `${coverA}?x=1`],
+  ['a download suffix', `${coverA}?download=1`],
+  ['a fragment', `${coverA}#x`],
+  ['an uppercased host', coverA.replace(/^https:\/\/([^/]+)/, (_, h) => `https://${h.toUpperCase()}`)],
+]) {
+  const dodged = await askDelete(variant);
+  check(`${label} cannot dodge the guard`, dodged.status === 409, `got ${dodged.status}`);
+  check(`the Blob survived ${label}`, await blobExists(coverA));
+}
+check('a non-Blob host is rejected outright', (await askDelete('https://evil.example/story-covers/x.png')).status === 400);
+
 console.log('\n-- 2. once nothing references it, the same cover is deleted --');
 await fetch(`${URL_}/rest/v1/stories?id=eq.${rowA.id}`, { method: 'DELETE', headers: auth });
 const allowed = await askDelete(coverA);
