@@ -28,7 +28,7 @@ See the Step 8 task list for the full account; the two worth carrying in your he
 
 **Known, deliberately deferred:** `useLibrary` tears down and refetches all 20 rows' full `content`
 on every return to Home, because HomeScreen is its only `/create` subscriber and is conditionally
-rendered. Correct but wasteful; wants its own pass, not a Step 8 bolt-on.
+rendered. Correct but wasteful; wants its own pass, not a Step 8 bolt-on — [#102](https://github.com/aio-studios/children-story-app/issues/102).
 
 **FIVE regression gates now, re-run after ANY persistence change:**
 - `scripts/verify-signin-sheet.mjs` — **37/37** (guest-only, so it needs no Supabase and costs nothing — run this one first, it catches the most for the least)
@@ -312,7 +312,7 @@ drop function if exists public.set_updated_at();
   - **Interactive stories never wrote progress per beat.** `toContentColumns` excludes it and `saveStoryProgress` is wired to the classic reader alone, so the row froze at whatever the first beat inserted — showing mid-arc stories as barely started on the Library *and* the new Home shelf.
   - **A save returning after the user left re-armed `savedRowRef`**, pointing the next story's writes at the previous story's row — the exact overwrite `setSaved(null)` on every exit exists to prevent. Now guarded on `activeGenerationRef`, like `generateCover`.
   - **`showDiscovery` never read the session's `loading`**, so a signed-in user saw "Popular this week" flash before their own shelf — precisely the flash the line was written to prevent.
-  - **`useLibrary` tears down on every view change** (HomeScreen is its only subscriber in `/create` and is conditionally rendered), refetching all 20 rows' full `content` on each return to Home. Not fixed here — it is a property of the store rather than of this step, and the fix is a cache/ref-count change that deserves its own pass. **Filed as a follow-up.**
+  - **`useLibrary` tears down on every view change** (HomeScreen is its only subscriber in `/create` and is conditionally rendered), refetching all 20 rows' full `content` on each return to Home. Not fixed here — it is a property of the store rather than of this step, and the fix is a cache/ref-count change that deserves its own pass. **Filed as [#102](https://github.com/aio-studios/children-story-app/issues/102).**
 
   **The `/security-review` finding, fixed rather than waved through:** `/api/delete-illustration` checked "is this cover still referenced?" by byte-exact equality against `stories.image_url`, then handed the *same raw string* to `del()`, which resolves several spellings of one Blob. A `?x=1`, a `#fragment`, `?download=1` or a differently-cased host slipped past the check as unreferenced and deleted the picture anyway, leaving a saved story with a permanently broken cover. New `canonicalCoverUrl()` in [lib/imageClient.ts](../lib/imageClient.ts) reduces the URL once and rejects anything off `*.blob.vercel-storage.com`/`story-covers/`; both the check and the delete use that one string. Nine assertions added to the cover gate (21 → 30) so it can't regress.
 
