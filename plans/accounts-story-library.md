@@ -1,30 +1,41 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `95%` — Steps 1–7 complete and verified. A guest who finishes a story is asked, once, whether they want to keep it; the Library carries the standing "Saved on this phone only" line; the `/auth/test` harness is retired. Four gates green (37/37 sheet, 42/42 screen, 16/16 persistence, 21/21 covers). Step 8 (Home — real stories) is next.
+**Overall Progress:** `97%` — Steps 1–8 complete and verified. Home now shows the user's own stories instead of invented ones, and the invented shelves stand down the moment there is something real. **Five** gates green (37/37 sheet, 18/18 Home shelf, 42/42 screen, 16/16 persistence, 30/30 covers). Step 9 (Privacy) is next.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-09-23 (session 7)
+**Last updated:** 2026-09-23 (session 8)
 
-## ▶ Resume point (2026-09-17, session 6)
+## ▶ Resume point (2026-09-23, session 8)
 
-**Branch:** `feat/92-accounts-auth-foundation` — 7 commits ahead of origin, **Step 7's work is
-uncommitted in the working tree.** `main` untouched.
+**Branch:** `feat/92-accounts-auth-foundation` — 9 commits ahead of origin, working tree clean.
+`main` untouched by this branch, but note **`main` has moved**: PR #101 (#96 tracking links) merged
+on 2026-09-23, so this branch will need a merge from `main` before it ships.
 
-**Next action: Step 8 (Home — real stories, closes #67).** Replace the fake `SAMPLE_STORIES` shelves
-in [components/HomeScreen.tsx](../components/HomeScreen.tsx) with real recent stories (frame A3), plus
-an empty/guest state. ⚠️ Home is the most recently polished screen (#65/#62/#82) — regression risk on
-work that has already been UAT'd.
+**Next action: Step 9 (Privacy).** `/privacy` page, account delete that purges stories *and* Blob
+covers, the nickname nudge in the custom-character form, and a settings entry point for sign-out +
+delete. Account delete is the one with teeth — it has to take the covers with it, and the cover
+delete path now canonicalises its URL (Step 8's security fix), so reuse `deleteCoverBlob()` rather
+than hand-rolling a second caller.
 
-**Steps 1–7 are DONE and verified.** Step 7 shipped the end-of-story sign-in sheet, the week-long
-snooze, the Library's honesty line, and the deletion of `/auth/test`. It also fixed three real
-persistence bugs that `/code-review` found in Steps 5/6 — see the Step 7 task list for what they were.
+**Steps 1–8 are DONE and verified.** Step 8 put real stories on Home and, in review, turned up five
+code bugs and one security bug — four of them pre-existing and invisible to the four earlier gates.
+See the Step 8 task list for the full account; the two worth carrying in your head:
+- **A late cover wiped reading progress** — the default path since covers went on by default, and
+  worst for guests, whose slot is the only copy. Fixed in `updateContinueStory`.
+- **The cover-delete endpoint's check and its delete disagreed on what identifies a Blob**, so a
+  `?x=1` deleted a referenced cover. Fixed with `canonicalCoverUrl()`; nine assertions now pin it.
 
-**FOUR regression gates now, re-run after ANY persistence change:**
+**Known, deliberately deferred:** `useLibrary` tears down and refetches all 20 rows' full `content`
+on every return to Home, because HomeScreen is its only `/create` subscriber and is conditionally
+rendered. Correct but wasteful; wants its own pass, not a Step 8 bolt-on.
+
+**FIVE regression gates now, re-run after ANY persistence change:**
 - `scripts/verify-signin-sheet.mjs` — **37/37** (guest-only, so it needs no Supabase and costs nothing — run this one first, it catches the most for the least)
+- `scripts/verify-home-recent.mjs` — **18/18** (seeds rows via PostgREST, free and fast)
 - `scripts/verify-library-screen.mjs` — **42/42** (seeds rows via PostgREST, free and fast)
 - `scripts/verify-library-signed-in.mjs` — **16/16**
-- `scripts/verify-cover-lifecycle.mjs` — **21/21** (~$0.16 in real cover images per run)
+- `scripts/verify-cover-lifecycle.mjs` — **30/30** (~$0.16 in real cover images per run)
 
 The last three need `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` in `.env.local` and a running
 `npm run dev`, and all three **delete every story belonging to that account** — keep it a throwaway
@@ -289,12 +300,23 @@ drop function if exists public.set_updated_at();
   - **A Home resume never picked its row back up**, so every `persistProgress` no-opped: the card's % and `updated_at` froze, which also skews eviction (eviction is by `updated_at`).
   - **A regenerate inherited the replaced story's read state** — shown as "Finished" in the Library, and it suppressed this very sign-in ask, which reads the same rule. `updateStory` now takes `{ resetProgress }`, set only on the replace-in-place branch. Related: `markCurrentStoryOpened` now flips `opened` locally *before* the round trip, closing a window where a regenerate could overwrite a story already opened.
 
-- [ ] 🟥 **Step 8: Home — real stories (closes #67)** ← current
+- [x] 🟩 **Step 8: Home — real stories (closes #67)**
 
-  - [ ] 🟥 Replace the fake `SAMPLE_STORIES` shelves in [components/HomeScreen.tsx](../components/HomeScreen.tsx) with real recent stories (frame A3)
-  - [ ] 🟥 Empty/guest state for someone with no stories yet
+  - [x] 🟩 A "Your recent stories" shelf in [components/HomeScreen.tsx](../components/HomeScreen.tsx) (frame A3) — the 6 newest saved stories, cover + genre + % read, opening straight from the row already in hand (no `?story=` round trip, no spinner). "All ›" goes to the Library.
+  - [x] 🟩 Empty/guest state: the invented `SAMPLE_STORIES` shelves stay for anyone with nothing real to show and disappear the moment there is, rather than a bare empty state.
+  - [x] 🟩 `scripts/verify-home-recent.mjs` — **18/18**, the fifth gate.
+  - [x] 🟩 `/code-review` at high — 5 findings, all confirmed against the code, all fixed (below). `/security-review` — one finding, scored 6/10 and below the reporting bar, fixed anyway (below).
 
-- [ ] 🟥 **Step 9: Privacy (in scope, not deferred)**
+  **Five bugs `/code-review` found, four of them pre-existing and none caught by the four earlier gates:**
+  - **A late cover wiped the reader's progress.** `updateContinueStory` carried the row id forward but not `progress`/`timeSpent`, so a cover landing 10–25s into a story someone was already reading handed the slot back at 0%. Guests worst hit — the slot is their only copy — and the *default* path since covers went on by default. The guard was also written `if (!existing?.id)`, which sent every guest down a wholesale overwrite.
+  - **Interactive stories never wrote progress per beat.** `toContentColumns` excludes it and `saveStoryProgress` is wired to the classic reader alone, so the row froze at whatever the first beat inserted — showing mid-arc stories as barely started on the Library *and* the new Home shelf.
+  - **A save returning after the user left re-armed `savedRowRef`**, pointing the next story's writes at the previous story's row — the exact overwrite `setSaved(null)` on every exit exists to prevent. Now guarded on `activeGenerationRef`, like `generateCover`.
+  - **`showDiscovery` never read the session's `loading`**, so a signed-in user saw "Popular this week" flash before their own shelf — precisely the flash the line was written to prevent.
+  - **`useLibrary` tears down on every view change** (HomeScreen is its only subscriber in `/create` and is conditionally rendered), refetching all 20 rows' full `content` on each return to Home. Not fixed here — it is a property of the store rather than of this step, and the fix is a cache/ref-count change that deserves its own pass. **Filed as a follow-up.**
+
+  **The `/security-review` finding, fixed rather than waved through:** `/api/delete-illustration` checked "is this cover still referenced?" by byte-exact equality against `stories.image_url`, then handed the *same raw string* to `del()`, which resolves several spellings of one Blob. A `?x=1`, a `#fragment`, `?download=1` or a differently-cased host slipped past the check as unreferenced and deleted the picture anyway, leaving a saved story with a permanently broken cover. New `canonicalCoverUrl()` in [lib/imageClient.ts](../lib/imageClient.ts) reduces the URL once and rejects anything off `*.blob.vercel-storage.com`/`story-covers/`; both the check and the delete use that one string. Nine assertions added to the cover gate (21 → 30) so it can't regress.
+
+- [ ] 🟥 **Step 9: Privacy (in scope, not deferred)** ← current
 
   - [ ] 🟥 `/privacy` page — what we store, why, how to delete it
   - [ ] 🟥 Account delete that purges stories + Blob covers, verified end-to-end

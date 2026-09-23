@@ -328,7 +328,7 @@ Who deletes what depends on who owns the cover:
 - **Guests** — the cover is owned by the `localStorage` continue slot, so `discardCover()` in `app/create/page.tsx` fires when that slot is overwritten or cleared. Unchanged behaviour.
 - **Signed-in users** — the cover is owned by a `stories` row that outlives the screen, so *only* `lib/storyRepo.ts` deletes it: on a replace-in-place regenerate, on `deleteStory`, and on eviction. The screen deliberately does not try to reason about it, because a cover is on screen a round trip before the update attaching it to its row commits — during that window the client and the database both say "unreferenced" about a Blob that is about to be referenced, and deleting there is exactly the #46 landmine.
 
-The path is `deleteCoverBlob()` (`lib/coverBlob.ts`) → `POST /api/delete-illustration` → `cover_is_referenced` (migration 003, `security definer`) → prefix-guarded `deleteIllustration()` (`lib/imageClient.ts`, `del()` on our `story-covers/` path only, never throws). The route **refuses** (409) any referenced cover and **fails closed** (503) if the check errors — the opposite posture to its rate limiter, deliberately: an unverifiable delete costs an orphan, a wrong one costs a saved story its cover. Cleanup has its own 60/60s rate-limit budget rather than sharing the 3/60s generation budget, because a refused cleanup is a *permanent* leak once the row is gone.
+The path is `deleteCoverBlob()` (`lib/coverBlob.ts`) → `POST /api/delete-illustration` → `canonicalCoverUrl()` → `cover_is_referenced` (migration 003, `security definer`) → prefix-guarded `deleteIllustration()` (`lib/imageClient.ts`, `del()` on our `story-covers/` path only, never throws). **The canonicalisation is load-bearing, not tidiness:** the reference check is byte-exact equality against `stories.image_url`, while `del()` resolves several spellings of one Blob (a `?query`, a `#fragment`, `?download=1`, a differently-cased host). Handing the raw string to both let them disagree about which picture was meant, and the disagreement always resolved toward deleting — so `canonicalCoverUrl()` (`lib/imageClient.ts`) reduces it to `https://<host><pathname>` once, rejects anything that isn't on `*.blob.vercel-storage.com` under `story-covers/`, and both steps use that one string. The route **refuses** (409) any referenced cover and **fails closed** (503) if the check errors — the opposite posture to its rate limiter, deliberately: an unverifiable delete costs an orphan, a wrong one costs a saved story its cover. Cleanup has its own 60/60s rate-limit budget rather than sharing the 3/60s generation budget, because a refused cleanup is a *permanent* leak once the row is gone.
 
 **Ordering rule, everywhere:** remove the reference first (clear the slot, overwrite or delete the row), delete the Blob second, and only if the first succeeded. The reverse leaves a visible story with a broken cover. Residual orphan: a cover whose save failed outright, so no row ever referenced it — a fraction of a cent, and the deliberate trade for never deleting a live one.
 
@@ -344,7 +344,7 @@ graph TD
   Shell["AppShell<br/>components/AppShell.tsx<br/>+ useLayoutMode()"]
   AppNav["AppNav<br/>components/AppNav.tsx<br/>bottom bar / rail / sidebar<br/>(shown except in reader)"]
   Nav["NavMenu<br/>components/NavMenu.tsx<br/>panel portaled to document.body<br/>(reader top bar only)"]
-  HS["HomeScreen<br/>components/HomeScreen.tsx"]
+  HS["HomeScreen<br/>components/HomeScreen.tsx<br/>+ useSession() / useLibrary()<br/>Recent shelf: 6 newest saved stories"]
   Deck["SetupDeck<br/>components/SetupDeck.tsx<br/>(immersive world→hero→customize deck)"]
   SR["StoryReader"]
 
@@ -354,7 +354,7 @@ graph TD
   Shell -->|view = home| HS
   Shell -->|view = setup, flush| Deck
   Shell -->|view = success| SR
-  HS -->|onSelectGenre, onContinue| Page
+  HS -->|onSelectGenre, onContinue, onOpenStory, onSeeAll| Page
   Deck -->|onStageChange, onCreate, selection callbacks| Page
   AppNav -->|onNavigateHome, onNavigateNewStory| Page
   Nav -->|onNavigateHome, onNavigateNewStory| Page
