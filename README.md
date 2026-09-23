@@ -53,7 +53,10 @@ See [persona/CTO.md](persona/CTO.md#tech-stack) for the decision and rationale. 
 
 ## Tracking Links
 
-To see whether an application's link was opened, give each application its own URL: `https://<site>/r/<anything>`, e.g. `/r/acme-oct`. It forwards to the landing page, and shows up as its own row in the Vercel Analytics **Pages** panel. Any slug works - no code change needed, so keep employer names out of this repo.
+To see where visits come from, link to `https://<site>/r/<anything>` instead of the bare site. It forwards to the landing page, and shows up as its own row in the Vercel Analytics **Pages** panel. Any slug works - no code change needed, so keep employer names out of this repo.
+
+- **Default: one link per channel** - `/r/resume` on the resume, `/r/linkedin` on LinkedIn. Set once, never edited.
+- **Optional: one per application** - e.g. `/r/acme-oct`, when a specific application is worth tracking.
 
 - **Stop counting your own visits:** open `https://<site>/?notrack=1` once on each of your devices/browsers. `?notrack=0` undoes it.
 - **Zero hits ≠ nobody looked** - ad blockers and corporate networks drop the analytics beacon entirely.
