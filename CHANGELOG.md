@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-23
+
+### Added
+
+- 21:36 - **Per-application tracking links (#96)** — `/r/<anything>` (e.g. `/r/acme-oct`) records its own row in Vercel Analytics, then forwards to the landing page. Any slug works, no deploy per application ([app/r/[slug]/page.tsx](app/r/[slug]/page.tsx), [components/TrackingForward.tsx](components/TrackingForward.tsx)). Client-side forward on purpose — a server redirect would silently record zero. `noindex`. How-to in [README.md](README.md#tracking-links).
+- 21:36 - **Exclude own visits from Analytics (#96)** — open any page with `?notrack=1` once per device; that browser stops being counted (`?notrack=0` undoes it). `<Analytics />` now mounted via [components/SiteAnalytics.tsx](components/SiteAnalytics.tsx) with a `beforeSend` filter.
+
 ## 2026-09-06
 
 ### Changed
