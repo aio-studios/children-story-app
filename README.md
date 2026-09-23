@@ -51,6 +51,17 @@ See [persona/CTO.md](persona/CTO.md#tech-stack) for the decision and rationale. 
 - [docs/architecture.md](docs/architecture.md) - technical considerations and system architecture
 - [docs/case-studies/](docs/case-studies/) - PM-perspective retrospective per major version (discovery, design, build, testing, launch), with real screenshots
 
+## Tracking Links
+
+To see where visits come from, link to `https://<site>/r/<anything>` instead of the bare site. It forwards to the landing page, and shows up as its own row in the Vercel Analytics **Pages** panel. Any slug works - no code change needed, so keep employer names out of this repo.
+
+- **Default: one link per channel** - `/r/resume` on the resume, `/r/linkedin` on LinkedIn. Set once, never edited.
+- **Optional: one per application** - e.g. `/r/acme-oct`, when a specific application is worth tracking.
+
+- **Stop counting your own visits:** open `https://<site>/?notrack=1` once on each of your devices/browsers. `?notrack=0` undoes it.
+- **Zero hits ≠ nobody looked** - ad blockers and corporate networks drop the analytics beacon entirely.
+- Visitor counts are per device, per day: one person on laptop + phone reads as 2.
+
 ## Project Management
 
 Tracked end-to-end on a public GitHub Projects board — Epics/Features/User Stories/Bugs/Tasks, priority and effort labels, and a Status workflow (Backlog → Todo → In Progress → In Review → Done).
