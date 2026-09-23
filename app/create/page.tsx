@@ -12,7 +12,7 @@ import {
   STORY_LENGTHS,
   TONES,
 } from "@/lib/storyOptions";
-import { ContinueStory, attachRowId, clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, useContinueStory } from "@/lib/storyHistory";
+import { ContinueStory, attachRowId, clearContinueStory, getContinueProgress, getContinueTimeSpent, saveContinueStory, updateContinueStory, useContinueStory } from "@/lib/storyHistory";
 import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction, StepResult } from "@/lib/interactive";
 import { CustomCharacter, GenreSelection, Lesson, LessonSelection, ReadingLevel, SelectedCharacter, StoryLength, StoryMode, Tone } from "@/lib/types";
 import { PillSelector } from "@/components/PillSelector";
@@ -24,6 +24,8 @@ import { InteractiveStoryReader } from "@/components/InteractiveStoryReader";
 import { HomeScreen } from "@/components/HomeScreen";
 import { SetupDeck } from "@/components/SetupDeck";
 import { AppShell } from "@/components/AppShell";
+import { SaveStorySheet } from "@/components/SaveStorySheet";
+import { isSignInAskSnoozed, isStoryFinished, slotArrivesFinished, snoozeSignInAsk } from "@/lib/signInPrompt";
 import { useSession } from "@/lib/useSession";
 import { evictBeyondLimit, markOpened, saveNewStory, saveStoryProgress, updateStory } from "@/lib/storyRepo";
 import { deleteCoverBlob } from "@/lib/coverBlob";
@@ -53,6 +55,13 @@ function defaultCharacterFor(genreId: string): SelectedCharacter {
 }
 
 const EMPTY_CUSTOM_CHARACTER: SelectedCharacter = { type: "custom", name: "", traits: "", description: "" };
+
+// Whether "Add a cover picture" starts switched on (#38). Flipped to ON 2026-09-23: a story with a
+// cover is the version worth showing anyone, and burying it behind a toggle most people never touch
+// meant the app's best feature was off by default. Every cover is a real ~$0.04 Gemini call, so this
+// is the cost dial - one line back to `false` and illustrations return to opt-in, with no other
+// change needed. The toggle's own label reads from this, so the copy can't drift from the behaviour.
+const ILLUSTRATE_BY_DEFAULT = true;
 
 // useSearchParams forces the tree up to the nearest Suspense boundary to render on the client. That
 // is already true of this whole page ("use client" + a generation state machine), so the boundary
@@ -101,9 +110,9 @@ function CreateApp() {
   const [customLessonDraft, setCustomLessonDraft] = useState("");
   const [generatedStory, setGeneratedStory] = useState<{ title: string; story: string } | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
-  // Illustration opt-in (#38), default off. Cover state is separate from the story so text can
-  // render immediately while the image generates (or fails) in the background.
-  const [illustrate, setIllustrate] = useState(false);
+  // Illustrations (#38), defaulting to ILLUSTRATE_BY_DEFAULT. Cover state is separate from the story
+  // so text can render immediately while the image generates (or fails) in the background.
+  const [illustrate, setIllustrate] = useState(ILLUSTRATE_BY_DEFAULT);
   const [coverStatus, setCoverStatus] = useState<CoverStatus>("idle");
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   // Mirrors coverUrl so async persistence (a beat resolving concurrently with the up-front cover)
@@ -141,7 +150,7 @@ function CreateApp() {
   // A signed-in user's stories are mirrored into Supabase alongside the localStorage continue slot,
   // which stays exactly as it was: it is still what drives Home's Continue card, and it is the only
   // copy a guest has. Every function below no-ops without a user, so the guest flow is unchanged.
-  const { user } = useSession();
+  const { user, loading: sessionLoading } = useSession();
   const userIdRef = useRef<string | null>(null);
   // Ref-mirrored because the callbacks that persist run inside async generation flows and would
   // otherwise capture whoever was signed in when the request started.
@@ -158,6 +167,31 @@ function CreateApp() {
 
   function setSaved(row: SavedRow | null) {
     savedRowRef.current = row;
+  }
+
+  // ---- The end-of-story ask (#92, Step 7) ----
+  // Offered to a guest who has just *finished* a story - the one moment they have both seen what the
+  // app is worth and have something worth keeping. Never on a story they merely opened.
+  const [askOpen, setAskOpen] = useState(false);
+  // One ask per story on screen. A ref, not state: nothing renders from it, and it is read from the
+  // reader's throttled progress callback, which would otherwise capture a stale value.
+  const askedForStoryRef = useRef(false);
+
+  // Every path that puts a different story on screen re-arms the ask. Without this, finishing a
+  // second story in the same session would be silent.
+  function resetSaveAsk() {
+    askedForStoryRef.current = false;
+    setAskOpen(false);
+  }
+
+  function maybeAskToSave() {
+    if (askedForStoryRef.current) return;
+    // Nothing to offer someone who already has an account. Checked against the ref rather than the
+    // render value because this runs inside reader callbacks and async step flows.
+    if (userIdRef.current) return;
+    if (isSignInAskSnoozed()) return;
+    askedForStoryRef.current = true;
+    setAskOpen(true);
   }
 
   // Fire-and-forget by design: the story is already generated and on screen, so a failed save must
@@ -196,6 +230,15 @@ function CreateApp() {
     void saveStoryProgress(row.id, progress, timeSpentMs).catch(() => {});
   }
 
+  // The reader's own throttled save, forwarded to the library row and read for one other thing: the
+  // moment a classic story counts as finished. saveProgress deliberately never notifies its store
+  // (it would re-render the reader on every scroll tick), so subscribing to the slot would never see
+  // the crossing - this callback is the only place that sees both numbers as they happen.
+  function handleProgressSaved(progress: number, timeSpentMs: number) {
+    persistProgress(progress, timeSpentMs);
+    if (isStoryFinished(progress, timeSpentMs)) maybeAskToSave();
+  }
+
   // Updates the row for the story already on screen (a cover arriving late, another beat, progress).
   // Distinct from persistNewStory: this must never insert, or advancing a beat would duplicate the
   // story every time.
@@ -222,12 +265,13 @@ function CreateApp() {
   function markCurrentStoryOpened() {
     const row = savedRowRef.current;
     if (!row || row.opened) return;
-    void markOpened(row.id)
-      .then(() => {
-        // The user may have moved to a different story while this was in flight.
-        if (savedRowRef.current?.id === row.id) setSaved({ id: row.id, opened: true });
-      })
-      .catch(() => {});
+    // Flipped locally FIRST, not on the round trip coming back. From this instant a regenerate must
+    // land beside this story rather than on top of it, and waiting for the PATCH left a window where
+    // "Regenerate" would overwrite a story the reader had already opened - exactly the data loss
+    // this flag exists to prevent. A failed PATCH leaves the local ref saying "opened", which errs
+    // toward keeping a story rather than replacing one.
+    setSaved({ id: row.id, opened: true });
+    void markOpened(row.id).catch(() => {});
   }
 
   // Interactive mode and illustrations are opt-in, off by default. They persist while moving through
@@ -236,7 +280,7 @@ function CreateApp() {
   // success view still reads `mode` to pick the reader) nor on resume (which restores mode/cover).
   function resetOptInToggles() {
     setMode("classic");
-    setIllustrate(false);
+    setIllustrate(ILLUSTRATE_BY_DEFAULT);
   }
 
   function selectPresetGenre(genreId: string) {
@@ -328,7 +372,10 @@ function CreateApp() {
       }
       updateCoverUrl(data.imageUrl);
       setCoverStatus("loaded");
-      saveContinueStory({ title, story, ...selections, imageUrl: data.imageUrl });
+      // Same story, new cover - an in-place update, so the slot keeps the library row id it is
+      // mirroring. saveContinueStory here would drop it, and deleting this story from the Library
+      // later would leave its Continue card stranded on Home.
+      updateContinueStory({ title, story, ...selections, imageUrl: data.imageUrl });
       void persistStoryUpdate({ title, story, ...selections, imageUrl: data.imageUrl });
     } catch {
       if (activeGenerationRef.current !== generationId) return;
@@ -369,6 +416,7 @@ function CreateApp() {
         return;
       }
       setGeneratedStory({ title: data.title, story: data.story });
+      resetSaveAsk();
       saveContinueStory({ title: data.title, story: data.story, ...selections });
       void persistNewStory({ title: data.title, story: data.story, ...selections });
       // The new story now owns the continue slot (with no image yet), so the old cover is orphaned.
@@ -394,7 +442,11 @@ function CreateApp() {
     // in the plan). Classic stories instead write scroll fraction from the reader itself.
     const progress = story.ended ? 1 : Math.min(1, story.beats.length / story.arc.max);
     const slot = { mode: "interactive" as const, interactive: story, imageUrl: imageUrl ?? undefined, progress };
-    saveContinueStory(slot);
+    // The same split as the persist call below, for the same reason: a new story replaces the slot
+    // outright (its row id arrives a round trip later, via attachRowId), while every beat after the
+    // first is an update that has to carry the existing id forward.
+    if (isNew) saveContinueStory(slot);
+    else updateContinueStory(slot);
     void (isNew ? persistNewStory(slot) : persistStoryUpdate(slot));
   }
 
@@ -471,7 +523,11 @@ function CreateApp() {
         ended: res.isEnding,
       };
       setStory(story);
+      resetSaveAsk();
       persistInteractive(story, null, true);
+      // A story that ends on its opening beat is rare but possible (the model reading a "quick" arc
+      // aggressively). Treat it like any other ending rather than letting it slip past the ask.
+      if (story.ended) maybeAskToSave();
       // The new story owns the continue slot now, so any previous cover Blob is orphaned (#46).
       discardCover(previousImageUrl);
       setView("success");
@@ -509,6 +565,9 @@ function CreateApp() {
       };
       setStory(story);
       persistInteractive(story, coverUrlRef.current);
+      // Fired on the transition, not from an effect watching `ended` - opening an already-finished
+      // story from the Library must not ask. The ask is for someone who just got to "The End".
+      if (story.ended) maybeAskToSave();
     } catch (error) {
       if (activeGenerationRef.current !== generationId) return;
       setStepError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
@@ -574,9 +633,13 @@ function CreateApp() {
 
   function handleContinueFromHome() {
     if (!continueStory) return;
+    // Pick the library row back up from the slot, which carries the id it mirrors (attachRowId).
+    // Without this the ref stays null for every Home resume and each progress write silently
+    // no-ops - the row's % and updated_at freeze, which also breaks the eviction order, since
+    // eviction is by updated_at. A guest's slot has no id, which correctly leaves the ref null.
+    if (continueStory.id) setSaved({ id: continueStory.id, opened: false });
     // Resuming is the moment a story stops being a draft: from here a regenerate should leave it
-    // alone and create a new row beside it. No-ops for a story resumed from the local slot, whose row
-    // id we don't know - openSavedStory below is the path that has one.
+    // alone and create a new row beside it.
     markCurrentStoryOpened();
     openStoryInReader(continueStory);
   }
@@ -585,6 +648,14 @@ function CreateApp() {
   // slot) and by the Library opening a story by id - one hydration path, so a field the Library
   // forgot to restore would break resume too, instead of only the newer of the two.
   function openStoryInReader(continueStory: ContinueStory) {
+    // A different story is taking the screen, so the previous one's ask is void and the new one gets
+    // its own chance - once it is actually finished, not on arrival.
+    resetSaveAsk();
+    // ...unless it arrives already finished, which is not the same moment at all. The interactive
+    // path gets this for free by firing on the `ended` transition; the classic path would otherwise
+    // pop the sheet half a second after opening, because its first progress save already reads as
+    // complete. Same rule either way: the ask belongs to the reader who just got to the end.
+    if (slotArrivesFinished(continueStory)) askedForStoryRef.current = true;
     if (continueStory.mode === "interactive") {
       const resumed = continueStory.interactive;
       setMode("interactive");
@@ -747,7 +818,7 @@ function CreateApp() {
         onCustomTextChange={updateCustomLessonText}
       />
       <StoryModeToggle mode={mode} onChange={setMode} />
-      <IllustrationToggle enabled={illustrate} onChange={setIllustrate} />
+      <IllustrationToggle enabled={illustrate} onChange={setIllustrate} defaultOn={ILLUSTRATE_BY_DEFAULT} />
     </>
   );
 
@@ -863,7 +934,7 @@ function CreateApp() {
           onBackToSetup={handleBackToSetupFromReader}
           // Fires on the reader's own throttle, only when the local write happened, so the library
           // row tracks the same position the Continue card shows.
-          onProgressSaved={persistProgress}
+          onProgressSaved={handleProgressSaved}
         />
       )}
 
@@ -890,6 +961,20 @@ function CreateApp() {
             </button>
           </div>
         </main>
+      )}
+
+      {/* The ask. Gated on `view === "success"` as well as on `askOpen`, because the classic reader
+          fires one last progress save as it unmounts - without the gate, leaving a finished story
+          for Home would pop the sheet over Home. `!user` also closes it the moment a session
+          arrives, so signing in elsewhere doesn't leave a stale pitch on screen. */}
+      {askOpen && view === "success" && !sessionLoading && !user && (
+        <SaveStorySheet
+          onDismiss={() => {
+            snoozeSignInAsk();
+            setAskOpen(false);
+          }}
+          onClose={() => setAskOpen(false)}
+        />
       )}
     </AppShell>
   );

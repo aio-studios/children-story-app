@@ -3222,6 +3222,110 @@ a,
 }
 .sk-signin-addr { font-weight: 800; overflow-wrap: anywhere; }
 
+/* ---- End-of-story sign-in sheet (#92, Step 7 - design frame A2) ---- */
+/* A bottom sheet rather than a centred dialog on purpose: it has to read as "one more thing" after
+   the story, not as an interruption of it. The story stays visible behind the scrim, which is the
+   whole argument - this is what you'd be keeping. */
+.sk-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 65; /* over the header/nav (30/40) and the Library's delete dialog (60); under the
+                  "Opening your story" overlay (70), which means a navigation is already underway */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 17, 11, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: sk-sheet-fade 180ms ease-out;
+}
+.sk-sheet {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+  border-radius: 26px 26px 0 0;
+  background: var(--sk-bg);
+  box-shadow: 0 -16px 40px -18px rgba(0, 0, 0, 0.5);
+  animation: sk-sheet-rise 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Focus lands here on open (so the keyboard doesn't fly up over a story) - but a dashed ring
+     around the whole sheet is noise, since the sheet's arrival is its own focus indicator. */
+  outline: none;
+}
+.sk-sheet-grab {
+  width: 40px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--sk-line);
+  align-self: center;
+  margin-bottom: 0.15rem;
+}
+.sk-sheet-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-heading);
+  color: var(--sk-ink);
+}
+.sk-sheet-body {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+}
+.sk-sheet-form { margin-top: 0.15rem; }
+.sk-sheet-dismiss {
+  align-self: stretch;
+  justify-content: center;
+  background: transparent;
+  border-color: transparent;
+  color: var(--sk-ink-soft);
+}
+.sk-sheet-fine {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--sk-ink-soft);
+}
+
+@keyframes sk-sheet-rise {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sk-sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-sheet-scrim,
+  .sk-sheet { animation: none; }
+}
+
+/* ---- "Saved on this phone only" (#92, Step 7) ---- */
+/* Deliberately quiet: a status line, not an alert. It is permanent for a guest, and anything
+   louder than this becomes something to resent rather than act on. */
+.sk-lib-local {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  /* Same 1.1rem gutter as .sk-lib-head and .sk-lib-seg, so it lines up under "Your library" instead
+     of hanging off the left edge. */
+  margin: 0 1.1rem 0.7rem;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--sk-ink-soft);
+}
+.sk-lib-local-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 99px;
+  background: var(--sk-danger); /* same amber-red the capacity warning uses, so "needs attention" reads one way */
+}
+
 /* ---- Opening a story from the Library ---- */
 .sk-opening {
   position: fixed;

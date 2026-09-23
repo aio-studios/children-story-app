@@ -102,10 +102,18 @@ export async function insertStory(
 // is already being read, another interactive beat. Deliberately does not touch progress/time_spent
 // (saveStoryProgress owns those - a late cover must not reset how far someone has read), nor
 // `user_id` (fixed at insert) or `opened`.
-export async function updateStory(id: string, story: WithoutSavedAt<ContinueStory>): Promise<SavedStory> {
+export async function updateStory(
+  id: string,
+  story: WithoutSavedAt<ContinueStory>,
+  // Regenerate only. toContentColumns deliberately leaves progress/time_spent alone, which is right
+  // for a cover landing or another beat and wrong for a replace-in-place regenerate: a brand new
+  // story would inherit the read state of the one it replaced and show up in the Library as already
+  // finished - which also suppresses the end-of-story sign-in ask, since that reads the same rule.
+  { resetProgress = false }: { resetProgress?: boolean } = {},
+): Promise<SavedStory> {
   const { data, error } = await createClient()
     .from("stories")
-    .update(toContentColumns(story))
+    .update(resetProgress ? { ...toContentColumns(story), progress: 0, time_spent: 0 } : toContentColumns(story))
     .eq("id", id)
     .select(COLUMNS)
     .maybeSingle<StoryRow>();
@@ -135,7 +143,7 @@ export async function saveNewStory(
     // UPDATE ... RETURNING gives back the new row, not the old one, and the client's cached value
     // can be a round trip behind - so the pre-update value is fetched here rather than passed in.
     const displaced = await currentCover(previous.id);
-    const saved = await updateStory(previous.id, story);
+    const saved = await updateStory(previous.id, story, { resetProgress: true });
     // Nothing references `displaced` any more: that row was its only reference and now points
     // somewhere else (usually nowhere - a freshly generated story has no cover yet). Deleted only
     // AFTER the update commits, so a failed update leaves the story on screen with its cover intact.

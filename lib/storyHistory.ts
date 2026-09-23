@@ -215,6 +215,21 @@ export function saveProgress(fraction: number, timeSpentMs: number): boolean {
   return true;
 }
 
+// Rewrites the slot for the story ALREADY on screen, keeping the library row id that attachRowId
+// stamped on it. saveContinueStory replaces the slot wholesale, which is right when a DIFFERENT
+// story takes the screen and wrong for every in-place update of the same one - a cover landing, the
+// next interactive beat. Those were dropping the id, which is invisible until someone deletes that
+// story from the Library and Home keeps offering to resume it: clearContinueStoryForRow matches on
+// the id, and there was no longer one to match.
+export function updateContinueStory(story: Saveable<ContinueStory>) {
+  const existing = readSlot();
+  if (!existing?.id) {
+    saveContinueStory(story);
+    return;
+  }
+  saveContinueStory({ ...story, id: existing.id });
+}
+
 // Stamps the library row id onto the slot already on screen, once the insert that created it comes
 // back. Merged into the existing slot rather than passed to saveContinueStory, because the id arrives
 // a round trip AFTER the story does - and rewriting the whole slot here would clobber any progress

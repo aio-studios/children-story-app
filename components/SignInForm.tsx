@@ -26,9 +26,13 @@ type Props = {
   /** Autofocus the field. Off by default - correct for an inline block, wrong for a sheet that just
    *  slid up over a story a child is looking at. */
   autoFocus?: boolean;
+  /** Fired once the link is actually away. The end-of-story sheet uses it to relabel its dismiss
+   *  button from "Not now" to "Close" - and to stop treating that tap as a refusal worth snoozing,
+   *  since someone waiting on a link is mid-sign-in, not declining. */
+  onSent?: () => void;
 };
 
-export function SignInForm({ className, autoFocus = false }: Props) {
+export function SignInForm({ className, autoFocus = false, onSent }: Props) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +64,7 @@ export function SignInForm({ className, autoFocus = false }: Props) {
       setSentTo(trimmed);
       setStatus("sent");
       setCooldown(RESEND_COOLDOWN_S);
+      onSent?.();
       return;
     }
     // Back to the form with the address still in it - retyping an email to retry is a small

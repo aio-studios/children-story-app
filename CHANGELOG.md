@@ -2,6 +2,39 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-23
+
+### Changed
+
+- 17:04 - **Cover pictures are now ON by default.** A story with a cover is the version worth showing anyone, and hiding the app's best feature behind a toggle most people never found meant almost nobody saw it. Controlled by a single `ILLUSTRATE_BY_DEFAULT` constant in [app/create/page.tsx](app/create/page.tsx) — flip it to `false` and illustrations go back to opt-in, with nothing else to change. The toggle's own "On by default" / "Off by default" label reads from the same constant, so the copy can't drift from the behaviour. **Cost note:** every story now makes a real ~$0.04 Gemini image call, where previously only opted-in stories did. This is the dial to turn if the bill climbs.
+
+### Fixed
+
+- 17:11 - **The end-of-story sign-in sheet was effectively unreachable in real use.** It borrowed the Continue card's "finished" rule — 2 minutes of reading for a quick story, 10 for a longer one — but that rule is tuned to fail safe in the opposite direction: being too strict there just means Home keeps offering to resume a story, while being too strict *here* means never asking at all. A quick story reads aloud in 60-90 seconds, and the reader's clock pauses whenever the tab is hidden, so a parent who puts the phone down mid-story banks nothing. Now reaching the end is the signal, with a 30-second floor purely to exclude a scroll-slam ([lib/signInPrompt.ts](lib/signInPrompt.ts)). The Continue card's own rule is untouched. Caught in UAT.
+- 17:04 - **Re-ran all four regression gates** against a freshly resumed Supabase project, covering the three persistence fixes from 2026-09-17 that had shipped unverified: 36/36 sign-in sheet, 42/42 Library screen, 16/16 signed-in persistence, 21/21 cover lifecycle.
+
+## 2026-09-17
+
+### Added
+
+- 19:37 - **The end-of-story sign-in sheet (#92, Step 7)** — a guest who has just *finished* a story gets asked, once, whether they want to keep it. Built to the approved design, Direction A frame A2.
+  - **[components/SaveStorySheet.tsx](components/SaveStorySheet.tsx)** — a bottom sheet over the story (not a centred dialog: the story stays visible behind the scrim, which is the whole argument for signing in). Wraps the existing [components/SignInForm.tsx](components/SignInForm.tsx) rather than growing a second copy of the email/send/resend logic. Escape, "Not now", and a tap on the scrim all do the same thing; the story behind it can't scroll while it's open; focus moves to the sheet, not the email field, so the keyboard doesn't fly up over a story a child is still looking at.
+  - **The ask fires on finishing, never on opening.** Classic stories use the same rule Home already uses to retire a Continue card — scrolled to the end **and** enough time actually spent (2 min quick / 10 min longer), so a fast scroll to the bottom doesn't count. Interactive stories fire on reaching "The End". Opening a story that was already finished doesn't ask: that isn't the same moment.
+  - **[lib/signInPrompt.ts](lib/signInPrompt.ts)** — "Not now" snoozes the ask for a week rather than forever. The design doc's own critique of this direction was "one ask, one chance"; asking at the end of every story is worse. A garbled or far-future stored value is treated as expired rather than silently muting the sheet for years.
+  - **"Saved on this phone only" in the Library** — the standing honesty line, sitting under the title and above the tabs for a signed-out visitor. B's honesty inside A's structure, per the design recommendation: no permanent banner nagging on Home.
+- 19:37 - **[scripts/verify-signin-sheet.mjs](scripts/verify-signin-sheet.mjs)** — 36-check Playwright suite covering the ask, the snooze (live / expired / garbled / clock-skewed), who *doesn't* get asked, the Library line, and the sheet at iPhone 12 Pro + iPad in light and dark. Entirely a guest suite, so it needs no Supabase, no seeded rows, and no generated stories.
+
+### Fixed
+
+- 19:37 - **Deleting an interactive story left a ghost Continue card on Home.** Every beat after the first rewrote the local continue slot wholesale, dropping the library row id stamped on it — so the delete could no longer tell that Home's card was the same story. Same defect hit every illustrated classic story the moment its cover landed. New `updateContinueStory` in [lib/storyHistory.ts](lib/storyHistory.ts) merges in place and keeps the id; `saveContinueStory` still replaces outright, which is correct when a *different* story takes the screen.
+- 19:37 - **Resuming a story from Home stopped saving its progress.** The library row was never picked back up, so every progress write silently no-opped: the card's "% read" and `updated_at` froze, which also skewed eviction order (eviction is by `updated_at`). [app/create/page.tsx](app/create/page.tsx) now reads the row id back off the slot.
+- 19:37 - **A regenerated story inherited the read state of the one it replaced**, showing up in the Library as already finished — and suppressing the new sign-in ask, which reads the same rule. `updateStory` in [lib/storyRepo.ts](lib/storyRepo.ts) now resets `progress`/`time_spent` on a replace-in-place regenerate, and only then.
+- 19:37 - **"Regenerate" could overwrite a story you had already opened.** The "opened" flag was only flipped locally once the database round trip came back, leaving a window where a regenerate landed on top of a story instead of beside it. It's now flipped the instant the story is opened; a failed write errs toward keeping the story.
+
+### Removed
+
+- 19:37 - **The `/auth/test` magic-link harness is gone.** With a real sign-in form on the Library and in the end-of-story sheet, it was a second publicly-routable magic-link sender spending the same Brevo 300/day quota, protected only by an `AUTH_HARNESS_TOKEN` env var that had to stay correctly set on every environment. That variable can now be deleted from the Vercel project.
+
 ## 2026-09-06
 
 ### Added

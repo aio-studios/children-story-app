@@ -236,6 +236,18 @@ export function LibraryScreen({ onOpenStory, onCreateStory }: LibraryScreenProps
         <h1 className="sk-lib-h1">Your library</h1>
       </div>
 
+      {/* B's honesty, A's structure (#92, Step 7). The design compared a permanent guest banner on
+          Home against saying nothing; this is the compromise the design doc landed on - one plain
+          line of status, inside the screen where someone is already thinking about their stories,
+          and nowhere else. It stays up while the guest pane's longer pitch scrolls away, and it is
+          the only standing reminder once the end-of-story sheet has been snoozed. */}
+      {!sessionLoading && !user && (
+        <p className="sk-lib-local" role="status">
+          <span className="sk-lib-local-dot" aria-hidden="true" />
+          Saved on this phone only
+        </p>
+      )}
+
       <div className="sk-lib-seg" role="tablist" aria-label="Library sections">
         <button
           type="button"

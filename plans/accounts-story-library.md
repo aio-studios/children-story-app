@@ -1,37 +1,46 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `92%` — Steps 1–6 complete and verified. The Library screen is live and the app has its first user-facing account surface: a signed-in user can see, open and delete saved stories, and a guest can sign in from inside the app. Three gates green (42/42 screen, 16/16 persistence, 21/21 covers). Step 7 (the end-of-story ask) is next.
+**Overall Progress:** `95%` — Steps 1–7 complete and verified. A guest who finishes a story is asked, once, whether they want to keep it; the Library carries the standing "Saved on this phone only" line; the `/auth/test` harness is retired. Four gates green (37/37 sheet, 42/42 screen, 16/16 persistence, 21/21 covers). Step 8 (Home — real stories) is next.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-09-06 (session 5)
+**Last updated:** 2026-09-23 (session 7)
 
-## ▶ Resume point (2026-09-06, session 5)
+## ▶ Resume point (2026-09-17, session 6)
 
-**Branch:** `feat/92-accounts-auth-foundation` — 6 commits ahead of origin, **Step 6's work is
+**Branch:** `feat/92-accounts-auth-foundation` — 7 commits ahead of origin, **Step 7's work is
 uncommitted in the working tree.** `main` untouched.
 
-**Next action: Step 7 (the end-of-story sign-in sheet).** Most of the hard part is already built —
-[components/SignInForm.tsx](../components/SignInForm.tsx) is the email + send + "check your email" +
-resend-cooldown block, used inline by the Library's guest state. Step 7 is placement (a dismissible
-sheet at the end of a story, frame A2) plus the "Saved on this phone only" line inside the Library.
+**Next action: Step 8 (Home — real stories, closes #67).** Replace the fake `SAMPLE_STORIES` shelves
+in [components/HomeScreen.tsx](../components/HomeScreen.tsx) with real recent stories (frame A3), plus
+an empty/guest state. ⚠️ Home is the most recently polished screen (#65/#62/#82) — regression risk on
+work that has already been UAT'd.
 
-**Steps 1–6 are DONE and verified.** Step 6 shipped: `/library` route, cover grid, History/Favourites
-tabs, capacity meter, delete-with-confirmation, guest sign-in, Library in all three nav shapes, and
-opening a saved story by id (`/create?story=<id>`).
+**Steps 1–7 are DONE and verified.** Step 7 shipped the end-of-story sign-in sheet, the week-long
+snooze, the Library's honesty line, and the deletion of `/auth/test`. It also fixed three real
+persistence bugs that `/code-review` found in Steps 5/6 — see the Step 7 task list for what they were.
 
-**Three regression gates, re-run after ANY persistence change:**
-- `scripts/verify-library-screen.mjs` — **42/42** (new; seeds rows via PostgREST, free and fast)
+**FOUR regression gates now, re-run after ANY persistence change:**
+- `scripts/verify-signin-sheet.mjs` — **37/37** (guest-only, so it needs no Supabase and costs nothing — run this one first, it catches the most for the least)
+- `scripts/verify-library-screen.mjs` — **42/42** (seeds rows via PostgREST, free and fast)
 - `scripts/verify-library-signed-in.mjs` — **16/16**
 - `scripts/verify-cover-lifecycle.mjs` — **21/21** (~$0.16 in real cover images per run)
 
-All three need `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` in `.env.local` and a running `npm run dev`,
-and all three **delete every story belonging to that account** — keep it a throwaway user.
-Run them **spaced out**: back-to-back runs trip the 3/60s story-generation rate limit, which presents
-as a Playwright timeout waiting for "Regenerate", not as a code failure.
+The last three need `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` in `.env.local` and a running
+`npm run dev`, and all three **delete every story belonging to that account** — keep it a throwaway
+user. Run them **spaced out**: back-to-back runs trip the 3/60s story-generation rate limit, which
+presents as a Playwright timeout waiting for "Regenerate", not as a code failure.
 
-**Reviews for Step 6 are done.** `/code-review` at high found 7, all confirmed and all fixed (see the
-Step 6 task list). `/security-review` found no HIGH/MEDIUM.
+**✅ CLEARED 2026-09-23: all four gates re-run green** against a freshly resumed Supabase project —
+37/37 sheet, 42/42 screen, 16/16 signed-in persistence, 21/21 covers. The 16/16 run is the one that
+mattered: it is what actually verified `updateContinueStory`, the Home-resume row pickup, and
+`updateStory`'s `resetProgress`, which had shipped unverified on 2026-09-17.
+
+**⚠️ The Supabase keep-alive cron has never run in production.** `vercel.json` and
+`app/api/cron/supabase-ping/route.ts` were added in `13f1f7b` **on this branch**, and this branch has
+never been pushed — so `main` has neither. That is why the project keeps pausing after 7 idle days
+(the exact scenario `supabase/migrations/README.md` warns about). It fixes itself when this branch
+merges; until then, expect to resume the project by hand from the dashboard.
 
 **⚠️ Migration 003 is a DEPLOY dependency.** On any environment whose database has not had it run,
 cover cleanup fails closed for *everyone including guests*. Never ship this branch somewhere 003 has
@@ -41,19 +50,29 @@ not been applied.
 **Site URL** from `http://localhost:3000` to the production URL. Site URL is the *silent fallback*
 when a redirect target is not allowlisted — Supabase does not error, it just redirects there. With it
 pointing at localhost, any production sign-in that misses the allowlist sends the user to their own
-machine with no diagnostic anywhere. **This is now urgent in a way it wasn't:** Step 6 put a real
-sign-in form on a public page, so production sign-in is no longer hypothetical.
+machine with no diagnostic anywhere. **Now urgent twice over:** Step 6 put a real sign-in form on a
+public page, and Step 7 put a second one in front of every guest who finishes a story.
 
-**⚠️ Also new with Step 6:** the magic-link sender is now reachable by anyone who opens `/library`,
-not just by the token-gated `/auth/test` harness. That is the intended product behaviour, but it puts
-the **Brevo free tier (300 emails/day)** on the critical path for the first time. Worth a look at
-Supabase's own per-address auth rate limits before this ships to production.
+**⚠️ Brevo's 300/day free tier is now genuinely on the critical path.** Two surfaces send magic links
+(the Library pitch and the end-of-story sheet), against one surface before. Worth a look at Supabase's
+own per-address auth rate limits before this ships. One thing that got *better*: deleting `/auth/test`
+removed a third sender spending the same quota.
+
+**Dashboard cleanup owed:** `AUTH_HARNESS_TOKEN` can be deleted from the Vercel project — nothing
+reads it any more.
+
+**Watch-item for Step 11 (from `/security-review`, below the reporting bar but relevant):**
+`lib/useLibrary.ts` keeps the previous snapshot's stories during a fetch and on error. There is no
+path to it today (sign-in lands via a server redirect and a full remount; sign-out clears immediately),
+but Step 11's guest → signed-in migration is exactly the in-page account transition that would expose
+it. Worth re-checking then.
 
 **Config changed in earlier sessions (all dashboard-side, not in the repo):**
 - Vercel **Deployment Protection → Vercel Authentication turned OFF**. It was intercepting
   `/auth/callback` with an SSO redirect, which breaks magic links from mail apps (in-app webviews
-  don't share the browser's Vercel cookie). Safe because `/auth/test` has its own server-side
-  `AUTH_HARNESS_TOKEN` gate.
+  don't share the browser's Vercel cookie). This was previously justified by `/auth/test` having its
+  own server-side gate; that harness is now deleted, and the reasoning still holds — nothing behind
+  the wall was protecting anything the gate wasn't.
 - Supabase **Redirect URLs** gained `https://children-story-app-git-*-aio-studios.vercel.app/**`.
 
 **Known trap, for whenever the project pauses again:** during a Supabase resume the API gateway
@@ -253,14 +272,24 @@ drop function if exists public.set_updated_at();
   - [x] 🟩 **`/security-review` — no HIGH/MEDIUM findings.** Cleared the `?story=` deep link (PostgREST parameterises, RLS scopes, `22P02` reads as not-found), the newly public magic-link form, and the narrowed `deleteStory` signature.
   - [x] 🟩 Screenshots at iPhone 12 Pro and iPad, light **and** dark, plus guest / empty / grid / Favourites / delete-dialog states
 
-- [ ] 🟥 **Step 7: The ask + the honesty line** ← current
+- [x] 🟩 **Step 7: The ask + the honesty line** — DONE 2026-09-17, 36/36 green
 
-  - [ ] 🟥 End-of-story sign-in sheet (frame A2) — dismissible "Not now", wrapping the existing [components/SignInForm.tsx](../components/SignInForm.tsx) rather than a second form
-  - [x] 🟩 "Check your email" state with resend cooldown — **built in Step 6** (45s), lives in `SignInForm`
-  - [ ] 🟥 "Saved on this phone only" line **inside the Library screen** (B's honesty, no banner on Home)
-  - [ ] 🟥 Delete the `/auth/test` harness once a real sign-in path exists on every surface that needs one
+  - [x] 🟩 End-of-story sign-in sheet (frame A2) — [components/SaveStorySheet.tsx](../components/SaveStorySheet.tsx), wrapping [components/SignInForm.tsx](../components/SignInForm.tsx). Modal bottom sheet over the story; Escape / "Not now" / scrim all exit the same way; body scroll locked with `overflow` (not `position: fixed`, which would reset the scrollY the reader saves its position from); focus goes to the sheet, not the email field.
+  - [x] 🟩 **Fires on finishing, not on opening.** Classic: scroll ≥ 0.98 AND a 30s floor (`isStoryFinished`, [lib/signInPrompt.ts](../lib/signInPrompt.ts)). Interactive fires on the `ended` transition. `openStoryInReader` burns the guard via `slotArrivesFinished` for a story that arrives already complete.
+  - [x] 🟩 **UAT 2026-09-23 fix — the ask must NOT reuse `isContinueComplete`.** It did at first, and the sheet was effectively unreachable: that rule fails safe by keeping a Continue card around, which here means never asking. A quick story reads aloud in 60-90s and the reader's clock pauses on tab-hide, so 2 minutes of *visible* reading was a bar real parents don't clear. The two questions look identical and want opposite tuning — don't merge them again.
+  - [x] 🟩 **"Not now" snoozes for a week, not forever** ([lib/signInPrompt.ts](../lib/signInPrompt.ts)). Direction A's own stated weakness was "one ask, one chance"; asking at the end of every story is worse. Garbled and far-future stored values both read as expired.
+  - [x] 🟩 "Check your email" state with resend cooldown — **built in Step 6** (45s), lives in `SignInForm`. Gained an `onSent` callback so the sheet can relabel its exit to "Close" and stop treating it as a refusal.
+  - [x] 🟩 "Saved on this phone only" line **inside the Library screen** (B's honesty, no banner on Home) — under the title, above the tabs, so it stays put while the guest pitch scrolls.
+  - [x] 🟩 Deleted the `/auth/test` harness. `AUTH_HARNESS_TOKEN` can now be removed from the Vercel project.
+  - [x] 🟩 **`scripts/verify-signin-sheet.mjs` — 36/36.** A guest suite: no Supabase, no seeded rows, no generated stories, so it runs offline and free. Covers the ask, the snooze (live/expired/garbled/clock-skewed), who does *not* get asked, the Library line, the 404 on the retired harness, and iPhone 12 Pro + iPad in light and dark.
+  - [x] 🟩 `/code-review` at high — 3 findings, all confirmed against the code and all fixed (see below). `/security-review` — no HIGH/MEDIUM.
 
-- [ ] 🟥 **Step 8: Home — real stories (closes #67)**
+  **Three real bugs the review caught, all pre-existing in Steps 5/6, all fixed here:**
+  - **The local slot was dropping its library row id** on every interactive beat and on every classic cover landing, because `saveContinueStory` replaces the slot wholesale. `clearContinueStoryForRow` matches on that id, so deleting the story from the Library left a ghost Continue card on Home. New `updateContinueStory` merges in place; `saveContinueStory` still replaces, which is right when a *different* story takes the screen.
+  - **A Home resume never picked its row back up**, so every `persistProgress` no-opped: the card's % and `updated_at` froze, which also skews eviction (eviction is by `updated_at`).
+  - **A regenerate inherited the replaced story's read state** — shown as "Finished" in the Library, and it suppressed this very sign-in ask, which reads the same rule. `updateStory` now takes `{ resetProgress }`, set only on the replace-in-place branch. Related: `markCurrentStoryOpened` now flips `opened` locally *before* the round trip, closing a window where a regenerate could overwrite a story already opened.
+
+- [ ] 🟥 **Step 8: Home — real stories (closes #67)** ← current
 
   - [ ] 🟥 Replace the fake `SAMPLE_STORIES` shelves in [components/HomeScreen.tsx](../components/HomeScreen.tsx) with real recent stories (frame A3)
   - [ ] 🟥 Empty/guest state for someone with no stories yet
