@@ -31,6 +31,7 @@ import { evictBeyondLimit, markOpened, saveNewStory, saveStoryProgress, updateSt
 import { deleteCoverBlob } from "@/lib/coverBlob";
 import { refreshLibrary } from "@/lib/useLibrary";
 import { useStory } from "@/lib/useStory";
+import { SavedStory } from "@/lib/stories";
 
 type View = "home" | "setup" | "loading" | "success" | "error";
 
@@ -199,8 +200,14 @@ function CreateApp() {
   async function persistNewStory(story: PersistableStory) {
     const userId = userIdRef.current;
     if (!userId) return;
+    // Captured before the await for the same reason generateCover takes one: the insert takes a
+    // round trip, and leaving the story in that window clears savedRow on purpose. Re-arming it
+    // afterwards would point the NEXT story's writes at this row - the exact overwrite-in-place
+    // that setSaved(null) on every exit exists to prevent - and stamp its id onto another story's slot.
+    const generationId = activeGenerationRef.current;
     try {
       const saved = await saveNewStory(story, userId, savedRowRef.current);
+      if (activeGenerationRef.current !== generationId) return;
       setSaved({ id: saved.id, opened: saved.opened });
       // Stamp the row id onto the local slot too, so deleting this story from the Library later can
       // tell that the Continue card on Home is the same story and clear it.
@@ -447,7 +454,19 @@ function CreateApp() {
     // first is an update that has to carry the existing id forward.
     if (isNew) saveContinueStory(slot);
     else updateContinueStory(slot);
-    void (isNew ? persistNewStory(slot) : persistStoryUpdate(slot));
+    if (isNew) {
+      void persistNewStory(slot);
+    } else {
+      void persistStoryUpdate(slot);
+      // Progress travels on its own path (see persistProgress) - updateStory writes content columns
+      // ONLY, so without this an interactive story's row froze at whatever the first beat inserted
+      // and every Library and Home card showed a story mid-arc as barely started. The insert on the
+      // isNew branch already carries progress, so this is the update path's share of the same job.
+      // 0 for time: only the classic reader measures reading time (onProgressSaved is wired to
+      // StoryReader alone), so an interactive row's time_spent is 0 already and this writes it back
+      // unchanged. Arc progress is the number that actually moves here.
+      persistProgress(progress, 0);
+    }
   }
 
   async function requestStep(story: InteractiveStory, action: StepAction): Promise<StepResult> {
@@ -629,6 +648,20 @@ function CreateApp() {
     resetOptInToggles();
     setSetupStep(2);
     setView("setup");
+  }
+
+  // Opening a saved story from Home's Recent shelf. Deliberately NOT a /create?story=<id> round trip
+  // like the Library's cards: useLibrary already holds the whole row, so re-fetching it would put a
+  // spinner in front of a story we are already holding. Everything else matches the deep-link path,
+  // and in the same order - the row is tracked BEFORE the mark, since markCurrentStoryOpened reads it.
+  function handleOpenSavedStory(story: SavedStory) {
+    abandonInFlightGeneration();
+    setSaved({ id: story.id, opened: story.opened });
+    markCurrentStoryOpened();
+    // Mirror it into the local slot so the Continue card, progress writes and a refresh all point at
+    // the story now on screen rather than whatever was there before.
+    saveContinueStory(story);
+    openStoryInReader(story);
   }
 
   function handleContinueFromHome() {
@@ -867,6 +900,8 @@ function CreateApp() {
           onContinue={handleContinueFromHome}
           onSelectGenre={handleSelectGenreFromHome}
           onSelectCustomGenre={handleSelectCustomGenreFromHome}
+          onOpenStory={handleOpenSavedStory}
+          onSeeAll={() => router.push("/library")}
         />
       )}
 

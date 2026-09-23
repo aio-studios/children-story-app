@@ -1021,7 +1021,21 @@ select:focus-visible,
   color: var(--sk-ink-soft);
 }
 .sk-drow { margin-bottom: 1rem; }
-.sk-drow-head { padding: 0 1.1rem 0.6rem; }
+/* The Recent shelf's head carries an "All ›" out to the Library, so it is a row rather than a lone
+   title. The discovery shelves have no second item and are unaffected by the flex. */
+.sk-drow-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; padding: 0 1.1rem 0.6rem; }
+.sk-drow-more {
+  flex: none;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  color: var(--sk-brand);
+  background: none;
+  border: 0;
+  padding: 0.2rem 0.1rem;
+  cursor: pointer;
+}
+.sk-drow-more:hover { text-decoration: underline; }
 .sk-drow-title { font-family: var(--font-fredoka), var(--font-sans); font-weight: 600; font-size: var(--text-heading); }
 /* Right-edge fade cues "scroll for more" at any width (#62), same as the old shelves. */
 .sk-drow-scroll {
@@ -1041,6 +1055,24 @@ select:focus-visible,
   border: 1px solid var(--sk-line);
   box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.5);
 }
+/* A card with a real story behind it is a <button>, so it needs the element defaults stripped back to
+   what the <div> version already looked like - and a press state, since it now does something. */
+.sk-cover-card-live {
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease;
+}
+.sk-cover-card-live:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  .sk-cover-card-live { transition: none; }
+  .sk-cover-card-live:active { transform: none; }
+}
+
 .sk-cover-art {
   position: absolute;
   inset: 0;

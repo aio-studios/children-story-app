@@ -223,11 +223,21 @@ export function saveProgress(fraction: number, timeSpentMs: number): boolean {
 // the id, and there was no longer one to match.
 export function updateContinueStory(story: Saveable<ContinueStory>) {
   const existing = readSlot();
-  if (!existing?.id) {
+  if (!existing) {
     saveContinueStory(story);
     return;
   }
-  saveContinueStory({ ...story, id: existing.id });
+  // Carry forward everything this caller isn't itself changing. The row id, and - just as important -
+  // how far the reader has already got: these updates land while the story is ON SCREEN and being
+  // read, so a cover arriving twenty seconds in would otherwise hand the slot back at 0% and resume
+  // at the top of a story already half finished. Note this has to happen with or without an id: a
+  // guest has no row to fall back on, so for them the slot IS the only copy of their progress.
+  // An interactive beat passes its own progress, and that rightly wins over the stored one.
+  const merged: Saveable<ContinueStory> = { ...story };
+  if (existing.id) merged.id = existing.id;
+  if (merged.progress === undefined) merged.progress = existing.progress;
+  if (merged.timeSpent === undefined) merged.timeSpent = existing.timeSpent;
+  saveContinueStory(merged);
 }
 
 // Stamps the library row id onto the slot already on screen, once the insert that created it comes

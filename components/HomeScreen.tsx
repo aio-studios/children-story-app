@@ -10,12 +10,24 @@ import {
   isContinueComplete,
   useHasCreatedStory,
 } from "@/lib/storyHistory";
+import { SavedStory } from "@/lib/stories";
+import { useLibrary } from "@/lib/useLibrary";
+import { useSession } from "@/lib/useSession";
+
+// How many saved stories the Recent shelf carries before it stops being a shelf and starts being the
+// Library. Six fills a horizontal scroll on a phone without turning Home into a second grid - "All"
+// is right there for the rest.
+const RECENT_SHELF_LIMIT = 6;
 
 type HomeScreenProps = {
   continueStory: ContinueStory | null;
   onContinue: () => void;
   onSelectGenre: (genreId: string) => void;
   onSelectCustomGenre: () => void;
+  /** Open a saved story in its reader. The row is already in hand, so no fetch is needed. */
+  onOpenStory: (story: SavedStory) => void;
+  /** "All ›" - straight to the Library. */
+  onSeeAll: () => void;
 };
 
 /* SVG icons (no emoji in the real UI - matches the nav's SVG set; emoji stays only on the placeholder
@@ -116,6 +128,59 @@ function CoverCard({ story }: { story: SampleStory }) {
   );
 }
 
+// A real saved story, as a card on Home's Recent shelf. Unlike CoverCard above this IS a button -
+// there is a story behind it, so it can promise the action. Shares the .sk-cover-* language so the
+// two shelves read as one system even though only one of them is real.
+function RecentCard({ story, onOpen }: { story: SavedStory; onOpen: () => void }) {
+  const [artFailed, setArtFailed] = useState(false);
+  const genre = getContinueGenre(story);
+  // A custom genre has no GENRES entry to theme from, same fallback the reader and Library use.
+  const genreId = genre.type === "preset" ? genre.genreId : "";
+  const label = genre.type === "preset" ? (getGenreById(genre.genreId)?.label ?? "Story") : genre.text;
+  const accent = genre.type === "preset" ? accentStyle(genre.genreId) : ({ "--accent-light": CUSTOM_GENRE_ACCENT.light, "--accent-dark": CUSTOM_GENRE_ACCENT.dark } as CSSProperties);
+  const pct = Math.round(getContinueProgress(story) * 100);
+  const cover = story.imageUrl;
+
+  return (
+    <button type="button" className="sk-cover-card sk-cover-card-live" style={accent} onClick={onOpen}>
+      <span className="sk-cover-art" aria-hidden="true" />
+      {cover && !artFailed && (
+        // eslint-disable-next-line @next/next/no-img-element -- Blob-hosted covers, no next/image optimizer.
+        <img src={cover} alt="" className="sk-cover-art-img" loading="lazy" onError={() => setArtFailed(true)} />
+      )}
+      <span className="sk-cover-scrim" aria-hidden="true" />
+      {pct > 0 && <span className="sk-cover-lvl">{pct}%</span>}
+      <span className="sk-cover-foot">
+        <span className="sk-cover-title">{getContinueTitle(story)}</span>
+        <span className="sk-cover-badges">
+          <span className="sk-cover-badge sk-cover-badge-genre">{label}</span>
+          {genreId === "" && <span className="sk-cover-badge">Your own</span>}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+// The Recent shelf. Signed-in only, because a guest's single local story is already the Continue
+// card directly above - a shelf repeating it would be one story shown twice.
+function RecentRow({ stories, onOpen, onSeeAll }: { stories: SavedStory[]; onOpen: (s: SavedStory) => void; onSeeAll: () => void }) {
+  return (
+    <section className="sk-drow">
+      <div className="sk-drow-head">
+        <span className="sk-drow-title">Your recent stories</span>
+        <button type="button" className="sk-drow-more" onClick={onSeeAll}>
+          All ›
+        </button>
+      </div>
+      <div className="sk-drow-scroll">
+        {stories.map((story) => (
+          <RecentCard key={story.id} story={story} onOpen={() => onOpen(story)} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function DiscoveryRow({ title, items }: { title: string; items: SampleStory[] }) {
   return (
     <section className="sk-drow">
@@ -153,7 +218,7 @@ function useDaypart(): Daypart | null {
   return useSyncExternalStore(noopSubscribe, daypart, () => null);
 }
 
-export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectCustomGenre }: HomeScreenProps) {
+export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectCustomGenre, onOpenStory, onSeeAll }: HomeScreenProps) {
   // #82: "has ever created", not just "has an active slot" - so a returning user who finished their
   // story still gets a returning greeting instead of "let's make your first story".
   const hasCreated = useHasCreatedStory();
@@ -174,6 +239,21 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
   const showContinue = continueStory && continueAccent && !isContinueComplete(continueStory);
 
   const quickStories = SAMPLE_STORIES.filter((s) => s.length === "~2 min");
+
+  // Real stories (#92, Step 8 / closes #67). The invented "Popular this week" shelves stay for
+  // anyone with nothing real to show - a guest, or a signed-in user on their first visit - because
+  // a Home stripped to an empty state is worse than one showing what the app can make. The moment
+  // there IS something real, the invented rows go: nobody with their own stories should be looking
+  // at made-up ones.
+  const { user, loading: sessionLoading } = useSession();
+  const { stories, loading: libraryLoading } = useLibrary();
+  const recent = user ? stories.slice(0, RECENT_SHELF_LIMIT) : [];
+  const hasRecent = recent.length > 0;
+  // Suppress the invented shelves while the real ones are still loading, so a signed-in user doesn't
+  // see "Popular this week" flash and then get replaced by their own library a beat later. The
+  // session has to be settled first: until it is, `user` is null and a signed-in user looks exactly
+  // like a guest - which is the flash this line is here to prevent.
+  const showDiscovery = !hasRecent && !sessionLoading && !(user && libraryLoading);
 
   return (
     <main className="sk-home">
@@ -272,9 +352,15 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
         </button>
       )}
 
-      <div className="sk-sect-label">Discover</div>
-      <DiscoveryRow title="Popular this week" items={SAMPLE_STORIES} />
-      <DiscoveryRow title="Quick stories · under 5 min" items={quickStories} />
+      {hasRecent && <RecentRow stories={recent} onOpen={onOpenStory} onSeeAll={onSeeAll} />}
+
+      {showDiscovery && (
+        <>
+          <div className="sk-sect-label">Discover</div>
+          <DiscoveryRow title="Popular this week" items={SAMPLE_STORIES} />
+          <DiscoveryRow title="Quick stories · under 5 min" items={quickStories} />
+        </>
+      )}
     </main>
   );
 }
