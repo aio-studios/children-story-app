@@ -108,7 +108,9 @@ function useReaderProgress(
   }, []);
 }
 
-export type CoverStatus = "idle" | "loading" | "loaded" | "failed";
+// "refused" is distinct from "failed" on purpose: nothing went wrong, the picture just can't be
+// made for this character (#103), and telling someone to try again would be a lie.
+export type CoverStatus = "idle" | "loading" | "loaded" | "failed" | "refused";
 
 type StoryReaderProps = {
   // Fired only when progress was actually persisted locally - lets a signed-in reader mirror the
@@ -167,11 +169,16 @@ export function StoryCover({ status, url, icon }: { status: CoverStatus; url: st
     return <img className="story-reader-hero" src={url} alt="" />;
   }
 
-  // Failed (or loaded with no url): graceful, non-broken fallback; the story stands on its own.
+  // Failed, refused, or loaded with no url: graceful, non-broken fallback; the story stands on its
+  // own. The two messages differ because the situations do - one is worth retrying and one isn't.
+  const message =
+    status === "refused"
+      ? "We can't draw famous characters, but your story is all here."
+      : "The cover didn't come through this time — but your story is all here.";
   return (
     <div className="story-reader-hero is-failed" role="img" aria-label="Cover illustration unavailable">
       <span className="story-reader-hero-fail-orb" aria-hidden="true">{icon}</span>
-      <span className="story-reader-hero-fail-text">The cover didn&apos;t come through this time — but your story is all here.</span>
+      <span className="story-reader-hero-fail-text">{message}</span>
     </div>
   );
 }

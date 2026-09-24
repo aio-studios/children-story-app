@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { google } from "@ai-sdk/google";
 import { generateImage } from "ai";
 import { del, put } from "@vercel/blob";
+import { NoImageGeneratedError } from "ai";
 
 // Nano Banana — character-consistency-tuned, kid-safe filters + SynthID watermark.
 // Swappable: any GoogleImageModelId (e.g. an Imagen 4 fallback) drops in here.
@@ -17,13 +18,32 @@ const EXTENSION_BY_MEDIA_TYPE: Record<string, string> = {
 const BLOB_PATH_PREFIX = "story-covers/";
 
 // Generates a cover image and stores it in Vercel Blob, returning the public URL.
-// Throws on any failure; the caller turns that into a graceful "no image" response.
+// A refusal, as opposed to a failure. Gemini declines a subject it won't draw - a named copyrighted
+// character, most often - by answering HTTP 200 with no image attached rather than by erroring, and
+// the AI SDK surfaces that as NoImageGeneratedError. A timeout, a quota trip or a bad key is a
+// different error class entirely. Keeping the two apart is what lets the caller retry a refusal with
+// a different prompt (pointless for a transport failure) and tell the reader something true.
+export class CoverRefusedError extends Error {
+  constructor() {
+    super("The image model declined to draw this subject.");
+    this.name = "CoverRefusedError";
+  }
+}
+
+// Throws on any failure; the caller turns that into a graceful "no image" response. A refusal throws
+// CoverRefusedError specifically.
 export async function generateIllustration(prompt: string): Promise<string> {
-  const { image } = await generateImage({
-    model: google.image(IMAGE_MODEL),
-    prompt,
-    aspectRatio: "4:3",
-  });
+  let image;
+  try {
+    ({ image } = await generateImage({
+      model: google.image(IMAGE_MODEL),
+      prompt,
+      aspectRatio: "4:3",
+    }));
+  } catch (error) {
+    if (NoImageGeneratedError.isInstance(error)) throw new CoverRefusedError();
+    throw error;
+  }
 
   const extension = EXTENSION_BY_MEDIA_TYPE[image.mediaType] ?? "png";
   const { url } = await put(`${BLOB_PATH_PREFIX}${randomUUID()}.${extension}`, Buffer.from(image.uint8Array), {

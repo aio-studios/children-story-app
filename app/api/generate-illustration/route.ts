@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
 import { buildImagePrompt } from "@/lib/imagePrompt";
-import { generateIllustration } from "@/lib/imageClient";
+import type { StorySelections } from "@/lib/storyPrompt";
+import { CoverRefusedError, generateIllustration } from "@/lib/imageClient";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { collectCustomText, validateSelections } from "@/lib/validateSelections";
 
 const GENERIC_ERROR_MESSAGE = "The cover didn't come through this time.";
+const REFUSED_ERROR_MESSAGE = "We can't draw this character.";
 const RATE_LIMIT_ERROR_MESSAGE = "Just a moment before making another picture.";
 const MAX_TITLE_LENGTH = 200;
 
@@ -55,11 +57,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const prompt = buildImagePrompt(selections, b.title);
-    const imageUrl = await generateIllustration(prompt);
-    return NextResponse.json({ imageUrl });
+    return NextResponse.json({ imageUrl: await renderCover(selections, b.title) });
   } catch (error) {
+    // A refusal that survived the nameless retry. 422, not 502: nothing is broken and retrying the
+    // same request will refuse again, so the client says so rather than inviting another attempt.
+    if (error instanceof CoverRefusedError) {
+      return NextResponse.json({ error: REFUSED_ERROR_MESSAGE, reason: "refused" }, { status: 422 });
+    }
     console.error("Illustration generation failed:", error);
     return NextResponse.json({ error: GENERIC_ERROR_MESSAGE }, { status: 502 });
+  }
+}
+
+// Two attempts at most, and only ever two. The second drops the character's name and the title,
+// which is what Gemini declines when it declines at all (#103) - a cover needs the description, not
+// the name. A transport failure is not retried here: it isn't a CoverRefusedError, so it propagates
+// on the first throw rather than spending a second paid image call on the same broken condition.
+async function renderCover(selections: StorySelections, title: string): Promise<string> {
+  try {
+    return await generateIllustration(buildImagePrompt(selections, title));
+  } catch (error) {
+    if (!(error instanceof CoverRefusedError)) throw error;
+    return await generateIllustration(buildImagePrompt(selections, title, { nameless: true }));
   }
 }

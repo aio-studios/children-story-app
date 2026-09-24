@@ -374,7 +374,9 @@ function CreateApp() {
       const data = await response.json();
       if (activeGenerationRef.current !== generationId) return;
       if (!response.ok || typeof data.imageUrl !== "string") {
-        setCoverStatus("failed");
+        // 422 means the model declined this character even without its name (#103). Nothing to
+        // retry, so the reader says that instead of implying a hiccup.
+        setCoverStatus(data?.reason === "refused" ? "refused" : "failed");
         return;
       }
       updateCoverUrl(data.imageUrl);
@@ -494,7 +496,9 @@ function CreateApp() {
       const data = await response.json();
       if (activeGenerationRef.current !== generationId) return;
       if (!response.ok || typeof data.imageUrl !== "string") {
-        setCoverStatus("failed");
+        // 422 means the model declined this character even without its name (#103). Nothing to
+        // retry, so the reader says that instead of implying a hiccup.
+        setCoverStatus(data?.reason === "refused" ? "refused" : "failed");
         return;
       }
       updateCoverUrl(data.imageUrl);

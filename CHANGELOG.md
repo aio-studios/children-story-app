@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-24
+
+### Fixed
+
+- 17:14 - **Stories about famous characters got no cover and a misleading error (#103).** Ask for Aladdin and you got the whole story with a blank cover reading "The cover didn't come through this time" - which sounds like a glitch you should retry. It wasn't. Gemini declines to draw named copyrighted characters, and it declines by answering *successfully with no picture attached* rather than by erroring, so the app couldn't tell a refusal from a dropped connection. Claude has no such filter, so the story itself wrote perfectly happily. Two changes:
+  - **The app now knows the difference.** A refusal and a network failure are separate errors, and the reader says "We can't draw famous characters, but your story is all here" instead of implying something broke. Nothing to retry, and it no longer pretends otherwise.
+  - **A cover is attempted twice before giving up.** If the first try is declined, the second drops the character's name and the story title from the picture request and describes the character instead - which is all a cover ever needed. Measured: the trigger is the *name*, wherever it appears (the title carries it too, since the title is built from the name), while the setting on its own is fine. A story about "Elsa, a young queen in a blue gown who can freeze water" now gets its cover. One about "Aladdin, a street boy from Agrabah with a magic lamp" still doesn't, because the description identifies him even unnamed - and that one gets the honest message. The retry costs a second image call only when the first is refused, never on the normal path, and never more than twice.
+
+  To be clear about what this is not: the second attempt asks for a different, generic character. It is not a way to get the trademarked one.
+
 ## 2026-09-23
 
 ### Added
