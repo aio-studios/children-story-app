@@ -8,9 +8,23 @@
 
 ## ▶ Resume point (2026-09-23, session 8)
 
-**Branch:** `feat/92-accounts-auth-foundation` — 9 commits ahead of origin, working tree clean.
-`main` untouched by this branch, but note **`main` has moved**: PR #101 (#96 tracking links) merged
-on 2026-09-23, so this branch will need a merge from `main` before it ships.
+**Branch:** `feat/92-accounts-auth-foundation` — 16 commits ahead of origin, working tree clean.
+**`main` was merged in on 2026-09-26** (PR #101, #96 tracking links; only CHANGELOG.md conflicted,
+both days' entries kept). Build clean with `/r/[slug]` present, and **all five gates re-run green
+after the merge**: 37/37, 18/18, 42/42, 16/16, 30/30.
+
+**Also shipped 2026-09-26: [#103](https://github.com/aio-studios/children-story-app/issues/103)** —
+covers for famous characters. Gemini declines named copyrighted characters by returning HTTP 200 with
+no image, which was indistinguishable from a dropped connection, so every refusal read as "the cover
+didn't come through, try again". Now `NoImageGeneratedError` → `CoverRefusedError` in
+`lib/imageClient.ts` (the only place the two are separable), a 422 + `reason:"refused"` from the
+route, a distinct `coverStatus="refused"` in the reader, and **one** retry with
+`buildImagePrompt(..., { nameless: true })` dropping the character name and the title. Measured: the
+trigger is the NAME wherever it appears (the title carries it, being generated from the name); the
+setting alone is fine. Elsa recovers on the retry; Aladdin still refuses because the description
+identifies him unnamed — correct, not a gap. **No automated gate for this** — a real test costs
+~$0.20/run in image calls and there is no unit-test harness for pure functions, so nothing catches
+someone re-adding the name to that prompt.
 
 **Next action: Step 9 (Privacy).** `/privacy` page, account delete that purges stories *and* Blob
 covers, the nickname nudge in the custom-character form, and a settings entry point for sign-out +
