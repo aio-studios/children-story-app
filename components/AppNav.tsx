@@ -7,10 +7,12 @@ import { Wordmark } from "./Wordmark";
 type AppNavProps = {
   mode: LayoutMode;
   /** Which destination the current view maps to, for the active highlight. */
-  activeTab?: "home" | "create" | "library";
+  activeTab?: "home" | "create" | "library" | "settings";
   onNavigateHome: () => void;
   onNavigateNewStory: () => void;
   onNavigateLibrary: () => void;
+  /** Absent → Settings stays a "Soon" item, per the NavItem contract below. */
+  onNavigateSettings?: () => void;
 };
 
 // Sidebar collapsed/open state persists across visits (localStorage now, account later once Supabase
@@ -130,10 +132,10 @@ type NavItem = {
 };
 
 // One nav model, three shapes (Nav-2, #73/#75). Bottom bar (portrait), 64px icon rail (landscape),
-// collapsible left sidebar (tablet). Home + Create + Library are live; Music/Settings are shown
-// greyed with a "Soon" badge so the roadmap reads at a glance (they don't exist yet). Create owns the
-// primary action and, in the bottom bar, sits dead-center as the raised FAB.
-export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory, onNavigateLibrary }: AppNavProps) {
+// collapsible left sidebar (tablet). Home + Create + Library + Settings are live; Music alone is
+// still shown greyed with a "Soon" badge so the roadmap reads at a glance. Create owns the primary
+// action and, in the bottom bar, sits dead-center as the raised FAB.
+export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory, onNavigateLibrary, onNavigateSettings }: AppNavProps) {
   const isSidebar = mode === "tablet";
   const collapsed = useSyncExternalStore(subscribeCollapsed, getCollapsedSnapshot, () => false);
 
@@ -151,7 +153,7 @@ export function AppNav({ mode, activeTab, onNavigateHome, onNavigateNewStory, on
   const create: NavItem = { key: "create", label: "Create", icon: <CreateIcon />, create: true, active: activeTab === "create", onClick: onNavigateNewStory };
   const library: NavItem = { key: "library", label: "Library", icon: <LibraryIcon />, active: activeTab === "library", onClick: onNavigateLibrary };
   const music: NavItem = { key: "music", label: "Music", icon: <MusicIcon /> };
-  const settings: NavItem = { key: "settings", label: "Settings", icon: <SettingsIcon /> };
+  const settings: NavItem = { key: "settings", label: "Settings", icon: <SettingsIcon />, active: activeTab === "settings", onClick: onNavigateSettings };
 
   // Bottom bar centers Create (the raised FAB), with Home + Library either side of it; the vertical
   // rail/sidebar keep Create high, right under Home, with Library and the "Soon" items below.

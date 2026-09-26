@@ -3400,3 +3400,105 @@ a,
   border-radius: 12px;
   padding: 0.6rem 0.75rem;
 }
+
+/* ===== Settings (#92) =====
+   One card, one concern: the account. Reuses the Library's spacing and type scale rather than
+   introducing a second vocabulary for what is basically the same kind of screen. */
+
+.sk-set { padding: 0.4rem 0 2.5rem; }
+.sk-set-title {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-title);
+  color: var(--sk-ink);
+  padding: 0.6rem 1.1rem 0.9rem;
+}
+.sk-set-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 1.1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--sk-line);
+  border-radius: 16px;
+  background: var(--sk-card-bg);
+}
+.sk-set-card-head { display: flex; align-items: center; gap: 0.6rem; }
+.sk-set-card-ico {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--sk-brand-wash);
+  color: var(--sk-brand);
+}
+.sk-set-card-h {
+  font-family: var(--font-fredoka), var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-heading);
+  color: var(--sk-ink);
+}
+.sk-set-b,
+.sk-set-note {
+  font-family: var(--font-nunito), var(--font-sans);
+  line-height: 1.5;
+  color: var(--sk-ink-soft);
+  max-width: 46ch;
+}
+.sk-set-b { font-size: var(--text-note); }
+.sk-set-note { font-size: var(--text-micro); }
+
+/* Label above value, not beside it: an email is long enough to wrap on a phone, and a two-column
+   row would either truncate it or push the label off. */
+.sk-set-row { display: flex; flex-direction: column; gap: 2px; }
+.sk-set-row-label {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-micro);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sk-ink-soft);
+}
+.sk-set-row-value {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  color: var(--sk-ink);
+  overflow-wrap: anywhere;
+}
+
+.sk-set-form { width: 100%; max-width: 340px; }
+
+/* Outlined, not filled: signing out is a way back, not the thing the screen wants you to do. */
+.sk-set-signout {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--sk-line);
+  background: transparent;
+  color: var(--sk-ink);
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  cursor: pointer;
+}
+.sk-set-signout:hover:not(:disabled) { background: var(--sk-brand-wash); border-color: var(--sk-brand); }
+.sk-set-signout:disabled { opacity: 0.6; cursor: default; }
+
+.sk-set-skeleton {
+  width: 100%;
+  height: 76px;
+  border-radius: 12px;
+  background: var(--sk-line-soft);
+  animation: sk-lib-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-set-skeleton { animation: none; }
+}
+
+/* Tablet/laptop: the card shouldn't stretch to a 1000px-wide strip of mostly nothing. */
+@media (min-width: 768px) and (min-height: 600px) {
+  .sk-set-card { max-width: 560px; }
+}

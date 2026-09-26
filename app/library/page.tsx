@@ -21,6 +21,7 @@ export default function LibraryPage() {
       onNavigateHome={() => router.push("/create")}
       onNavigateNewStory={() => router.push("/create?new=1")}
       onNavigateLibrary={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onNavigateSettings={() => router.push("/settings")}
     >
       <LibraryScreen
         onOpenStory={(story: SavedStory) => router.push(`/create?story=${encodeURIComponent(story.id)}`)}

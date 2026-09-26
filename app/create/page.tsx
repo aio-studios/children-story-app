@@ -873,6 +873,7 @@ function CreateApp() {
       onNavigateHome={handleNavigateHome}
       onNavigateNewStory={handleNavigateNewStory}
       onNavigateLibrary={() => router.push("/library")}
+      onNavigateSettings={() => router.push("/settings")}
       pageTitle={pageTitle}
       activeTab={view === "home" ? "home" : view === "setup" ? "create" : undefined}
       autoHide={view === "success"}

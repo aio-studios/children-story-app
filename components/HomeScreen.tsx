@@ -94,13 +94,24 @@ function accentStyle(genreId: string): CSSProperties {
 
 // Presentational only (no story to open behind these yet, D7) - a <div>, not a button, so it doesn't
 // promise an action it can't keep.
-function CoverCard({ story }: { story: SampleStory }) {
+// A shelf card for one of the invented sample stories. There is no story behind it, so tapping it
+// starts a NEW one in that card's genre rather than pretending to open it - which is what a person
+// poking at it wants anyway. It was an inert <div> until UAT, defensible while everything on Home was
+// fake, and not once Step 8 put real cards that ARE buttons on the same screen looking identical.
+function CoverCard({ story, onStart }: { story: SampleStory; onStart: () => void }) {
   // The emoji is the fallback, not a decoration on top of the art: it only appears if the image
   // fails to load, otherwise it would sit over the character it duplicates.
   const [artFailed, setArtFailed] = useState(false);
 
   return (
-    <div className="sk-cover-card" style={accentStyle(story.genreId)}>
+    <button
+      type="button"
+      className="sk-cover-card sk-cover-card-live"
+      style={accentStyle(story.genreId)}
+      onClick={onStart}
+      // The title alone reads as a story you can open. Naming the action stops that promise being made.
+      aria-label={`Make a ${story.title} style story`}
+    >
       <span className="sk-cover-art" aria-hidden="true" />
       {!artFailed && (
         // eslint-disable-next-line @next/next/no-img-element -- pre-sized static /public art, no next/image optimizer.
@@ -124,7 +135,7 @@ function CoverCard({ story }: { story: SampleStory }) {
           <span className="sk-cover-badge">{story.length}</span>
         </span>
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -181,7 +192,7 @@ function RecentRow({ stories, onOpen, onSeeAll }: { stories: SavedStory[]; onOpe
   );
 }
 
-function DiscoveryRow({ title, items }: { title: string; items: SampleStory[] }) {
+function DiscoveryRow({ title, items, onStart }: { title: string; items: SampleStory[]; onStart: (genreId: string) => void }) {
   return (
     <section className="sk-drow">
       <div className="sk-drow-head">
@@ -189,7 +200,7 @@ function DiscoveryRow({ title, items }: { title: string; items: SampleStory[] })
       </div>
       <div className="sk-drow-scroll">
         {items.map((story, index) => (
-          <CoverCard key={`${story.title}-${index}`} story={story} />
+          <CoverCard key={`${story.title}-${index}`} story={story} onStart={() => onStart(story.genreId)} />
         ))}
       </div>
     </section>
@@ -357,8 +368,8 @@ export function HomeScreen({ continueStory, onContinue, onSelectGenre, onSelectC
       {showDiscovery && (
         <>
           <div className="sk-sect-label">Discover</div>
-          <DiscoveryRow title="Popular this week" items={SAMPLE_STORIES} />
-          <DiscoveryRow title="Quick stories · under 5 min" items={quickStories} />
+          <DiscoveryRow title="Popular this week" items={SAMPLE_STORIES} onStart={onSelectGenre} />
+          <DiscoveryRow title="Quick stories · under 5 min" items={quickStories} onStart={onSelectGenre} />
         </>
       )}
     </main>

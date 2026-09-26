@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-26
+
+### Added
+
+- 13:17 - **A Settings screen, and with it a way to sign out.** Until now there wasn't one: `signOut()` had been sitting in the code with nothing calling it, so the only way back to a signed-out app was clearing your browser data. Settings had been in the nav all along marked "Soon"; it's real now. It shows the email you're signed in as and a Sign out button, or the sign-in form if you aren't signed in ([components/SettingsScreen.tsx](components/SettingsScreen.tsx), [app/settings/page.tsx](app/settings/page.tsx)). Signing out leaves your stories safe in your library. Deliberately just the account for now - deleting an account has to clear its cover pictures too, and promising that here before it works would be worse than leaving it out. Music is still honestly marked "Soon".
+- 13:17 - **[scripts/verify-settings.mjs](scripts/verify-settings.mjs)** - 29-check suite over the new screen: guest and signed-in states, the nav item no longer being disabled, signing out and staying signed out across a reload, the sample cards being real buttons, and the screen at iPhone and iPad in light and dark. Costs nothing to run - no stories are generated and no rows are written.
+
+### Fixed
+
+- 13:17 - **The "Popular this week" and "Quick stories" cards did nothing when tapped.** They were always sample content with no story behind them, which was defensible while everything on Home was invented - and stopped being defensible once real story cards appeared on the same screen looking identical. Tapping one now starts a new story in that card's genre, which is what you wanted from it anyway ([components/HomeScreen.tsx](components/HomeScreen.tsx)).
+
+### Changed
+
+- 13:17 - **Merged the latest `main`** into the accounts branch, bringing the `/r/<slug>` tracking links and the own-traffic Analytics opt-out alongside the accounts work. All five existing regression gates re-run green afterwards: 37/37, 18/18, 42/42, 16/16, 30/30.
+
 ## 2026-09-24
 
 ### Fixed
