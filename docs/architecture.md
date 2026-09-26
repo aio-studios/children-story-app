@@ -36,6 +36,7 @@ hiring manager arriving cold from a resume link with no idea what the product is
 | `/` | Landing page — hero + scripted demo, screenshots, "Behind the build" | Static server component; one client island (`components/landing/StoryDemo.tsx`) |
 | `/create` | The app — the create/read state machine, moved unchanged | Client (`"use client"`) |
 | `/library` | Saved stories (#92 Step 6) — cover grid, capacity meter, delete, guest sign-in | Client (`"use client"`) |
+| `/settings` | Account (#92) — signed-in email + sign out, or the sign-in form. The **only** sign-out surface: `signOut()` had zero callers before this | Client (`"use client"`) |
 | `/auth/callback` | Magic-link verification (#92 Step 3) | Server route |
 | `/api/*` | Story, beat and illustration endpoints — untouched | Server routes |
 | `/r/[slug]` | Per-application tracking link (#96) — any slug; renders so Analytics records the path, then `router.replace('/')`. `noindex`. Must stay client-side: a server redirect records nothing | Dynamic server page + client forwarder (`components/TrackingForward.tsx`) |
@@ -471,7 +472,9 @@ graph TD
 
 ##### Library screen (`app/library/page.tsx` / `components/LibraryScreen.tsx`) — #92 Step 6, 2026-09-06
 
-Its own route rather than a fifth view in `/create`'s state machine: it holds no generation state, it is deep-linkable, and it is the screen a signed-in user reaches most often after Home. Design: [docs/designs/library-accounts-directions.html](designs/library-accounts-directions.html), Direction A frame A1.
+Its own route rather than a fifth view in `/create`'s state machine: it holds no generation state, it is deep-linkable, and it is the screen a signed-in user reaches most often after Home. `/settings` (2026-09-26) is a route for the same three reasons.
+
+**Nav contract worth keeping:** a `NavItem` with no `onClick` renders greyed with a "Soon" badge and `disabled` — that is how Music still reads, and how Settings read until it existed. `AppShell` therefore passes `onNavigateSettings` through as **optional rather than defaulting it to a no-op**: a screen that forgets to supply one leaves Settings honestly marked "Soon" instead of rendering a live-looking button that silently does nothing. Three separate UAT findings on 2026-09-26 were all that same bug class (dead Settings item, inert sample cards, no sign-out anywhere), so the default matters. Design: [docs/designs/library-accounts-directions.html](designs/library-accounts-directions.html), Direction A frame A1.
 
 ```mermaid
 flowchart TD
