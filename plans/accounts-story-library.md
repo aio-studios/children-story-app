@@ -1,14 +1,18 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `97%` — Steps 1–8 complete and verified. Home now shows the user's own stories instead of invented ones, and the invented shelves stand down the moment there is something real. **Five** gates green (37/37 sheet, 18/18 Home shelf, 42/42 screen, 16/16 persistence, 30/30 covers). Step 9 (Privacy) is next.
+**Overall Progress:** `97%` — Steps 1–8 complete and verified, plus a Settings screen pulled forward out of Step 9. **Six** gates green (37/37 sheet, 18/18 Home shelf, 42/42 screen, 29/29 settings, 16/16 persistence, 30/30 covers). **Sarthak's UAT of Step 8 is still outstanding** — it is the only thing between here and closing #92/#67. Step 9 (the rest of Privacy) is next.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
-**Last updated:** 2026-09-23 (session 8)
+**Last updated:** 2026-09-26 (session 9)
 
-## ▶ Resume point (2026-09-23, session 8)
+## ▶ Resume point (2026-09-26, session 9)
 
-**Branch:** `feat/92-accounts-auth-foundation` — 16 commits ahead of origin, working tree clean.
+**Branch:** `feat/92-accounts-auth-foundation` — pushed to origin, working tree clean.
+
+**▶ NEXT ACTION: Sarthak's UAT of Step 8.** Everything below it is done and verified by machine; the
+one step no gate replaces has not happened yet. The walkthrough to give him is in the session notes
+below. Do not start Step 9 before that sign-off, and do not merge before the Supabase Site URL item.
 **`main` was merged in on 2026-09-26** (PR #101, #96 tracking links; only CHANGELOG.md conflicted,
 both days' entries kept). Build clean with `/r/[slug]` present, and **all five gates re-run green
 after the merge**: 37/37, 18/18, 42/42, 16/16, 30/30.
@@ -40,16 +44,61 @@ See the Step 8 task list for the full account; the two worth carrying in your he
 - **The cover-delete endpoint's check and its delete disagreed on what identifies a Blob**, so a
   `?x=1` deleted a referenced cover. Fixed with `canonicalCoverUrl()`; nine assertions now pin it.
 
+**Also shipped 2026-09-26 (session 9), out of UAT:** Sarthak reported three things, two of which
+were the same bug class — a control that looks live and isn't.
+- **There was no way to sign out, at all.** `signOut()` had sat in `lib/useSession.ts` with **zero
+  callers** since Step 3; sign-IN was reachable only from the Library's guest pane and the
+  end-of-story sheet, neither of which is where someone looks for their account. New `/settings`
+  route + `components/SettingsScreen.tsx`, mirroring `/library`'s reasons for being a route. Nav's
+  Settings item is live; Music keeps its honest "Soon". **Scope held to the account deliberately:
+  delete-account stays in Step 9 because it must purge Blob covers too.**
+- **The sample shelf cards were inert `<div>`s.** Fine while all of Home was invented, wrong once
+  Step 8 put identical-looking real buttons beside them. They carry a `genreId`, so tapping one now
+  starts a story in that genre.
+- **Landing screenshots pixelate on retina** → [#104](https://github.com/aio-studios/children-story-app/issues/104),
+  not fixed. Every capture is `deviceScaleFactor: 1` (phone 360x780, ipad 698x1000, laptop
+  1600x1000). The 3-up grid is fine; the **device showcase row** is the soft one. Recapture needs a
+  production build (dev paints its badge into shots) + real generated stories for the reader slots.
+
+**Design decision worth keeping from that:** `AppShell` passes `onNavigateSettings` through as
+**optional, not defaulted to a no-op**. A `NavItem` with no `onClick` renders greyed + "Soon" +
+disabled, so a screen that forgets to supply one degrades to honest rather than to a live-looking
+button that silently does nothing — which was the exact bug class in two of the three reports. A
+convenient `?? (() => {})` was written and then removed.
+
+### ▶ The UAT walkthrough to give Sarthak (nothing here has been run by him yet)
+
+App at `http://localhost:3000` after `npm run dev`.
+
+1. **Signed out, `/create`** — placeholder shelves show, no "Your recent stories".
+2. **Sign in** via Settings (or the Library guest pane), make 2–3 stories, return Home — the shelf
+   appears, placeholders vanish, newest first, real covers, % read on each.
+3. **Tap a card** — opens instantly, no spinner, URL stays clean. **"All ›"** → Library.
+4. **7+ stories** — shelf caps at 6.
+5. **⚠️ The one to hammer:** start a story with covers on, read partway, *wait for the cover to land*,
+   go Home. The Continue card must hold real progress. This reset to 0% until 2026-09-23 and was the
+   default path once covers went on by default.
+6. **#103:** custom character "Elsa" / "a young queen in a blue gown who can freeze water" → cover
+   appears (~12s, silent retry). Custom "Aladdin" / "a street boy from Agrabah with a magic lamp" →
+   no cover, message reads "We can't draw famous characters, but your story is all here."
+7. **Settings** → email + Sign out; sign out and confirm placeholders return and the Library shows
+   "Saved on this phone only".
+
 **Known, deliberately deferred:** `useLibrary` tears down and refetches all 20 rows' full `content`
 on every return to Home, because HomeScreen is its only `/create` subscriber and is conditionally
 rendered. Correct but wasteful; wants its own pass, not a Step 8 bolt-on — [#102](https://github.com/aio-studios/children-story-app/issues/102).
 
-**FIVE regression gates now, re-run after ANY persistence change:**
+**SIX regression gates now, re-run after ANY persistence change:**
 - `scripts/verify-signin-sheet.mjs` — **37/37** (guest-only, so it needs no Supabase and costs nothing — run this one first, it catches the most for the least)
 - `scripts/verify-home-recent.mjs` — **18/18** (seeds rows via PostgREST, free and fast)
 - `scripts/verify-library-screen.mjs` — **42/42** (seeds rows via PostgREST, free and fast)
+- `scripts/verify-settings.mjs` — **29/29** (signs the test user in and out; writes no rows, generates nothing, so it is free)
 - `scripts/verify-library-signed-in.mjs` — **16/16**
 - `scripts/verify-cover-lifecycle.mjs` — **30/30** (~$0.16 in real cover images per run)
+
+⚠️ `verify-settings.mjs` **re-signs-in before its dark/tablet block on purpose** — its own sign-out
+test genuinely revokes the session, and reusing those cookies renders the signed-out pane, which
+reads as three styling failures rather than as sign-out working. Cost the first run to diagnose.
 
 The last three need `TEST_USER_EMAIL` / `TEST_USER_PASSWORD` in `.env.local` and a running
 `npm run dev`, and all three **delete every story belonging to that account** — keep it a throwaway
