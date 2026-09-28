@@ -114,7 +114,7 @@ console.log('\nTHE ASK');
 
   await readToTheEnd(page);
   check('sheet appears once the story is finished', await sheetShows(page));
-  check('it asks the right question', (await page.locator('.sk-sheet-title').textContent())?.includes('Keep this story?'));
+  check('it asks the right question', (await page.locator('.sk-sheet-title').textContent())?.includes('Start your story library?'));
   check('it wraps the shared sign-in form', await page.locator('.sk-sheet #sk-signin-email').count() === 1);
   check('the email field is NOT autofocused over the story',
     await page.evaluate(() => document.activeElement?.id !== 'sk-signin-email'));

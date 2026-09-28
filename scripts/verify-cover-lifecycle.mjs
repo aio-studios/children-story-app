@@ -172,6 +172,15 @@ for (const [label, variant] of [
   check(`the Blob survived ${label}`, await blobExists(coverA));
 }
 check('a non-Blob host is rejected outright', (await askDelete('https://evil.example/story-covers/x.png')).status === 400);
+// Two spellings that could name the same object to a server that normalises them. Refused as
+// not-a-cover-URL (400) rather than checked, since a real cover URL never looks like either.
+for (const [label, variant] of [
+  ['a percent-encoded path', coverA.replace('/story-covers/', '/story-cover%73/')],
+  ['the non-public host', coverA.replace('.public.blob.', '.blob.')],
+]) {
+  check(`${label} is rejected outright`, (await askDelete(variant)).status === 400);
+  check(`the Blob survived ${label}`, await blobExists(coverA));
+}
 
 console.log('\n-- 2. once nothing references it, the same cover is deleted --');
 await fetch(`${URL_}/rest/v1/stories?id=eq.${rowA.id}`, { method: 'DELETE', headers: auth });

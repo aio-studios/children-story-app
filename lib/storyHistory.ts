@@ -244,10 +244,25 @@ export function updateContinueStory(story: Saveable<ContinueStory>) {
 // back. Merged into the existing slot rather than passed to saveContinueStory, because the id arrives
 // a round trip AFTER the story does - and rewriting the whole slot here would clobber any progress
 // written in between. Same merge-don't-replace shape as saveProgress above.
-export function attachRowId(rowId: string) {
+export function attachRowId(rowId: string, expected?: Saveable<ContinueStory>) {
   const slot = readSlot();
   if (!slot || slot.id === rowId) return;
+  // With `expected`, attach only to a slot that is still that story and has no row yet - for an
+  // insert that came back after the user moved on, when the slot may already hold something else.
+  if (expected && (slot.id || !isSameStory(slot, expected))) return;
   writeSlot({ ...slot, id: rowId });
+}
+
+function isSameStory(a: Saveable<ContinueStory>, b: Saveable<ContinueStory>): boolean {
+  if (a.mode === "interactive" || b.mode === "interactive") {
+    return (
+      a.mode === "interactive" &&
+      b.mode === "interactive" &&
+      a.interactive.title === b.interactive.title &&
+      a.interactive.beats[0] === b.interactive.beats[0]
+    );
+  }
+  return a.story === b.story;
 }
 
 // Clears the slot only if it is mirroring the row that was just deleted. Deleting a story from the

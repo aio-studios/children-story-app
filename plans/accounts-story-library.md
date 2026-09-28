@@ -6,6 +6,35 @@
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
 **Last updated:** 2026-09-26 (session 9)
 
+## ▶ Resume point (2026-09-28, session 10)
+
+**Branch:** `feat/92-accounts-auth-foundation`. Committed and pushed.
+
+**▶ NEXT ACTION: Sarthak's UAT of Step 8** (walkthrough below). It's unchanged, except that sign-in
+now lands in `/create` rather than the landing page, which the old walkthrough would have tripped on.
+Don't start Step 9 before sign-off. Don't merge before the Supabase Site URL is set to production.
+
+**Session 10: full-codebase review on the new model.** 7 real issues plus 1 older bug found while
+verifying, all fixed. Full list in CHANGELOG 2026-09-28. The one worth remembering:
+- **The classic reader's unmount save measured the NEXT view's DOM**, so every story left mid-read
+  was saved as 100% "finished". React runs passive-effect cleanup after the new view is already in
+  the DOM, so **never measure layout in an unmount cleanup; use the last value measured on screen.**
+  It went unnoticed only because a second bug (the row cleared before that save) kept it out of the
+  database. Fixing the second bug alone would have written the wrong 100% to the library. New gate
+  `verify-reader-exit.mjs` (2/2).
+
+**Gates, all green after the fixes:** sheet 37/37 (three runs; one earlier 36/37 was a >5-minute
+cold-compile run and didn't reproduce), home-recent 18/18, library-screen 42/42, settings 29/29,
+signed-in 16/16, cover 34/34, reader-exit 2/2.
+
+**Multi-model review setup:**
+- **Codex CLI:** installed and logged in via ChatGPT. Run it with `codex exec --sandbox read-only "<brief>" < /dev/null`. The `< /dev/null` is required: without it, Codex waits on stdin forever when run in the background.
+- **Gemini CLI:** Google-account sign-in is discontinued ("no longer supported for Gemini Code Assist for individuals"). It needs a separate AI Studio API key in `~/.gemini/.env` (deferred; Sarthak's call).
+- **Codex results this session:** 2 findings, both rejected. "Gates wipe the test account" is deliberate and documented; "text-only story match" is theoretical.
+
+**Deferred to the workflow-restructuring session:** scope gate cleanup to the rows each run seeded
+rather than wiping the account, the Gemini key, and a reusable review-brief template.
+
 ## ▶ Resume point (2026-09-26, session 9)
 
 **Branch:** `feat/92-accounts-auth-foundation` — pushed to origin, working tree clean.

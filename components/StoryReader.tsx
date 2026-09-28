@@ -56,8 +56,15 @@ function useReaderProgress(
     function totalTimeMs(): number {
       return baseTimeRef.current + accumulated + (activeStart != null ? Date.now() - activeStart : 0);
     }
-    function save() {
-      const fraction = computeFraction();
+    // The last position measured while the story was actually on screen. The unmount save can't
+    // measure: React runs this effect's cleanup after the next view is already in the DOM, so
+    // computeFraction() there reads Home's page, not the story's - a short page with nothing to
+    // scroll, which reads as 1 and marked every story left mid-read as finished.
+    // Seeded from the resume target, since the restore scroll lands a frame or more after mount.
+    const resumeTarget = targetRef.current;
+    let lastFraction = resumeTarget > 0.001 && resumeTarget < 0.999 ? resumeTarget : computeFraction();
+    function save(fraction = computeFraction()) {
+      lastFraction = fraction;
       const time = totalTimeMs();
       // Only mirror onward when the local write actually happened, so the library row is updated on
       // exactly the same throttle as localStorage rather than on every scroll tick.
@@ -79,6 +86,9 @@ function useReaderProgress(
 
     let lastWrite = 0;
     function onScroll() {
+      // Measured on every event, not just the throttled ones, so the unmount save has the real final
+      // position rather than wherever the last throttled write happened to land.
+      lastFraction = computeFraction();
       const now = Date.now();
       if (now - lastWrite < PROGRESS_THROTTLE_MS) return;
       lastWrite = now;
@@ -103,7 +113,7 @@ function useReaderProgress(
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVisibility);
       if (restoreTimer) clearTimeout(restoreTimer);
-      save(); // final position + time on unmount (in-app nav away from the reader)
+      save(lastFraction); // final position + time on unmount (in-app nav away from the reader)
     };
   }, []);
 }

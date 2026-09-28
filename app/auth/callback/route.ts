@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
   const type = parseOtpType(searchParams.get("type"));
-  const next = safeNextPath(searchParams.get("next"));
+  // "/" is the marketing landing page since #97, never where someone signing in wants to be, and
+  // it is also safeNextPath's fallback - so both a missing and a rejected `next` land in the app.
+  const safeNext = safeNextPath(searchParams.get("next"));
+  const next = safeNext === "/" ? "/create" : safeNext;
 
   if (tokenHash && type) {
     const supabase = await createClient();
@@ -24,8 +27,8 @@ export async function GET(request: NextRequest) {
     console.error("Magic-link verification failed:", error.message);
   }
 
-  // Home is a state machine rather than a set of routes, so a failure comes back as a query flag for
-  // the UI to surface (Step 7) instead of a dedicated /auth/error route. Deliberately vague to the
-  // user: distinguishing "expired" from "already used" from "bad token" leaks link state.
-  return NextResponse.redirect(new URL("/?auth=failed", request.url));
+  // Home is a state machine rather than a set of routes, so a failure comes back as a query flag that
+  // /create surfaces, instead of a dedicated /auth/error route. Deliberately vague to the user:
+  // distinguishing "expired" from "already used" from "bad token" leaks link state.
+  return NextResponse.redirect(new URL("/create?auth=failed", request.url));
 }

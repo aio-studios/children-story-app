@@ -170,6 +170,20 @@ function CreateApp() {
     savedRowRef.current = row;
   }
 
+  // Leaving the reader stops tracking its row, but the classic reader writes its final position from
+  // its unmount cleanup - which runs AFTER the exit handler has already cleared savedRowRef. This keeps
+  // the row reachable for exactly that one goodbye save: it is read only by persistProgress, and
+  // cleared by the effect below once the commit that unmounted the reader has run (React runs every
+  // passive unmount cleanup before any passive mount effect in the same commit).
+  const leavingRowRef = useRef<SavedRow | null>(null);
+  function releaseSavedRow() {
+    leavingRowRef.current = savedRowRef.current;
+    setSaved(null);
+  }
+  useEffect(() => {
+    leavingRowRef.current = null;
+  });
+
   // ---- The end-of-story ask (#92, Step 7) ----
   // Offered to a guest who has just *finished* a story - the one moment they have both seen what the
   // app is worth and have something worth keeping. Never on a story they merely opened.
@@ -207,7 +221,13 @@ function CreateApp() {
     const generationId = activeGenerationRef.current;
     try {
       const saved = await saveNewStory(story, userId, savedRowRef.current);
-      if (activeGenerationRef.current !== generationId) return;
+      if (activeGenerationRef.current !== generationId) {
+        // The row exists either way. Still stamp its id onto the slot if the slot is this story, so
+        // deleting it from the Library later clears its Continue card instead of leaving a ghost.
+        attachRowId(saved.id, story);
+        refreshLibrary();
+        return;
+      }
       setSaved({ id: saved.id, opened: saved.opened });
       // Stamp the row id onto the local slot too, so deleting this story from the Library later can
       // tell that the Continue card on Home is the same story and clear it.
@@ -231,7 +251,7 @@ function CreateApp() {
   // far someone has read it change on completely different schedules, and bundling them meant a late
   // cover PATCHing `progress: 0` over a reader's real position.
   function persistProgress(progress: number, timeSpentMs: number) {
-    const row = savedRowRef.current;
+    const row = savedRowRef.current ?? leavingRowRef.current;
     if (!row || !userIdRef.current) return;
     // Deliberately not awaited and not surfaced: losing a progress tick costs a scroll position.
     void saveStoryProgress(row.id, progress, timeSpentMs).catch(() => {});
@@ -630,7 +650,7 @@ function CreateApp() {
     discardCover(coverUrl);
     clearContinueStory();
     // The library keeps its copy; we just stop tracking it, so the next story is its own row.
-    setSaved(null);
+    releaseSavedRow();
     interactiveStoryRef.current = null;
     setInteractiveStory(null);
     setStepError(null);
@@ -647,7 +667,7 @@ function CreateApp() {
     discardCover(coverUrl);
     clearContinueStory();
     // The library keeps its copy; we just stop tracking it, so the next story is its own row.
-    setSaved(null);
+    releaseSavedRow();
     setGenerationError(null);
     resetOptInToggles();
     setSetupStep(2);
@@ -748,6 +768,9 @@ function CreateApp() {
   // left and Back doesn't fire the same navigation twice.
   const storyParam = searchParams.get("story");
   const newParam = searchParams.get("new");
+  // Set by /auth/callback when a magic link fails to verify. Left in the URL rather than stripped so
+  // it survives the page settling; it goes away on the next in-app navigation like any other param.
+  const authFailed = searchParams.get("auth") === "failed";
   const openTarget = useStory(storyParam);
   const consumedDeepLinkRef = useRef<string | null>(null);
 
@@ -826,7 +849,7 @@ function CreateApp() {
     abandonInFlightGeneration();
     // Stop tracking this library row. Without this, the next story generated would be treated as a
     // regenerate of this one and overwrite it in place - losing a story the user had already read.
-    setSaved(null);
+    releaseSavedRow();
     setView("home");
   }
 
@@ -834,7 +857,7 @@ function CreateApp() {
     abandonInFlightGeneration();
     // Same reason as handleNavigateHome: a new story must be its own row, never an overwrite of the
     // one still sitting in the library.
-    setSaved(null);
+    releaseSavedRow();
     resetOptInToggles();
     setSetupStep(0);
     setView("setup");
@@ -896,6 +919,13 @@ function CreateApp() {
       {view === "home" && deepLinkError && (
         <p className="sk-deeplink-error" role="alert">
           {deepLinkError}
+        </p>
+      )}
+
+      {view === "home" && authFailed && !user && (
+        <p className="sk-deeplink-error" role="alert">
+          That sign-in link didn&apos;t work. It may have expired or already been used. Ask for a new one
+          from Settings.
         </p>
       )}
 

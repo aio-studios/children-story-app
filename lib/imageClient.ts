@@ -54,8 +54,10 @@ export async function generateIllustration(prompt: string): Promise<string> {
   return url;
 }
 
-// Blob serves every store from a subdomain of this, and put() only ever hands back https.
-const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com";
+// A public store's host, which is the only kind put() hands back for covers (always https). Pinned to
+// the `.public.` form rather than any *.blob.vercel-storage.com, so a second spelling of the same
+// store's host can't read as a different URL to the reference check.
+const BLOB_PUBLIC_HOST = /^[a-z0-9-]+\.public\.blob\.vercel-storage\.com$/;
 
 // One agreed spelling of a cover URL, for both the "is this still referenced?" check and the delete
 // that follows it. The two steps identify a blob DIFFERENTLY: the check is byte-exact string equality
@@ -72,8 +74,12 @@ export function canonicalCoverUrl(raw: string): string | null {
   }
   const host = parsed.hostname.toLowerCase();
   if (parsed.protocol !== "https:") return null;
-  if (!host.endsWith(BLOB_HOST_SUFFIX)) return null;
+  if (!BLOB_PUBLIC_HOST.test(host)) return null;
   if (!parsed.pathname.startsWith(`/${BLOB_PATH_PREFIX}`)) return null;
+  // put() names covers with a UUID, so a real one never contains an escape. `%61` and `a` are the
+  // same object to a server that decodes but different strings to the check - reject rather than
+  // guess which normalisation Blob applies.
+  if (parsed.pathname.includes("%")) return null;
   // Exactly what put() stored: origin + pathname, never the query or hash.
   return `https://${host}${parsed.pathname}`;
 }

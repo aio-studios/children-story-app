@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-09-28
+
+### Fixed
+
+- 19:24 - **Leaving a story partway through no longer marks it "Finished".** When you left the reader through the menu, it saved your place by measuring the page after Home had already replaced the story, so it always recorded 100%. Continue cards showed "Finished" for stories you'd left halfway. It now remembers the last position it actually saw ([components/StoryReader.tsx](components/StoryReader.tsx)). This bug was older than today's work and slipped past all six test suites.
+- 19:24 - **Your library now gets your final reading position.** Leaving the reader stopped tracking the story *before* the reader's last save ran, so the library kept an older position, off by up to 15 seconds of reading. The row stays reachable for that one last save ([app/create/page.tsx](app/create/page.tsx)).
+- 19:24 - **Signing in lands you in the app, not on the marketing page.** Every magic link went to `/`, which has been the landing page since #97. It now goes to `/create`. A link that fails (expired or already used) says so on Home instead of failing silently ([app/auth/callback/route.ts](app/auth/callback/route.ts)).
+- 19:24 - **Signing out of one device no longer signs you out everywhere.** The sign-out call defaulted to "all devices", so signing out of the family iPad also signed you out on your phone ([lib/useSession.ts](lib/useSession.ts)).
+- 19:24 - The Settings "Sign out" button no longer flashes back to live after a successful sign-out, where it could be tapped twice ([components/SettingsScreen.tsx](components/SettingsScreen.tsx)).
+- 19:24 - A story saved just as you left it now still gets linked to its Continue card, so deleting it from the Library later clears the card instead of leaving a ghost ([lib/storyHistory.ts](lib/storyHistory.ts)).
+
+### Changed
+
+- 19:24 - End-of-story sheet copy is now honest: **"Start your story library?"** replaces "Keep this story?". Signing in saves stories made *after* that point; carrying over the one you just read is Step 11, which isn't built yet ([components/SaveStorySheet.tsx](components/SaveStorySheet.tsx)).
+
+### Security
+
+- 19:24 - Cover delete now accepts only our exact public Blob host and rejects percent-encoded paths, so two spellings of one picture can't slip past the "is a saved story still using this?" check ([lib/imageClient.ts](lib/imageClient.ts)). Cover suite: 30 to 34 checks.
+
+### Added
+
+- 19:24 - **[scripts/verify-reader-exit.mjs](scripts/verify-reader-exit.mjs)**: a free check that leaving a story at 70% records 70% both on the Continue card and in the library. It's the gap all six other suites missed.
+- 19:24 - Review process: after a full-codebase review on the new model, the diff was also reviewed by OpenAI's Codex CLI (read-only) and `/security-review`. Codex's 2 findings and the security review's candidates were all checked against the code and rejected with reasons.
+
 ## 2026-09-26
 
 ### Added

@@ -33,9 +33,9 @@ export function SettingsScreen() {
     setSigningOut(true);
     try {
       await signOut();
-    } finally {
-      // Not reset on success: the session store notifies, this unmounts to the signed-out pane, and
-      // clearing it first would flash the button back to "Sign out" on the way there.
+    } catch {
+      // Reset only on failure: on success the session store notifies and this swaps to the
+      // signed-out pane, and clearing it first would flash the button back to "Sign out" on the way.
       setSigningOut(false);
     }
   }

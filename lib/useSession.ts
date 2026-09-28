@@ -86,9 +86,11 @@ export async function sendMagicLink(email: string): Promise<MagicLinkResult> {
 // leaves the last story sitting on Home for the next person - and leaves the sticky "has created a
 // story" flag set, which would greet them as a returning user. In `finally` so a failed network
 // sign-out still clears local state - the DB copy is the durable one for signed-in users.
+// `scope: "local"` because auth-js defaults to "global", which would also sign the parent out on
+// every other device - signing out of the family iPad must not sign them out of their own phone.
 export async function signOut(): Promise<void> {
   try {
-    await createClient().auth.signOut();
+    await createClient().auth.signOut({ scope: "local" });
   } finally {
     clearLocalStoryState();
   }

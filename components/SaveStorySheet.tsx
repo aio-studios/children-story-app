@@ -68,11 +68,11 @@ export function SaveStorySheet({ onDismiss, onClose }: SaveStorySheetProps) {
       >
         <span className="sk-sheet-grab" aria-hidden="true" />
         <h2 className="sk-sheet-title" id="sk-sheet-title">
-          Keep this story?
+          Start your story library?
         </h2>
         <p className="sk-sheet-body">
-          Right now it only lives on this phone, until you make the next one. Add your email and it will
-          be waiting on any device.
+          Right now it only lives on this phone, until you make the next one. Add your email and every
+          story you make after this one is saved to your library, on any device.
         </p>
         <SignInForm className="sk-sheet-form" onSent={() => setSent(true)} />
         <button type="button" className="sk-nav-btn sk-sheet-dismiss" onClick={dismiss}>
