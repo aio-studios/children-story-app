@@ -1,6 +1,6 @@
 # Project Context
 
-**Last updated:** 2026-09-29 22:26
+**Last updated:** 2026-10-05 22:05
 
 - This project is Storykins (working title — not finalized, revisit later), a children's story creation app. This will be a mobile web app to start with.
 - Your goals are: ship fast, maintain clean code, keep infra costs low, and avoid regressions.
@@ -51,7 +51,7 @@ is added or a key is rotated.
 - **Image generation (story covers, #38 — shipped 2026-08-03):** Google Gemini 2.5 Flash Image ("Nano Banana") via the **Vercel AI SDK** (`ai` + `@ai-sdk/google`). First non-Anthropic AI vendor; swappable behind the AI SDK. Opt-in, ~$0.04/image. The Vercel AI SDK is also the recommended path for Day 2 streaming chat.
 - **Rate limiting:** Upstash Redis (via Vercel's Marketplace integration) — shared per-IP sliding window (#39).
 - **Analytics / performance monitoring (#90 — shipped 2026-08-16):** Vercel Web Analytics + Speed Insights (`@vercel/analytics`, `@vercel/speed-insights`), mounted in `app/layout.tsx`. Cookieless/PII-free (no consent banner), free tier at current traffic. Each needs a one-time **Enable** in its own Vercel dashboard tab, separate from the code change.
-- **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both. Project `xbmhlczhufgbumukcdvu`, Free tier. Only the publishable/anon key is ever used; the service-role key is deliberately not in the codebase, so RLS stays in force on every path.
+- **Auth + Database (Day 2+):** Supabase (Postgres + built-in auth) — one vendor for both. Project `xbmhlczhufgbumukcdvu` (live), Free tier. A second project, `hidletuqkfepajjrhjvm`, is the dev database for local work and every test (#105); `.env.local` points there and live keys live only in Vercel. Only the publishable/anon key is ever used; the service-role key is deliberately not in the codebase, so RLS stays in force on every path.
 - **Transactional email (#92 — auth magic links):** **Brevo** SMTP, free tier (300/day). Forced earlier than planned: Supabase locks email-template editing behind custom SMTP, and its built-in sender is ~2 emails/hour and unsupported for production. Brevo chosen over Resend because it sends to any recipient without owning a domain — so email isn't blocked on the naming decision (#68). Revisit the sender address once a real domain exists.
 - **Hosting + image storage:** Vercel (app + API routes); **Vercel Blob** for generated cover images.
 - **Later (deferred until those phases):** video generation, TTS/STT, payments — provider TBD when we get there.

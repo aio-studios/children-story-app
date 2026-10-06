@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-10-05
+
+### Added
+
+- 22:05 - **A separate dev database (#105).** Local development and every automated test now run against their own Supabase project (`storykins-dev`) instead of the live one, so working on the app can't touch real users' accounts or stories. Same tables, access rules, and sign-in emails as live, with its own Brevo email key. Email sign-in tested end to end on it. Live keys now live only in Vercel.
+- 22:05 - **The sign-in email templates are in the repo** ([supabase/email-templates/](supabase/email-templates/)). They used to exist only inside the Supabase dashboard, so losing the project meant losing them. The README explains why they're custom and to update both projects together.
+
 ## 2026-09-28
 
 ### Fixed

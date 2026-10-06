@@ -1,7 +1,7 @@
 # Supabase migrations
 
-The source of truth for the database schema. Applied by hand through the Supabase SQL editor
-(project `xbmhlczhufgbumukcdvu`) — there is no CLI link, and no service-role key in this repo by
+The source of truth for the database schema. Applied by hand through the Supabase SQL editor,
+in **both** projects: live (`xbmhlczhufgbumukcdvu`) and dev (`hidletuqkfepajjrhjvm`, #105). Apply every new migration to dev first, then live — there is no CLI link, and no service-role key in this repo by
 design, so nothing here runs automatically.
 
 **To rebuild the schema from scratch:** paste each file into the SQL editor in numeric order and
