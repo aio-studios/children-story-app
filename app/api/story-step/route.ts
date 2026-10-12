@@ -3,6 +3,7 @@ import { anthropicClient, extractJsonBlock, HAIKU_MODEL } from "@/lib/anthropicC
 import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
 import { InteractiveStory, LENGTH_BEAT_RANGE, StepAction } from "@/lib/interactive";
 import { checkStepRateLimit } from "@/lib/rateLimit";
+import { rateLimitKey } from "@/lib/rateLimitKey";
 import { MAX_CUSTOM_TEXT_LENGTH } from "@/lib/storyOptions";
 import { buildStepPrompt } from "@/lib/stepPrompt";
 import { validateSelections } from "@/lib/validateSelections";
@@ -69,8 +70,8 @@ function validateStory(value: unknown): InteractiveStory | null {
 }
 
 export async function POST(request: Request) {
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  const allowed = await checkStepRateLimit(clientIp);
+  // Per account when signed in, per IP for guests (lib/rateLimitKey.ts).
+  const allowed = await checkStepRateLimit(await rateLimitKey(request));
   if (!allowed) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR_MESSAGE }, { status: 429 });
   }

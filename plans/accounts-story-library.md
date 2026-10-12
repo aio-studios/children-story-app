@@ -408,7 +408,7 @@ drop function if exists public.set_updated_at();
 
   **The `/security-review` finding, fixed rather than waved through:** `/api/delete-illustration` checked "is this cover still referenced?" by byte-exact equality against `stories.image_url`, then handed the *same raw string* to `del()`, which resolves several spellings of one Blob. A `?x=1`, a `#fragment`, `?download=1` or a differently-cased host slipped past the check as unreferenced and deleted the picture anyway, leaving a saved story with a permanently broken cover. New `canonicalCoverUrl()` in [lib/imageClient.ts](../lib/imageClient.ts) reduces the URL once and rejects anything off `*.blob.vercel-storage.com`/`story-covers/`; both the check and the delete use that one string. Nine assertions added to the cover gate (21 → 30) so it can't regress.
 
-- [x] 🟩 **Step 9: Privacy** — built 2026-10-11, awaiting Sarthak's UAT
+- [x] 🟩 **Step 9: Privacy** — built 2026-10-11, **UAT passed 2026-10-12**
 
   - [x] 🟩 `/privacy` page — what we store, why, how to delete it ([app/privacy/page.tsx](../app/privacy/page.tsx))
   - [x] 🟩 Account delete that purges stories + Blob covers, verified end-to-end (`verify-delete-account.mjs`, 23/23). Order: rows (`delete … returning image_url`) → covers (3 tries; leftovers logged + reported) → `delete_my_account()` (migration 004)
@@ -417,9 +417,13 @@ drop function if exists public.set_updated_at();
   - Reviews: `/code-review` and Codex both caught silently-ignored cover failures (fixed). Codex also flagged three privacy-page overclaims (fixed) and a shared-URL race (rejected: every cover URL is a fresh random path). `/security-review`: no findings ≥ 8.
   - **⚠️ Deploy dependency:** migration 004 must be run on the LIVE project before merge, or Delete account fails with "Your stories were deleted, but your account wasn't".
 
-- [ ] 🟥 **Step 10: Rate limiter keys on user**
+- [x] 🟩 **Step 10: Rate limiter keys on user** — built 2026-10-12
 
-  - [ ] 🟥 [lib/rateLimit.ts](../lib/rateLimit.ts): user id when signed in, IP for guests (fixes families sharing one router)
+  - [x] 🟩 [lib/rateLimitKey.ts](../lib/rateLimitKey.ts): `user:<sub>` via `getClaims()` (local ES256 check) when signed in; `ip:` for guests, anonymous users and auth errors
+  - [x] 🟩 Per-connection ceiling for signed-in users (10/min stories + covers). Own limit checked FIRST, so one tapper can't burn the household's shared slots (a `/code-review` catch)
+  - [x] 🟩 `verify-rate-limit-keys.mjs` 11/11, free; old-code control fails the change-dependent checks
+  - Gotchas: @upstash/ratelimit keeps an in-memory "blocked" cache in the app, so a Redis reset can't unblock a user (the test waits instead); and the sliding window discounts the previous minute, so pre-fills must happen right before the check
+  - Reviews: Codex caught two same-IP test checks that couldn't fail (fixed); `/code-review` caught the ceiling order and a test that could pass for the wrong reason (both fixed); `/security-review` found nothing ≥ 8
 
 - [ ] 🟥 **Step 11: Guest → sign-in migration**
 

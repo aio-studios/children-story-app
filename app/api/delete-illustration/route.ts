@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { canonicalCoverUrl, deleteIllustration } from "@/lib/imageClient";
 import { checkDeleteRateLimit } from "@/lib/rateLimit";
+import { clientIp } from "@/lib/rateLimitKey";
 import { createClient } from "@/lib/supabase/server";
 
 // Cleanup of a cover the client has orphaned (regenerated, replaced, or cleared the continue slot)
@@ -15,8 +16,7 @@ export async function POST(request: Request) {
   // per IP so the external Blob call can't be spammed, but on its OWN generous budget: sharing the
   // 3/60s generation budget meant routine cleanup (a few regenerates, an eviction) got refused, and
   // a refused cleanup is a permanent leak because the row referencing it is already gone.
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  if (!(await checkDeleteRateLimit(`del:${clientIp}`))) {
+  if (!(await checkDeleteRateLimit(`del:${clientIp(request)}`))) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 

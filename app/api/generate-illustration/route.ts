@@ -3,7 +3,8 @@ import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
 import { buildImagePrompt } from "@/lib/imagePrompt";
 import type { StorySelections } from "@/lib/storyPrompt";
 import { CoverRefusedError, generateIllustration } from "@/lib/imageClient";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkConnectionCeiling, checkRateLimit } from "@/lib/rateLimit";
+import { clientIp, rateLimitKey } from "@/lib/rateLimitKey";
 import { collectCustomText, validateSelections } from "@/lib/validateSelections";
 
 const GENERIC_ERROR_MESSAGE = "The cover didn't come through this time.";
@@ -17,9 +18,15 @@ function isValidTitle(value: unknown): value is string {
 
 export async function POST(request: Request) {
   // Own rate-limit bucket, separate from story generation, since images cost more per call.
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  // Per account when signed in, per IP for guests (lib/rateLimitKey.ts).
   // failClosed: unlike story generation, a Redis outage here must not leave paid image gen uncapped (#47).
-  const allowed = await checkRateLimit(`illust:${clientIp}`, true);
+  // Signed-in requests also count against the per-connection ceiling (fail-closed here too).
+  const key = await rateLimitKey(request);
+  // The person's own limit first, ceiling second: a request their own limit refuses then never
+  // spends one of the connection's shared slots, so one over-eager tapper can't lock out the house.
+  const allowed =
+    (await checkRateLimit(`illust:${key}`, true)) &&
+    (!key.startsWith("user:") || (await checkConnectionCeiling(`illust:${clientIp(request)}`, true)));
   if (!allowed) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR_MESSAGE }, { status: 429 });
   }

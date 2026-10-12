@@ -45,6 +45,29 @@ const deleteRatelimit = new Ratelimit({
   prefix: "ratelimit:del",
 });
 
+// Per-connection ceiling for SIGNED-IN users (#92 Step 10). Signed-in users are limited per account
+// (lib/rateLimitKey.ts), which fixes families sharing a router - but on its own it lets one person
+// cycle through N throwaway accounts on one connection for N times the budget, on the two routes
+// that cost real money. 10/min sits above a whole household (3 people x 3 stories = 9) and stops
+// that trick. Guests never hit this: they are already limited per connection by the 3/min budget.
+const CONNECTION_CEILING_MAX_REQUESTS = 10;
+const connectionCeiling = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(CONNECTION_CEILING_MAX_REQUESTS, RATE_LIMIT_WINDOW),
+  analytics: true,
+  prefix: "ratelimit:conn",
+});
+
+export async function checkConnectionCeiling(identifier: string, failClosed = false): Promise<boolean> {
+  try {
+    const { success } = await connectionCeiling.limit(identifier);
+    return success;
+  } catch (error) {
+    console.error(`Connection ceiling check failed, failing ${failClosed ? "closed" : "open"}:`, error);
+    return !failClosed;
+  }
+}
+
 // On an Upstash error we default to failing OPEN (allow the request) so a transient Redis blip
 // doesn't break story generation for everyone. Callers guarding a paid endpoint (image generation)
 // pass failClosed=true: there, an outage should block rather than leave per-IP spend uncapped (#47) -

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { anthropicClient, extractJsonBlock, HAIKU_MODEL } from "@/lib/anthropicClient";
 import { classifySafety, containsBlockedContent } from "@/lib/contentSafety";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkConnectionCeiling, checkRateLimit } from "@/lib/rateLimit";
+import { clientIp, rateLimitKey } from "@/lib/rateLimitKey";
 import { buildStoryPrompt } from "@/lib/storyPrompt";
 import { collectCustomText, validateSelections } from "@/lib/validateSelections";
 
@@ -19,8 +20,14 @@ function blockUnsafe(reason: string, message: string) {
 }
 
 export async function POST(request: Request) {
-  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  const allowed = await checkRateLimit(clientIp);
+  // Per account when signed in, per IP for guests (lib/rateLimitKey.ts). Signed-in requests also
+  // count against a looser per-connection ceiling, so a pile of accounts can't multiply the budget.
+  const key = await rateLimitKey(request);
+  // The person's own limit first, ceiling second: a request their own limit refuses then never
+  // spends one of the connection's shared slots, so one over-eager tapper can't lock out the house.
+  const allowed =
+    (await checkRateLimit(key)) &&
+    (!key.startsWith("user:") || (await checkConnectionCeiling(`story:${clientIp(request)}`)));
   if (!allowed) {
     return NextResponse.json({ error: RATE_LIMIT_ERROR_MESSAGE }, { status: 429 });
   }

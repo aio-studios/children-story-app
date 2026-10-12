@@ -6,7 +6,13 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Changed
 
+- 00:39 - **Each signed-in parent gets their own rate limit (#92 Step 10).** "3 stories a minute" used to count per internet connection, so a household on one Wi-Fi shared a single budget and the 4th story in a minute failed, even for three different people. Signed-in users now count per account. Guests still count per connection, since nothing else tells two guests apart ([lib/rateLimitKey.ts](lib/rateLimitKey.ts)). Accounts are identified from the login token locally, with no extra network call per story.
+- 00:39 - **A per-connection ceiling for signed-in users:** 10 stories and 10 cover pictures a minute per connection. That's above a whole family (3 × 3 = 9) and stops one person cycling through throwaway accounts on the two routes that cost money. A person's own limit is checked first, so someone tapping Generate repeatedly only spends their own budget and can't lock out the household ([lib/rateLimit.ts](lib/rateLimit.ts)).
 - 00:06 - **Your laptop no longer touches the live picture storage (#111).** Pictures made on a laptop and every test picture now go to a separate dev store. Before this, the "is this picture still in use?" safety check asked the dev database, which has never seen a real user's story, so from a laptop every real user's picture looked unused and could be deleted. It only worked from your own machine and nothing went wrong, but it broke the "never touch live" rule. Verified: a test upload lands in the dev store, and the delete-account test passes against it (23/23).
+
+### Added
+
+- 00:39 - **[scripts/verify-rate-limit-keys.mjs](scripts/verify-rate-limit-keys.mjs)**: 11 free checks (every request is deliberately invalid, so no AI is called). Run against the old code as a control, the checks that depend on this change fail there. Follow-up filed: the rate-limit store is still shared with live (#112).
 
 ## 2026-10-11
 
