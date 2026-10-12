@@ -2176,6 +2176,15 @@ a,
   font-size: var(--text-body);
   color: var(--sk-ink);
 }
+/* Label + its hint, kept together with the label's own spacing (the hint can't live inside the label). */
+.sk-form-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.sk-form-hint {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-weight: 400;
+  font-size: var(--text-micro);
+  line-height: 1.4;
+  color: var(--sk-ink-soft);
+}
 /* The tapped "make your own" card flips + scales up to reveal its form on the back (UAT). Front = the
    card art, back = the form; the inner's resting transform shows the back, so prefers-reduced-motion
    (which disables the flip) still lands on the usable form. Pure GPU transform (rotateY + scale) — the
@@ -2612,6 +2621,27 @@ a,
   margin: 0.6rem 0 0;
 }
 .sk-lp-foot-note a { color: var(--sk-brand); font-weight: 700; }
+
+/* --- privacy page (#92 Step 9): one readable column, same tokens as the landing --- */
+.sk-priv-main {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.5rem var(--lp-pad) 3rem;
+  line-height: 1.6;
+}
+.sk-priv-main h1,
+.sk-priv-main h2 { font-family: var(--font-fredoka), var(--font-nunito), sans-serif; font-weight: 600; color: var(--sk-ink); }
+.sk-priv-main h1 { font-size: var(--text-title); }
+.sk-priv-main h2 { font-size: var(--text-heading); margin: 1.75rem 0 0.5rem; }
+.sk-priv-main p,
+.sk-priv-main li { font-size: var(--text-body); color: var(--sk-ink-soft); }
+.sk-priv-main p + p { margin-top: 0.75rem; }
+.sk-priv-main ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; display: grid; gap: 0.4rem; }
+.sk-priv-main strong { color: var(--sk-ink); }
+.sk-priv-main a { color: var(--sk-brand); font-weight: 700; }
+.sk-priv-updated { font-size: var(--text-caption) !important; margin-top: 0.25rem; }
+.sk-priv-lead { font-size: var(--text-body); color: var(--sk-ink) !important; font-weight: 700; margin-top: 1rem; }
 
 /* Order matters: at exactly 1024x600 BOTH queries below match. lib/useLayoutMode.ts checks
    TABLET_QUERY first and returns "tablet", so tablet must win here too - in CSS that means the
@@ -3486,6 +3516,52 @@ a,
 }
 .sk-set-signout:hover:not(:disabled) { background: var(--sk-brand-wash); border-color: var(--sk-brand); }
 .sk-set-signout:disabled { opacity: 0.6; cursor: default; }
+
+/* Delete account (#92 Step 9). Its own card, below the account card, so the destructive action is
+   never one mis-tap away from Sign out. Danger-coloured outline first; the solid fill appears only
+   once the parent has opened the confirm step. */
+.sk-set-card + .sk-set-card { margin-top: 1rem; }
+.sk-set-danger {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--sk-danger);
+  background: transparent;
+  color: var(--sk-danger);
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 800;
+  cursor: pointer;
+}
+.sk-set-danger-solid { background: var(--sk-danger); color: var(--sk-card-bg); }
+.sk-set-danger:disabled { opacity: 0.45; cursor: default; }
+.sk-set-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 340px;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  color: var(--sk-ink);
+}
+.sk-set-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.sk-set-error,
+.sk-set-done {
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-note);
+  font-weight: 700;
+  line-height: 1.5;
+  max-width: 46ch;
+}
+.sk-set-error { color: var(--sk-danger); }
+.sk-set-done { color: var(--sk-ink); }
+.sk-set-legal {
+  margin: 1.2rem 1.1rem 0;
+  font-family: var(--font-nunito), var(--font-sans);
+  font-size: var(--text-micro);
+}
+.sk-set-legal a { color: var(--sk-ink-soft); text-decoration: underline; text-underline-offset: 3px; }
 
 .sk-set-skeleton {
   width: 100%;

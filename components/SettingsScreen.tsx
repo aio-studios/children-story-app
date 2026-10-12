@@ -10,8 +10,8 @@ import { SignInForm } from "./SignInForm";
    signed-out app was clearing site data.
 
    Deliberately just the account, not a settings catalogue. Theme follows the OS and has no toggle,
-   the nav's collapsed state persists itself, and "delete my account" is Step 9's job because it has
-   to purge Blob covers too - promising it here before it works would be worse than its absence. */
+   and the nav's collapsed state persists itself. Step 9 added the second card: deleting the account,
+   which purges its stories and their Blob covers server-side (app/api/delete-account). */
 
 function AccountIcon() {
   return (
@@ -27,6 +27,18 @@ export function SettingsScreen() {
   // Sign-out is a round trip. Without this the button stays live and a second tap fires a second
   // request against a session the first one is already tearing down.
   const [signingOut, setSigningOut] = useState(false);
+  // Delete account: a two-step reveal, then the parent types DELETE. A toddler with the phone can
+  // tap a button twice; they can't spell DELETE.
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Survives the swap to the signed-out pane, so the parent sees the deletion actually happened
+  // rather than just finding themselves signed out.
+  const [deleted, setDeleted] = useState(false);
+  // How many cover pictures the server couldn't remove even after retrying. Rare (a Blob outage), but
+  // the parent was promised every picture goes, so they're told rather than shown a clean success.
+  const [coversLeftBehind, setCoversLeftBehind] = useState(0);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -37,6 +49,34 @@ export function SettingsScreen() {
       // Reset only on failure: on success the session store notifies and this swaps to the
       // signed-out pane, and clearing it first would flash the button back to "Sign out" on the way.
       setSigningOut(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (deleting || confirmText !== "DELETE") return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: "DELETE" }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setDeleteError(data?.error ?? "We couldn't delete your account. Please try again.");
+        setDeleting(false);
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { coversLeftBehind?: number } | null;
+      setCoversLeftBehind(data?.coversLeftBehind ?? 0);
+      setDeleted(true);
+      // The server already cleared the session cookies. This drops the browser's copy of the session
+      // and this device's local story slot, and the session store swaps the screen to signed-out.
+      await signOut().catch(() => {});
+    } catch {
+      setDeleteError("We couldn't reach the server. Check your connection and try again.");
+      setDeleting(false);
     }
   }
 
@@ -75,6 +115,13 @@ export function SettingsScreen() {
           </>
         ) : (
           <>
+            {deleted && (
+              <p className="sk-set-done" role="status">
+                Your account and all its stories have been deleted.
+                {coversLeftBehind > 0 &&
+                  ` ${coversLeftBehind === 1 ? "One cover picture" : `${coversLeftBehind} cover pictures`} couldn't be removed right away. We've logged ${coversLeftBehind === 1 ? "it" : "them"} and will remove ${coversLeftBehind === 1 ? "it" : "them"} by hand.`}
+              </p>
+            )}
             <p className="sk-set-b">
               You&apos;re not signed in, so stories are saved on this device only. Add your email and
               they follow you anywhere.
@@ -86,6 +133,73 @@ export function SettingsScreen() {
           </>
         )}
       </section>
+
+      {user && !loading && (
+        <section className="sk-set-card" aria-labelledby="sk-set-delete-h">
+          <h2 className="sk-set-card-h" id="sk-set-delete-h">
+            Delete account
+          </h2>
+          <p className="sk-set-b">
+            Deletes your account, every story in your library, and their cover pictures. This can&apos;t
+            be undone.
+          </p>
+          {!deleteOpen ? (
+            <button type="button" className="sk-set-danger" onClick={() => setDeleteOpen(true)}>
+              Delete my account
+            </button>
+          ) : (
+            <>
+              <label className="sk-set-confirm">
+                {/* One span: the label is a flex column, so bare text + <strong> would stack as three rows. */}
+                <span>
+                  Type <strong>DELETE</strong> to confirm
+                </span>
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="sk-field font-normal"
+                  disabled={deleting}
+                />
+              </label>
+              {deleteError && (
+                <p className="sk-set-error" role="alert">
+                  {deleteError}
+                </p>
+              )}
+              <div className="sk-set-actions">
+                <button
+                  type="button"
+                  className="sk-set-danger sk-set-danger-solid"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting || confirmText !== "DELETE"}
+                >
+                  {deleting ? "Deleting…" : "Delete forever"}
+                </button>
+                <button
+                  type="button"
+                  className="sk-set-signout"
+                  onClick={() => {
+                    setDeleteOpen(false);
+                    setConfirmText("");
+                    setDeleteError(null);
+                  }}
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      )}
+
+      <p className="sk-set-legal">
+        <a href="/privacy">Privacy: what we store and how to delete it</a>
+      </p>
     </main>
   );
 }

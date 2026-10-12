@@ -88,11 +88,14 @@ export function canonicalCoverUrl(raw: string): string | null {
 // in Blob (#46). Guarded to our own story-covers path (a caller can't ask us to delete an arbitrary
 // URL) and never throws - a failed delete must not break the response, and the orphan is only a small
 // storage cost. del() is idempotent, so re-deleting an already-gone URL is a no-op.
-export async function deleteIllustration(url: string): Promise<void> {
-  if (!url.includes(`/${BLOB_PATH_PREFIX}`)) return;
+// Returns whether the delete went through, for the one caller that must report it (account delete).
+export async function deleteIllustration(url: string): Promise<boolean> {
+  if (!url.includes(`/${BLOB_PATH_PREFIX}`)) return false;
   try {
     await del(url);
+    return true;
   } catch (error) {
     console.error("Failed to delete superseded illustration:", error);
+    return false;
   }
 }

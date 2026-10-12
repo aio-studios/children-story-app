@@ -1,6 +1,6 @@
 # Accounts + Story Library — Implementation Plan
 
-**Overall Progress:** `97%` — Steps 1–8 complete and verified, plus a Settings screen pulled forward out of Step 9. **Six** gates green (37/37 sheet, 18/18 Home shelf, 42/42 screen, 29/29 settings, 16/16 persistence, 30/30 covers). **Sarthak's UAT of Step 8 is still outstanding** — it is the only thing between here and closing #92/#67. Step 9 (the rest of Privacy) is next.
+**Overall Progress:** `97%` — Steps 1–8 complete and verified, plus a Settings screen pulled forward out of Step 9. **Six** gates green (37/37 sheet, 18/18 Home shelf, 42/42 screen, 29/29 settings, 16/16 persistence, 30/30 covers). **Step 8 UAT PASSED 2026-10-10** (Sarthak, on the dev database); #67 closed. Step 9 (Privacy) built 2026-10-11, awaiting UAT.
 
 **Issue:** [#92](https://github.com/aio-studios/children-story-app/issues/92) (sub-issue A of epic [#23](https://github.com/aio-studios/children-story-app/issues/23))
 **Design:** [docs/designs/library-accounts-directions.html](../docs/designs/library-accounts-directions.html) — Direction A, frames A1–A3
@@ -10,7 +10,7 @@
 
 **Branch:** `feat/92-accounts-auth-foundation`. Committed and pushed.
 
-**▶ NEXT ACTION: Sarthak's UAT of Step 8** (walkthrough below). It's unchanged, except that sign-in
+**✅ Step 8 UAT PASSED 2026-10-10; #67 closed. ▶ NEXT ACTION: Step 9 (Privacy).** (Old walkthrough kept below for reference.) It's unchanged, except that sign-in
 now lands in `/create` rather than the landing page, which the old walkthrough would have tripped on.
 Don't start Step 9 before sign-off. Don't merge before the Supabase Site URL is set to production.
 
@@ -408,12 +408,14 @@ drop function if exists public.set_updated_at();
 
   **The `/security-review` finding, fixed rather than waved through:** `/api/delete-illustration` checked "is this cover still referenced?" by byte-exact equality against `stories.image_url`, then handed the *same raw string* to `del()`, which resolves several spellings of one Blob. A `?x=1`, a `#fragment`, `?download=1` or a differently-cased host slipped past the check as unreferenced and deleted the picture anyway, leaving a saved story with a permanently broken cover. New `canonicalCoverUrl()` in [lib/imageClient.ts](../lib/imageClient.ts) reduces the URL once and rejects anything off `*.blob.vercel-storage.com`/`story-covers/`; both the check and the delete use that one string. Nine assertions added to the cover gate (21 → 30) so it can't regress.
 
-- [ ] 🟥 **Step 9: Privacy (in scope, not deferred)** ← current
+- [x] 🟩 **Step 9: Privacy** — built 2026-10-11, awaiting Sarthak's UAT
 
-  - [ ] 🟥 `/privacy` page — what we store, why, how to delete it
-  - [ ] 🟥 Account delete that purges stories + Blob covers, verified end-to-end
-  - [ ] 🟥 Nickname-over-real-name nudge in the custom character form
-  - [ ] 🟥 Settings entry point for sign-out + delete account
+  - [x] 🟩 `/privacy` page — what we store, why, how to delete it ([app/privacy/page.tsx](../app/privacy/page.tsx))
+  - [x] 🟩 Account delete that purges stories + Blob covers, verified end-to-end (`verify-delete-account.mjs`, 23/23). Order: rows (`delete … returning image_url`) → covers (3 tries; leftovers logged + reported) → `delete_my_account()` (migration 004)
+  - [x] 🟩 Nickname-over-real-name nudge in the custom character form
+  - [x] 🟩 Settings entry point for sign-out + delete account
+  - Reviews: `/code-review` and Codex both caught silently-ignored cover failures (fixed). Codex also flagged three privacy-page overclaims (fixed) and a shared-URL race (rejected: every cover URL is a fresh random path). `/security-review`: no findings ≥ 8.
+  - **⚠️ Deploy dependency:** migration 004 must be run on the LIVE project before merge, or Delete account fails with "Your stories were deleted, but your account wasn't".
 
 - [ ] 🟥 **Step 10: Rate limiter keys on user**
 

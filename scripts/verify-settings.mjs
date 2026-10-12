@@ -174,10 +174,11 @@ for (const [label, viewport, scheme] of [
   await p.goto(APP + '/settings', { waitUntil: 'networkidle' });
   await p.addStyleTag({ content: HIDE });
   await p.waitForTimeout(900);
-  check(`Settings renders at ${label}`, await p.locator('.sk-set-card').isVisible());
+  // Two cards for a signed-in user since Step 9 (Account, then Delete account). Every one must fit.
+  check(`Settings renders at ${label}`, await p.getByRole('region', { name: 'Account', exact: true }).isVisible());
   check(`"Sign out" is reachable at ${label}`, await p.locator('.sk-set-signout').isVisible());
-  const box = await p.locator('.sk-set-card').boundingBox();
-  check(`the card fits the viewport at ${label}`, !!box && box.width <= viewport.width, JSON.stringify(box));
+  const boxes = await p.locator('.sk-set-card').evaluateAll(els => els.map(e => e.getBoundingClientRect().width));
+  check(`every card fits the viewport at ${label}`, boxes.length === 2 && boxes.every(w => w <= viewport.width), JSON.stringify(boxes));
   await p.screenshot({ path: SHOTS + `/settings-${label}.png`, fullPage: true });
   await ctx.close();
 }

@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here, grouped by day, each entry timestamped.
 
+## 2026-10-11
+
+### Added
+
+- 23:49 - **Delete your account (#92 Step 9).** Settings has a new "Delete account" card. You have to type DELETE to confirm, because a toddler can tap a button twice but can't spell. It deletes every story, then their cover pictures, then the account itself, in that order, so a failure partway never leaves a story with a missing picture. If a picture can't be removed even after 3 tries, the app says so instead of claiming success ([app/api/delete-account/route.ts](app/api/delete-account/route.ts), [components/SettingsScreen.tsx](components/SettingsScreen.tsx)). It's backed by a new database function that only ever deletes the signed-in user's own account, so the app still holds no master key ([supabase/migrations/004_delete_my_account.sql](supabase/migrations/004_delete_my_account.sql)).
+- 23:49 - **A privacy page** ([app/privacy/page.tsx](app/privacy/page.tsx)) in plain language: accounts are for grown-ups, what we store with and without signing in, which companies process what, cookies and browser storage, and how to delete one story or everything. Every claim was checked against the code. Linked from Settings and the landing page footer. Not legal advice: a lawyer should read it before Storykins charges money.
+- 23:49 - **Nickname tip** under the hero's name field: "a nickname works just as well as your child's real name" ([components/CustomCharacterForm.tsx](components/CustomCharacterForm.tsx)).
+- 23:49 - **[scripts/verify-delete-account.mjs](scripts/verify-delete-account.mjs)**: 23 free checks. It creates a throwaway anonymous account with real cover pictures, deletes it through the real Settings screen, and proves the stories, the pictures and the account are all gone. It also checks the privacy page and links. Needs "Allow anonymous sign-ins" on the **dev** project only.
+
+### Changed
+
+- 23:49 - `deleteIllustration()` now reports whether the delete worked; existing callers ignore it ([lib/imageClient.ts](lib/imageClient.ts)). The settings test now expects two cards for a signed-in user.
+
 ## 2026-09-28
 
 ### Fixed

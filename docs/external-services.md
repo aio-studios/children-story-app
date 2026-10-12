@@ -79,3 +79,16 @@ Things that look like mistakes to whoever finds them next, but aren't.
 - **Vercel Blob cuts off rather than bills.** Good for cost safety, bad for uptime — covers stop
   loading rather than generating a surprise invoice. Related: #95 (covers upload uncompressed,
   ~5x storage waste), which brings that ceiling closer than it should be.
+
+## Runbook: cover pictures left behind by an account delete
+
+`/api/delete-account` retries each cover delete 3 times. If one still fails (a Vercel Blob outage),
+the account is deleted anyway, the parent is told "N cover pictures couldn't be removed right away",
+and the URLs are logged. Since the story rows are already gone, nothing will ever retry them, so
+clean them up by hand:
+
+1. Vercel dashboard → the project → **Logs**. Search for `cover(s) left behind after retries`.
+2. Copy the `https://….public.blob.vercel-storage.com/story-covers/…` URLs from that log line.
+3. Vercel dashboard → **Storage** → the Blob store → find each file by name → **Delete**.
+
+Should be rare. If it happens more than once, that's the cue to build an automatic retry queue.

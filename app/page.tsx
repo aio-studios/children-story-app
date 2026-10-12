@@ -112,7 +112,8 @@ export default function LandingPage() {
           Built by Sarthak Gupta ·{" "}
           <a href="https://github.com/aio-studios/children-story-app" target="_blank" rel="noopener noreferrer">
             GitHub
-          </a>
+          </a>{" "}
+          · <a href="/privacy">Privacy</a>
         </p>
       </footer>
     </div>
