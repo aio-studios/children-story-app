@@ -6,7 +6,7 @@ All notable changes to this project are documented here, grouped by day, each en
 
 ### Changed
 
-- **Your laptop no longer touches the live picture storage (#111).** Pictures made on a laptop and every test picture now go to a separate dev store. Before this, the "is this picture still in use?" safety check asked the dev database, which has never seen a real user's story, so from a laptop every real user's picture looked unused and could be deleted. It only worked from your own machine and nothing went wrong, but it broke the "never touch live" rule. Verified: a test upload lands in the dev store, and the delete-account test passes against it (23/23).
+- 00:06 - **Your laptop no longer touches the live picture storage (#111).** Pictures made on a laptop and every test picture now go to a separate dev store. Before this, the "is this picture still in use?" safety check asked the dev database, which has never seen a real user's story, so from a laptop every real user's picture looked unused and could be deleted. It only worked from your own machine and nothing went wrong, but it broke the "never touch live" rule. Verified: a test upload lands in the dev store, and the delete-account test passes against it (23/23).
 
 ## 2026-10-11
 
