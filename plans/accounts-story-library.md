@@ -10,6 +10,8 @@
 
 **Branch:** `feat/92-accounts-auth-foundation`. Committed and pushed.
 
+**▶ QUEUED BEFORE STEP 11 (agreed 2026-10-19): keep-alive PR into `main`.** Both Supabase projects keep pausing because the daily cron (`vercel.json` + `app/api/cron/supabase-ping`) exists only on this branch and Vercel runs crons from production. Plan: a small standalone PR to `main` with the cron + a route that pings BOTH projects using plain `fetch` to `/rest/v1/stories?select=id&limit=0` (no `lib/supabase` dependency, since `main` doesn't have it). Dev is pinged via new Production env vars `DEV_SUPABASE_URL` + `DEV_SUPABASE_PUBLISHABLE_KEY` (public key). Sarthak adds those two in Vercel (Production) and confirms `CRON_SECRET` is set there. Verify after merge by calling the route once with the secret and checking both answer. Get Sarthak's go first; he asked for it, but "Go?" wasn't answered yet.
+
 **✅ Step 8 UAT PASSED 2026-10-10; #67 closed. ▶ NEXT ACTION: Step 9 (Privacy).** (Old walkthrough kept below for reference.) It's unchanged, except that sign-in
 now lands in `/create` rather than the landing page, which the old walkthrough would have tripped on.
 Don't start Step 9 before sign-off. Don't merge before the Supabase Site URL is set to production.
