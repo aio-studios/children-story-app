@@ -1,4 +1,5 @@
 @persona/CTO.md
+@../alpha_brot.md
 
 <!-- BEGIN:nextjs-agent-rules -->
 
